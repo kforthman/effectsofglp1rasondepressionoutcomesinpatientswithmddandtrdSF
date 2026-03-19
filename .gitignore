@@ -1,0 +1,25 @@
+# Ignore everything by default
+*
+
+# But don't ignore directories (needed so we can unignore files inside them)
+!*/
+
+# Track only R scripts
+!*.R
+
+# Track the pipeline map
+!pipeline_map.csv
+
+# Track the pipeline map generator
+!generate_pipeline_map.py
+
+# Track .txt files unless they start with SQL_Query
+!*.txt
+SQL_Query*.txt
+IDs*.txt
+
+# Optional: keep this file tracked (recommended)
+!.gitignore
+
+# Jupyter
+.ipynb_checkpoints/
