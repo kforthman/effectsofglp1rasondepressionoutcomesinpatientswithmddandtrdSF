@@ -1,5 +1,5 @@
 ---
-title: "Propensity Scoring Report: Semaglutide vs. `r params$drug`"
+title: "Propensity Scoring Report: `r params$target_drug` vs. `r params$comparator_drug`"
 date: "`r Sys.Date()`"
 output:
   html_document:
@@ -9,7 +9,8 @@ output:
     theme: flatly
     df_print: kable
 params:
-  drug: "DPP4i"
+  target_drug: "Semaglutide"
+  comparator_drug: "DPP4i"
 ---
 
 ```{r setup, include=FALSE}
@@ -21,17 +22,17 @@ source("my_table1.txt")
 source("analysis_Propensity_Scoring.R")
 notebook_setup()
 
-r <- run_propensity_scoring(params$drug)
+r <- run_propensity_scoring(params$comparator_drug, params$target_drug)
 ```
 
 # Data Summary
 
-Semaglutide vs. **`r r$this_drug`** comparison cohort.
+**`r r$target_drug`** vs. **`r r$comparator_drug`** comparison cohort.
 
 ```{r data-summary}
 r$this.data %>%
     count(treatment) %>%
-    mutate(group = ifelse(treatment == 1, "Semaglutide", r$this_drug)) %>%
+    mutate(group = ifelse(treatment == 1, r$target_drug, r$comparator_drug)) %>%
     dplyr::select(group, n) %>%
     knitr::kable(col.names = c("Treatment Group", "N"))
 ```
@@ -309,12 +310,12 @@ p1 + p2
 ```{r ps-weight-scatter, fig.width=14, fig.height=7}
 ggplot(r$this.data.ps %>%
            mutate(treatment_name = factor(treatment_name,
-                                          levels = c("Semaglutide", r$this_drug))),
+                                          levels = c(r$target_drug, r$comparator_drug))),
        aes(x = pscore, y = weight, color = treatment_name)) +
     geom_point(alpha = 0.5) +
     scale_color_viridis_d(option = "plasma", end = 0.7, name = "Treatment") +
     labs(title    = "Weight vs Propensity Score by Treatment",
-         subtitle = paste0("Semaglutide vs. ", r$this_drug),
+         subtitle = paste0(r$target_drug, " vs. ", r$comparator_drug),
          x        = "Propensity Score",
          y        = "Weight") +
     theme_minimal(base_size = 20) +
@@ -325,9 +326,9 @@ ggplot(r$this.data.ps %>%
 ## Weight Summary
 
 ```{r weight-sums}
-cat(sprintf("Sum of weights — Semaglutide group: %s\n\n", r$sema_weight_sum))
+cat(sprintf("Sum of weights — %s group: %s\n\n", r$target_drug, r$sema_weight_sum))
 cat(sprintf("Sum of weights — %s group: %s\n",
-            r$this_drug, round(r$alte_weight_sum, 4)))
+            r$comparator_drug, round(r$alte_weight_sum, 4)))
 ```
 
 ## Extreme Weights (Comparison Group)

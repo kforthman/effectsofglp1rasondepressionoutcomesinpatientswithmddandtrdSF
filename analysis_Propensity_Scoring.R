@@ -7,7 +7,7 @@
 #
 # Usage:
 #   source("analysis_Propensity_Scoring.R")
-#   result <- run_propensity_scoring("DPP4i")
+#   result <- run_propensity_scoring(comparator_drug = "DPP4i")
 #
 # Outputs written to disk:
 #   PS_Covariates-{drug}.csv
@@ -65,7 +65,7 @@ stat_ks <- function(var, treat, data) {
 # Main propensity scoring function
 # ---------------------------------------------------------------------------
 
-run_propensity_scoring <- function(this_drug) {
+run_propensity_scoring <- function(comparator_drug, target_drug = "Semaglutide") {
 
     # ── 1. Load and prepare data ─────────────────────────────────────────────
 
@@ -86,34 +86,34 @@ run_propensity_scoring <- function(this_drug) {
     matchingVars    <- read.csv("ps_covariates.csv") %>% mutate(issues = NA)
     matchingFormula <- as.formula(paste0("treatment ~ ", paste(matchingVars$var, collapse = " + ")))
 
-    Semaglutide_Population_for_Semaglutide_vs_Drug <- paste0("Semaglutide_Population_for_Semaglutide_vs_", this_drug)
-    Drug_Population_for_Semaglutide_vs_Drug        <- paste0(this_drug, "_Population_for_Semaglutide_vs_", this_drug)
+    target_pop_colname     <- paste0(target_drug, "_Population_for_", target_drug, "_vs_", comparator_drug)
+    comparator_pop_colname <- paste0(comparator_drug, "_Population_for_", target_drug, "_vs_", comparator_drug)
 
-    varname_semaglutide_age_at_index_years <- "Semaglutide_age_at_index_years"
-    varname_thisdrug_age_at_index_years    <- paste0(this_drug, "_age_at_index_years")
+    varname_target_age_at_index_years     <- paste0(target_drug, "_age_at_index_years")
+    varname_comparator_age_at_index_years <- paste0(comparator_drug, "_age_at_index_years")
 
-    varname_semaglutide_mdd_to_index_days  <- "Semaglutide_mdd_to_index_days"
-    varname_thisdrug_mdd_to_index_days     <- paste0(this_drug, "_mdd_to_index_days")
+    varname_target_mdd_to_index_days     <- paste0(target_drug, "_mdd_to_index_days")
+    varname_comparator_mdd_to_index_days <- paste0(comparator_drug, "_mdd_to_index_days")
 
-    varname_semaglutide_first_drug_record  <- "Semaglutide_first_drug_record"
-    varname_thisdrug_first_drug_record     <- ifelse(
-        this_drug == "Nontreatment", "Nontreatment_index",
-        paste0(this_drug, "_first_drug_record")
+    varname_target_first_drug_record     <- paste0(target_drug, "_first_drug_record")
+    varname_comparator_first_drug_record <- ifelse(
+        comparator_drug == "Nontreatment", "Nontreatment_index",
+        paste0(comparator_drug, "_first_drug_record")
     )
 
     this.data <- dte_cohort_data %>%
-        filter(!!sym(Semaglutide_Population_for_Semaglutide_vs_Drug) |
-               !!sym(Drug_Population_for_Semaglutide_vs_Drug)) %>%
-        mutate(treatment = ifelse(!!sym(Semaglutide_Population_for_Semaglutide_vs_Drug) == TRUE, 1, 0)) %>%
+        filter(!!sym(target_pop_colname) |
+               !!sym(comparator_pop_colname)) %>%
+        mutate(treatment = ifelse(!!sym(target_pop_colname) == TRUE, 1, 0)) %>%
         mutate(age_at_index_years = ifelse(treatment,
-                                           !!sym(varname_semaglutide_age_at_index_years),
-                                           !!sym(varname_thisdrug_age_at_index_years))) %>%
+                                           !!sym(varname_target_age_at_index_years),
+                                           !!sym(varname_comparator_age_at_index_years))) %>%
         mutate(mdd_to_index_days = ifelse(treatment,
-                                          !!sym(varname_semaglutide_mdd_to_index_days),
-                                          !!sym(varname_thisdrug_mdd_to_index_days))) %>%
+                                          !!sym(varname_target_mdd_to_index_days),
+                                          !!sym(varname_comparator_mdd_to_index_days))) %>%
         mutate(first_drug_record = as.Date(ifelse(treatment,
-                                                  !!sym(varname_semaglutide_first_drug_record),
-                                                  !!sym(varname_thisdrug_first_drug_record))),
+                                                  !!sym(varname_target_first_drug_record),
+                                                  !!sym(varname_comparator_first_drug_record))),
                first_drug_record_year = year(first_drug_record)) %>%
         as.data.frame()
 
@@ -268,7 +268,7 @@ run_propensity_scoring <- function(this_drug) {
                                             paste(matchingVars.final$var, collapse = " + ")))
 
     write.csv(matchingVars.final,
-              paste0("PS_Covariates-", this_drug, ".csv"),
+              paste0("PS_Covariates-", comparator_drug, ".csv"),
               row.names = FALSE)
 
     # ── 3. Propensity scoring (twang GBM) ────────────────────────────────────
@@ -289,7 +289,7 @@ run_propensity_scoring <- function(this_drug) {
     )
 
     this.data.ps              <- this.data %>%
-        mutate(treatment_name = ifelse(treatment, "Semaglutide", this_drug))
+        mutate(treatment_name = ifelse(treatment, target_drug, comparator_drug))
     this.data.ps$weight       <- get.weights(ps.out, stop.method = "es.mean")
     this.data.ps$pscore       <- ps.out$ps$es.mean.ATT
     this.data.ps$logit_pscore <- log(this.data.ps$pscore / (1 - this.data.ps$pscore))
@@ -297,19 +297,19 @@ run_propensity_scoring <- function(this_drug) {
     # ── 4. IPTW weighted dataset ─────────────────────────────────────────────
 
     weighted.data <- this.data.ps
-    save(weighted.data, file = paste0("PS_Weighted_Dataset-", this_drug, ".rds"))
+    save(weighted.data, file = paste0("PS_Weighted_Dataset-", comparator_drug, ".rds"))
 
     sema_weight_sum <- sum(this.data.ps %>%
-                           filter(treatment_name == "Semaglutide") %>% pull(weight))
+                           filter(treatment_name == target_drug) %>% pull(weight))
     alte_weight_sum <- sum(this.data.ps %>%
-                           filter(treatment_name == this_drug) %>% pull(weight))
+                           filter(treatment_name == comparator_drug) %>% pull(weight))
 
     total_n_alternate_weighted   <- this.data.ps %>%
-        filter(treatment_name == this_drug) %>% nrow()
+        filter(treatment_name == comparator_drug) %>% nrow()
     total_small_weights_weighted <- this.data.ps %>%
-        filter(treatment_name == this_drug & weight < 0.01) %>% nrow()
+        filter(treatment_name == comparator_drug & weight < 0.01) %>% nrow()
     total_big_weights_weighted   <- this.data.ps %>%
-        filter(treatment_name == this_drug & weight > 0.99) %>% nrow()
+        filter(treatment_name == comparator_drug & weight > 0.99) %>% nrow()
 
     design.ps <- svydesign(ids = ~person_id, weights = ~weight, data = this.data.ps)
 
@@ -324,14 +324,14 @@ run_propensity_scoring <- function(this_drug) {
     )
 
     matched.data <- match.data(m.out)
-    save(matched.data, file = paste0("PS_Matched_Dataset-", this_drug, ".rds"))
+    save(matched.data, file = paste0("PS_Matched_Dataset-", comparator_drug, ".rds"))
 
     total_n_alternate_matched   <- matched.data %>%
-        filter(treatment_name == this_drug) %>% nrow()
+        filter(treatment_name == comparator_drug) %>% nrow()
     total_small_weights_matched <- matched.data %>%
-        filter(treatment_name == this_drug & weight < 0.01) %>% nrow()
+        filter(treatment_name == comparator_drug & weight < 0.01) %>% nrow()
     total_big_weights_matched   <- matched.data %>%
-        filter(treatment_name == this_drug & weight > 0.99) %>% nrow()
+        filter(treatment_name == comparator_drug & weight > 0.99) %>% nrow()
 
     # ── 6. Matched-data balance table ────────────────────────────────────────
 
@@ -373,7 +373,8 @@ run_propensity_scoring <- function(this_drug) {
     # ── Return all results ───────────────────────────────────────────────────
 
     list(
-        this_drug                    = this_drug,
+        target_drug                  = target_drug,
+        comparator_drug              = comparator_drug,
         this.data                    = this.data,
         matchingVars                 = matchingVars,
         nzv                          = nzv,
