@@ -19,9 +19,39 @@
 source("workbench_functions.txt")
 
 # ---------------------------------------------------------------------------
-# Helper functions for matched-data balance assessment
-# (stat_smd and stat_pval are already defined in workbench_functions.txt)
+# Helper functions for balance assessment
 # ---------------------------------------------------------------------------
+
+stat_smd <- function(var, treat, data) {
+    z <- data[[treat]]
+    x <- data[[var]]
+    xT <- x[z == 1]
+    xC <- x[z == 0]
+    m0 <- mean(xC)
+    m1 <- mean(xT)
+    s_pooled <- sqrt((sd(xC)^2 + sd(xT)^2) / 2)
+    return((m1 - m0) / s_pooled)
+}
+
+stat_pval <- function(var, treat, data) {
+    z <- data[[treat]]
+    x <- data[[var]]
+    xT <- x[z == 1]
+    xC <- x[z == 0]
+    if (is.numeric(x)) {
+        test_obj <- try(t.test(xT, xC), silent = TRUE)
+        if (inherits(test_obj, "htest")) test_obj$p.value else NA_real_
+    } else {
+        tab     <- table(x, z)
+        chi_obj <- try(chisq.test(tab, correct = FALSE), silent = TRUE)
+        if (inherits(chi_obj, "htest") && all(chi_obj$expected >= 5)) {
+            chi_obj$p.value
+        } else {
+            fish_obj <- try(fisher.test(tab), silent = TRUE)
+            if (inherits(fish_obj, "htest")) fish_obj$p.value else NA_real_
+        }
+    }
+}
 
 std_diff <- function(var, treat, data) {
     z <- data[[treat]]
