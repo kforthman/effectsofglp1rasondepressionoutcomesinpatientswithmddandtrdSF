@@ -17,9 +17,6 @@
 #   PS_Matched_Dataset-{drug}.rds
 
 source("workbench_functions.txt")
-source("easy_delete_copy_R.txt")
-source("my_table1.txt")
-notebook_setup()
 
 # ---------------------------------------------------------------------------
 # Helper functions for matched-data balance assessment
