@@ -7,7 +7,9 @@
 #
 # Usage:
 #   source("analysis_Propensity_Scoring.R")
-#   result <- run_propensity_scoring(comparator_drug = "DPP4i")
+#   result <- run_propensity_scoring(comparator_drug = "DPP4i",
+#                                    cohort_file     = "dte_cohort_wNontreat_data.rds",
+#                                    covariates_file = "ps_covariates.csv")
 #
 # Outputs written to disk:
 #   PS_Covariates-{drug}.csv
@@ -65,11 +67,14 @@ stat_ks <- function(var, treat, data) {
 # Main propensity scoring function
 # ---------------------------------------------------------------------------
 
-run_propensity_scoring <- function(comparator_drug, target_drug = "Semaglutide") {
+run_propensity_scoring <- function(comparator_drug,
+                                   target_drug     = "Semaglutide",
+                                   cohort_file     = "dte_cohort_wNontreat_data.rds",
+                                   covariates_file = "ps_covariates.csv") {
 
     # ── 1. Load and prepare data ─────────────────────────────────────────────
 
-    load("dte_cohort_wNontreat_data.rds")
+    load(cohort_file)
     dte_cohort_data <- this.data
 
     logical_vars <- dte_cohort_data %>%
@@ -83,7 +88,7 @@ run_propensity_scoring <- function(comparator_drug, target_drug = "Semaglutide")
     dte_cohort_data <- dte_cohort_data %>%
         mutate(across(all_of(logical_vars), ~ as.numeric(.)))
 
-    matchingVars    <- read.csv("ps_covariates.csv") %>% mutate(issues = NA)
+    matchingVars    <- read.csv(covariates_file) %>% mutate(issues = NA)
     matchingFormula <- as.formula(paste0("treatment ~ ", paste(matchingVars$var, collapse = " + ")))
 
     target_pop_colname     <- paste0(target_drug, "_Population_for_", target_drug, "_vs_", comparator_drug)
