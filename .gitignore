@@ -23,3 +23,6 @@ IDs*.txt
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Track CLAUDE.md
+!CLAUDE.md
