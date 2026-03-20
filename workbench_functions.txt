@@ -2,7 +2,7 @@ is_package_installed <- function(package_name) {
   return(package_name %in% installed.packages()[, "Package"])
 }
 
-# This function does several things. It is reccommended to run it 
+# This function does several things. It is recommended to run it 
 # at the beginning of every notebook.
 # 1. install and load most commonly used packages
 # 2. prints the current time and date
@@ -67,94 +67,12 @@ notebook_setup <- function(packages_to_install = c("base64enc", "bigrquery", "ca
   # Disable scientific notation formatting
   options(scipen=999)
   
-  # Allow all columns to print
-  options(
-  repr.matrix.max.cols     = Inf,
-  repr.data.frame.max.cols = Inf,
-  repr.matrix.max.rows     = 200,  # optional
-  repr.data.frame.max.rows = 200   # optional
-)
-  
-  # Set html display to auto-margins at 80%
-  IRdisplay::display_html('
-<style>
-.container { width:100% !important; } 
-</style>
-
-<style>
-.output_png {
-    display: table-cell;
-    text-align: center;
-    vertical-align: middle;
-}
-</style>
-
-<style>
-    table {
-        display: inline-block
-    }
-</style>
-
-<style>
-    .output_png {
-        display: block;
-        margin-left: auto;
-        margin-right: auto;
-    }
-</style>
-
-')
-  
-  # Set plot size to 8x8
-  options(repr.plot.width=plot.width, repr.plot.height=plot.height)
-  
-  
-}
-
-# This function will print all rows in the dataset.
-print_all_rows <- function(data){
-  warning(paste0("The dataset has ", nrow(data), " rows."))
-  for(i in 0:floor(nrow(data)/10)){
-    flush.console()
-    if(i < 1){bgn <- 1}else{bgn <- end + 1}
-    end <- bgn + 9
-    if(end > nrow(data)){end <- nrow(data)}
-    cat("\n\n")
-    View(data[bgn:end,])
-  }
-}
-
-# This function will print all columns in the dataset.
-print_all_cols <- function(data){
-  warning(paste0("The dataset has ", ncol(data), " cols."))
-  for(i in 0:floor(ncol(data)/10)){
-    flush.console()
-    if(i < 1){bgn <- 1}else{bgn <- end + 1}
-    if(bgn > ncol(data)){next}
-    end <- bgn + 9
-    if(end > ncol(data)){end <- ncol(data)}
-    cat("\n\n")
-    View(data[,bgn:end])
-  }
 }
 
 # Helper function to get the hash of a local file
 get_local_file_hash <- function(filename) {
   file_hash <- digest::digest(object = filename, algo = "md5", file = TRUE)
   return(file_hash)
-}
-
-# Helper function to get the hash of a file in the Google bucket
-get_bucket_file_hash <- function(filename, bucket) {
-  gcs_auth(email = Sys.getenv('OWNER_EMAIL'))  # Make sure you are authenticated
-  obj <- gcs_get_object(paste0(bucket, "/", filename), meta = TRUE)
-  if (!is.null(obj)) {
-    bucket_hash_base64 <- obj$md5Hash
-    bucket_hash_raw <- base64decode(bucket_hash_base64)
-    bucket_hash_hex <- rawToHex(bucket_hash_raw)
-      return(bucket_hash_hex)
-  }
-  return(NULL)
 }
 
 stat_smd <- function(var, treat, data){
