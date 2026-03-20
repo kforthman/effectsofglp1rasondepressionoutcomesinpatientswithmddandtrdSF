@@ -7,6 +7,9 @@
 # Track only R scripts
 !*.R
 
+# Track R Markdown reports
+!*.Rmd
+
 # Track the pipeline map
 !pipeline_map.csv
 

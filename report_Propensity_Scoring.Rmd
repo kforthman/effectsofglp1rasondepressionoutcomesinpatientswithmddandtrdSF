@@ -1,0 +1,596 @@
+---
+title: "Propensity Scoring Report: Semaglutide vs. `r params$drug`"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 4
+    theme: flatly
+    df_print: kable
+params:
+  drug: "DPP4i"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+source("workbench_functions.txt")
+source("easy_delete_copy_R.txt")
+source("my_table1.txt")
+source("analysis_Propensity_Scoring.R")
+notebook_setup()
+
+r <- run_propensity_scoring(params$drug)
+```
+
+# Data Summary
+
+Semaglutide vs. **`r r$this_drug`** comparison cohort.
+
+```{r data-summary}
+r$this.data %>%
+    count(treatment) %>%
+    mutate(group = ifelse(treatment == 1, "Semaglutide", r$this_drug)) %>%
+    dplyr::select(group, n) %>%
+    knitr::kable(col.names = c("Treatment Group", "N"))
+```
+
+---
+
+# Variable Selection
+
+## Initial Covariates
+
+```{r initial-covariates}
+r$matchingVars %>% knitr::kable()
+```
+
+## 2.1 Near Zero Variance
+
+```{r nzv-table}
+r$nzv %>%
+    rownames_to_column("var") %>%
+    knitr::kable(caption = "Near Zero Variance Metrics (all covariates)")
+```
+
+**Variables flagged (near zero variance):**
+
+```{r nzv-flagged}
+if (length(r$nzv_vars) == 0) {
+    cat("None\n")
+} else {
+    print(r$nzv_vars)
+}
+```
+
+```{r matchingVars1}
+r$matchingVars.1 %>% knitr::kable(caption = "matchingVars after NZV check")
+```
+
+## 2.2 Zero Variance
+
+**Variables flagged (zero variance):**
+
+```{r zv-flagged}
+if (length(r$zv_vars) == 0) {
+    cat("None\n")
+} else {
+    print(r$zv_vars)
+}
+```
+
+```{r matchingVars2}
+r$matchingVars.2 %>% knitr::kable(caption = "matchingVars after zero-variance check")
+```
+
+## 2.3 Linear Combinations
+
+**Variables flagged (linear combination):**
+
+```{r lc-flagged}
+if (length(r$lc_vars) == 0) {
+    cat("None\n")
+} else {
+    print(r$lc_vars)
+}
+```
+
+```{r matchingVars3}
+r$matchingVars.3 %>% knitr::kable(caption = "matchingVars after linear-combination check")
+```
+
+## 2.4 High Correlation
+
+```{r corrplot, fig.width=12, fig.height=12}
+ggcorrplot(r$cor_mat,
+           hc.order = TRUE,
+           type     = "lower",
+           lab      = TRUE,
+           tl.cex   = 10)
+```
+
+**Correlated pairs (|r| > 0.8):**
+
+```{r cor-pairs}
+if (nrow(r$these_cors) == 0) {
+    cat("None\n")
+} else {
+    r$these_cors %>% knitr::kable()
+}
+```
+
+```{r matchingVars4}
+r$matchingVars.4 %>% knitr::kable(caption = "matchingVars after high-correlation check")
+```
+
+## 2.5 Positivity
+
+For each non-continuous variable, cell counts are shown (values < 20 masked). Variables where any cell is zero fail the positivity assumption.
+
+```{r positivity, results='asis'}
+for (vname in names(r$positivity_tables)) {
+    cat("\n\n**Variable:**", vname, "\n\n")
+    print(knitr::kable(r$positivity_tables[[vname]]))
+    cat("\n\n")
+}
+```
+
+**Variables failing positivity:**
+
+```{r pos-fail}
+if (length(r$pos_fail_vars) == 0) {
+    cat("None\n")
+} else {
+    print(r$pos_fail_vars)
+}
+```
+
+```{r matchingVars5}
+r$matchingVars.5 %>% knitr::kable(caption = "matchingVars after positivity check")
+```
+
+## 2.6 Balance
+
+### Negligible imbalance (SMD < 0.05)
+
+```{r smd-low}
+if (length(r$vars_negligible_imbalance) == 0) {
+    cat("None\n")
+} else {
+    print(r$vars_negligible_imbalance)
+}
+```
+
+```{r matchingVars6}
+r$matchingVars.6 %>% knitr::kable(caption = "matchingVars after negligible-imbalance check")
+```
+
+### Does not predict treatment (p > 0.05)
+
+```{r pval-high}
+if (length(r$vars_no_predict) == 0) {
+    cat("None\n")
+} else {
+    print(r$vars_no_predict)
+}
+```
+
+```{r matchingVars7}
+r$matchingVars.7 %>% knitr::kable(caption = "matchingVars.7 — all issues flagged")
+```
+
+## 2.7 Filtering to Final Covariate Set
+
+Keep variables with no issues, or whose only issue is high correlation (resolved iteratively below).
+
+```{r matchingVars8}
+r$matchingVars.8 %>% knitr::kable(caption = "matchingVars.8 — after initial filter")
+```
+
+```{r matchingVars9}
+r$matchingVars.9 %>% knitr::kable(caption = "matchingVars.9 — correlated-to-dropped resolved")
+```
+
+```{r matchingVars10}
+r$matchingVars.10 %>% knitr::kable(caption = "matchingVars.10 — after iterative correlation removal")
+```
+
+### Final Covariate Set
+
+```{r matchingVars-final}
+r$matchingVars.final %>% knitr::kable(caption = "Final covariates used in PS model")
+```
+
+**Matching formula:**
+
+```{r formula}
+print(r$matchingFormula)
+```
+
+---
+
+# Propensity Scoring
+
+## Twang GBM Model Summary
+
+```{r twang-summary}
+summary(r$ps.out)
+```
+
+## Summary Figures
+
+```{r twang-theme, include=FALSE}
+base.theme <- canonical.theme("pdf", color = TRUE)
+base.theme$fontsize$text    <- 16
+base.theme$fontsize$points  <- 12
+base.theme$par.xlab.text    <- list(cex = 2)
+base.theme$par.ylab.text    <- list(cex = 2)
+base.theme$plot.line        <- list(lwd = 2)
+base.theme$plot.symbol      <- list(cex = 1.5)
+base.theme$axis.text        <- list(cex = 1.3)
+trellis.par.set(base.theme)
+```
+
+### Balance measure as a function of GBM iterations
+
+The following plot gives the balance measures as a function of the number of iterations in the gradient boosting algorithm, with higher iterations corresponding to more complicated fitted models.
+
+```{r twang-plot1, fig.width=14, fig.height=10}
+plot(r$ps.out, plots = 1, par.strip.text = list(cex = 2))
+```
+
+### Boxplot of treatment/control propensity scores
+
+The boxplots illustrate the spread of the estimated propensity scores in the treatment and comparison groups. Whereas propensity score stratification requires considerable overlap in these spreads, excellent covariate balance can often be achieved with weights, even when the propensity scores estimated for the treatment and control groups show little overlap.
+
+```{r twang-plot2, fig.width=14, fig.height=10}
+plot(r$ps.out, plots = 2, par.strip.text = list(cex = 2))
+```
+
+### Standardized effect size of pretreatment variables
+
+The effect size plot illustrates the effect of weights on the magnitude of differences between groups on each pretreatment covariate. These magnitudes are standardized using the standardized effect size. Substantial reductions in effect sizes are observed for most variables (blue lines). Closed red circles indicate a statistically significant difference.
+
+```{r twang-plot3, fig.width=14, fig.height=10}
+plot(r$ps.out, plots = 3, par.strip.text = list(cex = 2))
+```
+
+### t-test p-values for weighted pretreatment variables
+
+A QQ plot comparing the quantiles of the observed p-values to the quantiles of the uniform distribution (45 degree line). Severe deviation of the p-values below the diagonal suggests lack of balance; p-values running at or above the diagonal suggests balance may have been achieved.
+
+```{r twang-plot4, fig.width=14, fig.height=10}
+plot(r$ps.out, plots = 4, par.strip.text = list(cex = 2))
+```
+
+### Kolmogorov-Smirnov p-values for weighted pretreatment variables
+
+```{r twang-plot5, fig.width=14, fig.height=10}
+plot(r$ps.out, plots = 5, par.strip.text = list(cex = 2))
+```
+
+### Histogram of weights for treatment/control
+
+```{r twang-plot6, fig.width=14, fig.height=10}
+plot(r$ps.out, plots = 6, par.strip.text = list(cex = 2))
+```
+
+## Balance Table (Twang)
+
+```{r bal-table}
+bal.table(r$ps.out)
+```
+
+---
+
+# Propensity Score Weighting (IPTW)
+
+## Distribution of Propensity Score by Treatment Group
+
+```{r ps-hist, fig.width=14, fig.height=5}
+p1 <- ggplot(r$this.data.ps, aes(x = pscore, fill = treatment_name)) +
+    geom_histogram(position = "identity", alpha = 0.5, bins = 20) +
+    theme_minimal(base_size = 20) +
+    theme(legend.position = "top") +
+    labs(title = "Raw Propensity Score", x = "PS", y = "Count", fill = "Treatment")
+
+p2 <- ggplot(r$this.data.ps, aes(x = logit_pscore, fill = treatment_name)) +
+    geom_histogram(position = "identity", alpha = 0.5, bins = 20) +
+    theme_minimal(base_size = 20) +
+    theme(legend.position = "top") +
+    labs(title = "Logit Propensity Score", x = "Logit PS", y = "Count", fill = "Treatment")
+
+p1 + p2
+```
+
+## Propensity Score vs. Weight
+
+```{r ps-weight-scatter, fig.width=14, fig.height=7}
+ggplot(r$this.data.ps %>%
+           mutate(treatment_name = factor(treatment_name,
+                                          levels = c("Semaglutide", r$this_drug))),
+       aes(x = pscore, y = weight, color = treatment_name)) +
+    geom_point(alpha = 0.5) +
+    scale_color_viridis_d(option = "plasma", end = 0.7, name = "Treatment") +
+    labs(title    = "Weight vs Propensity Score by Treatment",
+         subtitle = paste0("Semaglutide vs. ", r$this_drug),
+         x        = "Propensity Score",
+         y        = "Weight") +
+    theme_minimal(base_size = 20) +
+    theme(panel.grid.major.x = element_blank(),
+          panel.grid.minor   = element_blank())
+```
+
+## Weight Summary
+
+```{r weight-sums}
+cat(sprintf("Sum of weights — Semaglutide group: %s\n\n", r$sema_weight_sum))
+cat(sprintf("Sum of weights — %s group: %s\n",
+            r$this_drug, round(r$alte_weight_sum, 4)))
+```
+
+## Extreme Weights (Comparison Group)
+
+```{r extreme-weights-iptw}
+cat(sprintf("Weights < 0.01: %s (%s)\n",
+            comma(r$total_small_weights_weighted),
+            percent(r$total_small_weights_weighted / r$total_n_alternate_weighted)))
+cat(sprintf("Weights > 0.99: %s (%s)\n",
+            comma(r$total_big_weights_weighted),
+            percent(r$total_big_weights_weighted / r$total_n_alternate_weighted)))
+```
+
+## Weight Distribution
+
+```{r weight-hist, fig.width=12, fig.height=6}
+ggplot(r$this.data.ps, aes(x = weight, fill = treatment_name)) +
+    geom_histogram(position = "identity", alpha = 0.5, binwidth = 0.1) +
+    theme_minimal(base_size = 20) +
+    theme(legend.position = "top") +
+    labs(title = "Distribution of IPTW Weights",
+         x     = "Weight",
+         y     = "Count",
+         fill  = "Treatment")
+```
+
+## Covariate Distributions Before and After Weighting
+
+```{r covariate-dist-weighted, fig.width=20, fig.height=7, results='asis'}
+theme_set(theme_grey(base_size = 18))
+
+for (i in 1:nrow(r$matchingVars)) {
+    this_var  <- r$matchingVars$var[i]
+    inc_in_ps <- this_var %in% r$matchingVars.final$var
+
+    mu_unweighted <- r$this.data.ps %>%
+        group_by(treatment_name) %>%
+        summarise(grp.mean = mean(.data[[this_var]], na.rm = TRUE), .groups = "drop")
+
+    p1 <- ggplot(r$this.data.ps, aes(x = !!sym(this_var), fill = treatment_name)) +
+        geom_histogram(aes(y = after_stat(density)), position = "identity",
+                       alpha = 0.5, bins = 20) +
+        geom_density(alpha = 0.4) +
+        geom_vline(data = mu_unweighted,
+                   aes(xintercept = grp.mean, color = treatment_name), linetype = "dashed") +
+        theme(legend.position = "top") +
+        labs(title    = paste0(this_var, " — before weighting"),
+             subtitle = ifelse(inc_in_ps, "Included in PS model", "NOT in PS model"),
+             x        = this_var,
+             y        = "Density",
+             fill     = "Treatment",
+             color    = "Treatment")
+
+    mu_weighted <- svyby(formula = formula(paste0("~", this_var)),
+                         by      = ~treatment_name,
+                         design  = r$design.ps,
+                         FUN     = svymean,
+                         na.rm   = TRUE)
+    mu_weighted <- mu_weighted[, 1:2]
+    colnames(mu_weighted) <- c("treatment_name", "grp.mean")
+    rownames(mu_weighted) <- NULL
+
+    p2 <- ggplot(r$this.data.ps,
+                 aes(x = !!sym(this_var), fill = treatment_name, weight = weight)) +
+        geom_histogram(aes(y = after_stat(density)), position = "identity",
+                       alpha = 0.5, bins = 20) +
+        geom_density(alpha = 0.4) +
+        geom_vline(data = mu_weighted,
+                   aes(xintercept = grp.mean, color = treatment_name), linetype = "dashed") +
+        theme(legend.position = "top") +
+        labs(title    = paste0(this_var, " — after weighting"),
+             subtitle = ifelse(inc_in_ps, "Included in PS model", "NOT in PS model"),
+             x        = this_var,
+             y        = "Density",
+             fill     = "Treatment",
+             color    = "Treatment")
+
+    print(p1 + p2)
+}
+```
+
+---
+
+# Propensity Score Matching (Nearest Neighbour)
+
+## Matching Summary
+
+```{r matchit-summary}
+summary(r$m.out, standardize = TRUE)
+```
+
+## PS Distribution Before and After Matching
+
+```{r ps-dist-matching, fig.width=20, fig.height=7}
+mu_before <- r$this.data.ps %>%
+    group_by(treatment_name) %>%
+    summarise(grp.mean = mean(logit_pscore, na.rm = TRUE), .groups = "drop")
+
+p1 <- ggplot(r$this.data.ps, aes(x = logit_pscore, fill = treatment_name)) +
+    geom_histogram(aes(y = after_stat(density)), position = "identity",
+                   alpha = 0.5, bins = 20) +
+    geom_density(alpha = 0.4) +
+    geom_vline(data = mu_before,
+               aes(xintercept = grp.mean, color = treatment_name), linetype = "dashed") +
+    theme_minimal(base_size = 18) +
+    theme(legend.position = "top") +
+    labs(title = "Logit PS — before NN matching",
+         x     = "Logit PS",
+         y     = "Density",
+         fill  = "Treatment",
+         color = "Treatment")
+
+mu_after <- r$matched.data %>%
+    group_by(treatment_name) %>%
+    summarise(grp.mean = mean(logit_pscore, na.rm = TRUE), .groups = "drop")
+
+p2 <- ggplot(r$matched.data, aes(x = logit_pscore, fill = treatment_name)) +
+    geom_histogram(aes(y = after_stat(density)), position = "identity",
+                   alpha = 0.5, bins = 20) +
+    geom_density(alpha = 0.4) +
+    geom_vline(data = mu_after,
+               aes(xintercept = grp.mean, color = treatment_name), linetype = "dashed") +
+    theme_minimal(base_size = 18) +
+    theme(legend.position = "top") +
+    labs(title = "Logit PS — after NN matching",
+         x     = "Logit PS",
+         y     = "Density",
+         fill  = "Treatment",
+         color = "Treatment")
+
+p1 + p2
+```
+
+## Weight Distribution Before and After Matching
+
+```{r weight-dist-matching, fig.width=20, fig.height=7}
+mu_before_w <- r$this.data.ps %>%
+    group_by(treatment_name) %>%
+    summarise(grp.mean = mean(weight, na.rm = TRUE), .groups = "drop")
+
+p1 <- ggplot(r$this.data.ps, aes(x = weight, fill = treatment_name)) +
+    geom_histogram(aes(y = after_stat(density)), position = "identity",
+                   alpha = 0.5, bins = 20) +
+    geom_density(alpha = 0.4) +
+    geom_vline(data = mu_before_w,
+               aes(xintercept = grp.mean, color = treatment_name), linetype = "dashed") +
+    theme_minimal(base_size = 18) +
+    theme(legend.position = "top") +
+    labs(title = "Weight distribution — before NN matching",
+         x     = "Weight",
+         y     = "Density",
+         fill  = "Treatment",
+         color = "Treatment")
+
+mu_after_w <- r$matched.data %>%
+    group_by(treatment_name) %>%
+    summarise(grp.mean = mean(weight, na.rm = TRUE), .groups = "drop")
+
+p2 <- ggplot(r$matched.data, aes(x = weight, fill = treatment_name)) +
+    geom_histogram(aes(y = after_stat(density)), position = "identity",
+                   alpha = 0.5, bins = 20) +
+    geom_density(alpha = 0.4) +
+    geom_vline(data = mu_after_w,
+               aes(xintercept = grp.mean, color = treatment_name), linetype = "dashed") +
+    theme_minimal(base_size = 18) +
+    theme(legend.position = "top") +
+    labs(title = "Weight distribution — after NN matching",
+         x     = "Weight",
+         y     = "Density",
+         fill  = "Treatment",
+         color = "Treatment")
+
+p1 + p2
+```
+
+## Weight vs PS Before and After Matching
+
+```{r weight-ps-matching, fig.width=20, fig.height=7}
+p1 <- ggplot(r$this.data.ps, aes(x = pscore, y = weight, color = treatment_name)) +
+    scale_color_viridis_d(option = "plasma", end = 0.7, name = "Treatment") +
+    geom_point(alpha = 0.5) +
+    theme_minimal(base_size = 20) +
+    theme(legend.position = c(0.02, 0.98),
+          legend.justification  = c(0, 1),
+          legend.background     = element_rect(fill = "white", colour = "black"),
+          legend.key            = element_rect(fill = "white", colour = NA)) +
+    labs(title = "Before NN matching", x = "Propensity Score", y = "Weight")
+
+p2 <- ggplot(r$matched.data, aes(x = pscore, y = weight, color = treatment_name)) +
+    scale_color_viridis_d(option = "plasma", end = 0.7, name = "Treatment") +
+    geom_point(alpha = 0.5) +
+    theme_minimal(base_size = 20) +
+    theme(legend.position = c(0.02, 0.98),
+          legend.justification  = c(0, 1),
+          legend.background     = element_rect(fill = "white", colour = "black"),
+          legend.key            = element_rect(fill = "white", colour = NA)) +
+    labs(title = "After NN matching", x = "Propensity Score", y = "Weight")
+
+p1 + p2
+```
+
+## Extreme Weights in Matched Data (Comparison Group)
+
+```{r extreme-weights-matched}
+cat(sprintf("Weights < 0.01: %s (%s)\n",
+            comma(r$total_small_weights_matched),
+            percent(r$total_small_weights_matched / r$total_n_alternate_matched)))
+cat(sprintf("Weights > 0.99: %s (%s)\n",
+            comma(r$total_big_weights_matched),
+            percent(r$total_big_weights_matched / r$total_n_alternate_matched)))
+```
+
+## Covariate Distributions Before and After Matching
+
+```{r covariate-dist-matched, fig.width=20, fig.height=7, results='asis'}
+theme_set(theme_grey(base_size = 18))
+
+for (i in 1:nrow(r$matchingVars)) {
+    this_var  <- r$matchingVars$var[i]
+    inc_in_ps <- this_var %in% r$matchingVars.final$var
+
+    mu_before <- r$this.data.ps %>%
+        group_by(treatment_name) %>%
+        summarise(grp.mean = mean(.data[[this_var]], na.rm = TRUE), .groups = "drop")
+
+    p1 <- ggplot(r$this.data.ps, aes(x = !!sym(this_var), fill = treatment_name)) +
+        geom_histogram(aes(y = after_stat(density)), position = "identity",
+                       alpha = 0.5, bins = 20) +
+        geom_density(alpha = 0.4) +
+        geom_vline(data = mu_before,
+                   aes(xintercept = grp.mean, color = treatment_name), linetype = "dashed") +
+        theme(legend.position = "top") +
+        labs(title    = paste0(this_var, " — before matching"),
+             subtitle = ifelse(inc_in_ps, "Included in PS model", "NOT in PS model"),
+             x        = this_var,
+             y        = "Density",
+             fill     = "Treatment",
+             color    = "Treatment")
+
+    mu_after <- r$matched.data %>%
+        group_by(treatment_name) %>%
+        summarise(grp.mean = mean(.data[[this_var]], na.rm = TRUE), .groups = "drop")
+
+    p2 <- ggplot(r$matched.data, aes(x = !!sym(this_var), fill = treatment_name)) +
+        geom_histogram(aes(y = after_stat(density)), position = "identity",
+                       alpha = 0.5, bins = 20) +
+        geom_density(alpha = 0.4) +
+        geom_vline(data = mu_after,
+                   aes(xintercept = grp.mean, color = treatment_name), linetype = "dashed") +
+        theme(legend.position = "top") +
+        labs(title    = paste0(this_var, " — after matching"),
+             subtitle = ifelse(inc_in_ps, "Included in PS model", "NOT in PS model"),
+             x        = this_var,
+             y        = "Density",
+             fill     = "Treatment",
+             color    = "Treatment")
+
+    print(p1 + p2)
+}
+```
+
+## Statistical Summary of Matched Data
+
+```{r balance-table}
+r$balance_table %>% knitr::kable(caption = "Covariate balance in matched dataset")
+```
