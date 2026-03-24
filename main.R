@@ -173,7 +173,7 @@ saveRDS(nontreat_result, result_file)
 
 render(
     input       = "report_Antidiabetic_Nontreatment_Timelines.Rmd",
-    output_file = paste0("report_Antidiabetic_Nontreatment_Timelines-", target_drug, ".html"),
+    output_file = paste0("Reports/report_Antidiabetic_Nontreatment_Timelines-", target_drug, ".html"),
     params      = list(
         target_drug = target_drug,
         result_file = result_file
@@ -192,14 +192,14 @@ for (drug in comparator_drugs) {
                                              "ps_covariates.csv")
 
     write.csv(ps_result$matchingVars.final,
-              paste0("PS_Covariates-", drug, ".csv"),
+              paste0("Data/PS_Covariates-", drug, ".csv"),
               row.names = FALSE)
 
     weighted.data <- ps_result$weighted.data
-    save(weighted.data, file = paste0("PS_Weighted_Dataset-", drug, ".rds"))
+    save(weighted.data, file = paste0("Data/PS_Weighted_Dataset-", drug, ".rds"))
 
     matched.data <- ps_result$matched.data
-    save(matched.data, file = paste0("PS_Matched_Dataset-", drug, ".rds"))
+    save(matched.data, file = paste0("Data/PS_Matched_Dataset-", drug, ".rds"))
 
     result_file <- paste0("Data/propensity_scoring_result-", target_drug, "Vs", drug, ".rds")
     saveRDS(ps_result, result_file)
@@ -207,7 +207,7 @@ for (drug in comparator_drugs) {
     message("Rendering report for: ", drug)
     render(
         input       = "report_Propensity_Scoring.Rmd",
-        output_file = paste0("report_Propensity_Scoring-", target_drug, "Vs", drug, ".html"),
+        output_file = paste0("Reports/report_Propensity_Scoring-", target_drug, "Vs", drug, ".html"),
         params      = list(
             target_drug     = target_drug,
             comparator_drug = drug,
