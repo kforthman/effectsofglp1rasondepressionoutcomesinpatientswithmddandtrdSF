@@ -191,6 +191,16 @@ for (drug in comparator_drugs) {
                                              "dte_cohort_wNontreat_data.rds",
                                              "ps_covariates.csv")
 
+    write.csv(ps_result$matchingVars.final,
+              paste0("PS_Covariates-", drug, ".csv"),
+              row.names = FALSE)
+
+    weighted.data <- ps_result$weighted.data
+    save(weighted.data, file = paste0("PS_Weighted_Dataset-", drug, ".rds"))
+
+    matched.data <- ps_result$matched.data
+    save(matched.data, file = paste0("PS_Matched_Dataset-", drug, ".rds"))
+
     result_file <- paste0("Data/propensity_scoring_result-", target_drug, "Vs", drug, ".rds")
     saveRDS(ps_result, result_file)
 

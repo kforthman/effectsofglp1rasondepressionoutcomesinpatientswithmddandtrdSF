@@ -11,10 +11,11 @@
 #                                    cohort_file     = "dte_cohort_wNontreat_data.rds",
 #                                    covariates_file = "ps_covariates.csv")
 #
-# Outputs written to disk:
+# Outputs (written to disk by main.R):
 #   PS_Covariates-{drug}.csv
 #   PS_Weighted_Dataset-{drug}.rds
 #   PS_Matched_Dataset-{drug}.rds
+#   Data/propensity_scoring_result-{target}Vs{drug}.rds
 
 source("workbench_functions.txt")
 
@@ -299,9 +300,6 @@ analysis_Propensity_Scoring <- function(comparator_drug,
     matchingFormula    <- as.formula(paste0("treatment ~ ",
                                             paste(matchingVars.final$var, collapse = " + ")))
 
-    write.csv(matchingVars.final,
-              paste0("PS_Covariates-", comparator_drug, ".csv"),
-              row.names = FALSE)
 
     # ── 3. Propensity scoring (twang GBM) ────────────────────────────────────
 
@@ -329,7 +327,6 @@ analysis_Propensity_Scoring <- function(comparator_drug,
     # ── 4. IPTW weighted dataset ─────────────────────────────────────────────
 
     weighted.data <- this.data.ps
-    save(weighted.data, file = paste0("PS_Weighted_Dataset-", comparator_drug, ".rds"))
 
     sema_weight_sum <- sum(this.data.ps %>%
                            filter(treatment_name == target_drug) %>% pull(weight))
@@ -356,7 +353,6 @@ analysis_Propensity_Scoring <- function(comparator_drug,
     )
 
     matched.data <- match.data(m.out)
-    save(matched.data, file = paste0("PS_Matched_Dataset-", comparator_drug, ".rds"))
 
     total_n_alternate_matched   <- matched.data %>%
         filter(treatment_name == comparator_drug) %>% nrow()
