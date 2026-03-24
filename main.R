@@ -170,6 +170,7 @@ this.data <- nontreat_result$dte_cohort_data2
 save(this.data, file = "Data/dte_cohort_wNontreat_data.rds")
 
 result_file <- paste0("Data/nontreatment_timelines_result-", target_drug, ".rds")
+
 saveRDS(nontreat_result, result_file)
 
 # ── Render nontreatment timelines report ──────────────────────────────────────
@@ -191,20 +192,20 @@ source("analysis_Propensity_Scoring.R")
 for (drug in comparator_drugs) {
     message("Running propensity scoring for: ", drug)
     ps_result <- analysis_Propensity_Scoring(drug, target_drug,
-                                             "dte_cohort_wNontreat_data.rds",
-                                             "ps_covariates.csv")
+                                             "OutputData/dte_cohort_wNontreat_data.rds",
+                                             "Data/ps_covariates.csv")
 
     write.csv(ps_result$matchingVars.final,
-              paste0("Data/PS_Covariates-", drug, ".csv"),
+              paste0("OutputData/PS_Covariates-", drug, ".csv"),
               row.names = FALSE)
 
     weighted.data <- ps_result$weighted.data
-    save(weighted.data, file = paste0("Data/PS_Weighted_Dataset-", drug, ".rds"))
+    save(weighted.data, file = paste0("OutputData/PS_Weighted_Dataset-", drug, ".rds"))
 
     matched.data <- ps_result$matched.data
-    save(matched.data, file = paste0("Data/PS_Matched_Dataset-", drug, ".rds"))
+    save(matched.data, file = paste0("OutputData/PS_Matched_Dataset-", drug, ".rds"))
 
-    result_file <- paste0("Data/propensity_scoring_result-", target_drug, "Vs", drug, ".rds")
+    result_file <- paste0("OutputData/propensity_scoring_result-", target_drug, "Vs", drug, ".rds")
     saveRDS(ps_result, result_file)
 
     message("Rendering report for: ", drug)
