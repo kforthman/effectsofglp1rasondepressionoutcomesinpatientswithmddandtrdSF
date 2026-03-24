@@ -448,8 +448,5 @@ analysis_Propensity_Scoring <- function(comparator_drug,
         total_big_weights_matched    = total_big_weights_matched
     )
 
-    saveRDS(result,
-            paste0("Data/propensity_scoring_result-", target_drug, "Vs", comparator_drug, ".rds"))
-
     result
 }

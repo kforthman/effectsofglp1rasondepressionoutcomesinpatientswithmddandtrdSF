@@ -187,11 +187,12 @@ source("analysis_Propensity_Scoring.R")
 
 for (drug in comparator_drugs) {
     message("Running propensity scoring for: ", drug)
-    analysis_Propensity_Scoring(drug, target_drug,
-                                "dte_cohort_wNontreat_data.rds",
-                                "ps_covariates.csv")
+    ps_result <- analysis_Propensity_Scoring(drug, target_drug,
+                                             "dte_cohort_wNontreat_data.rds",
+                                             "ps_covariates.csv")
 
     result_file <- paste0("Data/propensity_scoring_result-", target_drug, "Vs", drug, ".rds")
+    saveRDS(ps_result, result_file)
 
     message("Rendering report for: ", drug)
     render(
