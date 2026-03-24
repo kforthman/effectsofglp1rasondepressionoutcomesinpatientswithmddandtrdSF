@@ -167,9 +167,9 @@ message("Building nontreatment cohort for: ", target_drug)
 nontreat_result <- get_Antidiabetic_Nontreatment_Timelines(mdd_data, dte_cohort_data, nonswitch_periods, target_drug)
 
 this.data <- nontreat_result$dte_cohort_data2
-save(this.data, file = "Data/dte_cohort_wNontreat_data.rds")
+save(this.data, file = "OutputData/dte_cohort_wNontreat_data.rds")
 
-result_file <- paste0("Data/nontreatment_timelines_result-", target_drug, ".rds")
+result_file <- paste0("OutputData/nontreatment_timelines_result-", target_drug, ".rds")
 
 saveRDS(nontreat_result, result_file)
 
