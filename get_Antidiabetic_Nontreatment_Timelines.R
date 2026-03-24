@@ -290,14 +290,14 @@ dte_cohort_data2 <- dte_cohort_data %>%
          Nontreatment_PostIndexEncounterCount          = NA,
          Nontreatment_PrePostInclusionCriteriaMet      = PatientDurableKey %in% nonswitch_periods_selected$PatientDurableKey,
          Semaglutide_vs_Nontreatment_AllCriteriaMet    = PatientDurableKey %in% sema_data$PatientDurableKey,
-         Nontreatment_Semaglutide_AllCriteriaMet       = PatientDurableKey %in% nonswitch_periods_selected$PatientDurableKey
+         Nontreatment_vs_Semaglutide_AllCriteriaMet    = PatientDurableKey %in% nonswitch_periods_selected$PatientDurableKey
          )
 
 # %%
 # formatted for comparison of the 2 groups
 dte_cohort_data3 <- dte_cohort_data2 %>%
   left_join(mdd_data %>% dplyr::select(PatientDurableKey, BirthDate), by = "PatientDurableKey") %>%
-  filter(Semaglutide_vs_Nontreatment_AllCriteriaMet | Nontreatment_Semaglutide_AllCriteriaMet) %>%
+  filter(Semaglutide_vs_Nontreatment_AllCriteriaMet | Nontreatment_vs_Semaglutide_AllCriteriaMet) %>%
   mutate(treatment = ifelse(Semaglutide_vs_Nontreatment_AllCriteriaMet, 1, 0)) %>%
   mutate(treatment_name = ifelse(treatment, "Semaglutide", "Nontreatment")) %>%
   mutate(index_date = as.Date(ifelse(treatment, Semaglutide_Index, Nontreatment_Index))) %>%
@@ -311,7 +311,7 @@ dte_cohort_data3 <- dte_cohort_data2 %>%
 
 # %%
 ggplot(dte_cohort_data3, aes(x = age_at_index_years)) +
-  geom_histogram(aes(y=..density.., color = treatment_name, fill = treatment_name), alpha=0.4, position = "dodge") +
+  geom_histogram(aes(y = after_stat(density), color = treatment_name, fill = treatment_name), alpha=0.4, position = "dodge") +
   geom_density(aes(color = treatment_name))
 
 s_samp <- dte_cohort_data3 %>% filter(treatment_name == "Semaglutide")  %>% pull(age_at_index_years)
@@ -321,7 +321,7 @@ ks.test(s_samp, c_samp)
 
 # %%
 ggplot(dte_cohort_data3, aes(x = time_diag_to_index_days)) +
-  geom_histogram(aes(y=..density.., color = treatment_name, fill = treatment_name), alpha=0.4, position = "dodge") +
+  geom_histogram(aes(y = after_stat(density), color = treatment_name, fill = treatment_name), alpha=0.4, position = "dodge") +
   geom_density(aes(color = treatment_name))
 
 s_samp <- dte_cohort_data3 %>% filter(treatment_name == "Semaglutide")  %>% pull(time_diag_to_index_days)
@@ -331,7 +331,7 @@ ks.test(s_samp, c_samp)
 
 # %%
 ggplot(dte_cohort_data3, aes(x = index_year)) +
-  geom_histogram(aes(y=..density.., color = treatment_name, fill = treatment_name), alpha=0.4, position = "dodge") +
+  geom_histogram(aes(y = after_stat(density), color = treatment_name, fill = treatment_name), alpha=0.4, position = "dodge") +
   geom_density(aes(color = treatment_name))
 
 s_samp <- dte_cohort_data3 %>% filter(treatment_name == "Semaglutide")  %>% pull(index_year)
@@ -340,7 +340,7 @@ c_samp <- dte_cohort_data3 %>% filter(treatment_name == "Nontreatment") %>% pull
 ks.test(s_samp, c_samp)
 
 # %%
-length(unique(nonswitch_periods_selected$person_id)) == nrow(nonswitch_periods_selected)
+length(unique(nonswitch_periods_selected$PatientDurableKey)) == nrow(nonswitch_periods_selected)
 
 # %%
 this.data <- dte_cohort_data2
