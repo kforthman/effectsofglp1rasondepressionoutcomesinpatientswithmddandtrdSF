@@ -164,7 +164,7 @@ nonswitch_periods <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260318
 source("get_Antidiabetic_Nontreatment_Timelines.R")
 
 message("Building nontreatment cohort for: ", target_drug)
-nontreat_result <- build_nontreatment_cohort(mdd_data, dte_cohort_data, nonswitch_periods, target_drug)
+nontreat_result <- get_Antidiabetic_Nontreatment_Timelines(mdd_data, dte_cohort_data, nonswitch_periods, target_drug)
 
 result_file <- paste0("Data/nontreatment_timelines_result-", target_drug, ".rds")
 saveRDS(nontreat_result, result_file)

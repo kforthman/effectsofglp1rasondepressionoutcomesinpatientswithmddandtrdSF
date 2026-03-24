@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# build_nontreatment_cohort(): Defines periods of time for which participants
+# get_Antidiabetic_Nontreatment_Timelines(): Defines periods of time for which participants
 # do not experience a change in antidiabetic treatment. Only use of a new drug
 # counts as a change. Eligible time is masked before 6 months before MDD first
 # diagnosis and after beginning target_drug.
@@ -21,7 +21,7 @@
 # Returns:
 #   List of diagnostic objects for report_Antidiabetic_Nontreatment_Timelines.Rmd
 
-build_nontreatment_cohort <- function(mdd_data,
+get_Antidiabetic_Nontreatment_Timelines <- function(mdd_data,
                                        dte_cohort_data,
                                        nonswitch_periods,
                                        target_drug = "Semaglutide") {

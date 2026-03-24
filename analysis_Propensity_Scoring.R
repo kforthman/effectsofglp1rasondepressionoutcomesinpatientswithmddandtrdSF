@@ -7,7 +7,7 @@
 #
 # Usage:
 #   source("analysis_Propensity_Scoring.R")
-#   result <- run_propensity_scoring(comparator_drug = "DPP4i",
+#   result <- analysis_Propensity_Scoring(comparator_drug = "DPP4i",
 #                                    cohort_file     = "dte_cohort_wNontreat_data.rds",
 #                                    covariates_file = "ps_covariates.csv")
 #
@@ -94,7 +94,7 @@ stat_ks <- function(var, treat, data) {
 # Main propensity scoring function
 # ---------------------------------------------------------------------------
 
-run_propensity_scoring <- function(comparator_drug,
+analysis_Propensity_Scoring <- function(comparator_drug,
                                    target_drug     = "Semaglutide",
                                    cohort_file     = "dte_cohort_wNontreat_data.rds",
                                    covariates_file = "ps_covariates.csv") {

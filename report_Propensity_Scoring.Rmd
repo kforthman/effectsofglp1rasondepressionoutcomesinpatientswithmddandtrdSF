@@ -24,7 +24,7 @@ source("my_table1.txt")
 source("analysis_Propensity_Scoring.R")
 notebook_setup()
 
-r <- run_propensity_scoring(params$comparator_drug, params$target_drug,
+r <- analysis_Propensity_Scoring(params$comparator_drug, params$target_drug,
                             params$cohort_file, params$covariates_file)
 ```
 
