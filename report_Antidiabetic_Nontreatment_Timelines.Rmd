@@ -1,0 +1,192 @@
+---
+title: "Antidiabetic Nontreatment Timelines: `r params$target_drug` vs. Nontreatment"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    theme: flatly
+    df_print: kable
+params:
+  target_drug: "Semaglutide"
+  result_file: "Data/nontreatment_timelines_result-Semaglutide.rds"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+library(tidyverse)
+library(scales)
+
+r <- readRDS(params$result_file)
+```
+
+# Eligible Population Summary
+
+```{r population-summary}
+cat(sprintf(
+    "There are %s individuals eligible for the non-treatment population and %s in the %s population. Match ratio of %d to 1.",
+    comma(r$n_comp),
+    comma(r$n_sema),
+    r$target_drug,
+    r$match_ratio
+))
+```
+
+---
+
+# Treatment Group: Time from Eligibility to Index
+
+Distribution of days from MDD diagnosis to index date in the **`r params$target_drug`** group.
+
+```{r tfe-dist-plot, fig.width=12, fig.height=5}
+ggplot(r$tfe_dist, aes(x = tfe_at_index_days, y = n)) +
+    geom_bar(stat = "identity", fill = "salmon") +
+    theme_minimal(base_size = 14) +
+    labs(
+        title = paste0(r$target_drug, ": Time from MDD Diagnosis to Index Date"),
+        x     = "Days from MDD Diagnosis to Index",
+        y     = "Count"
+    )
+```
+
+---
+
+# Index Date Emulation
+
+## Selected Nontreatment Periods
+
+```{r nonswitch-nrow}
+cat(sprintf("%s nontreatment period rows selected after emulation filter.\n",
+            comma(nrow(r$nonswitch_selected))))
+```
+
+```{r nonswitch-head}
+r$nonswitch_selected %>% head() %>% knitr::kable(caption = "First rows of selected nontreatment periods")
+```
+
+```{r nonswitch2-head}
+r$nonswitch_selected2 %>% head() %>% knitr::kable(caption = "First rows after assigning Nontreatment_Index")
+```
+
+## TFE Distribution: Treatment vs. Comparison
+
+```{r tfe-comparison-plot, fig.width=12, fig.height=5}
+ggplot(r$dist_comp, aes(x = tfe_at_index_days, y = n, fill = group)) +
+    geom_bar(stat = "identity") +
+    scale_fill_viridis_d(option = "plasma", end = 0.7) +
+    theme_minimal(base_size = 14) +
+    labs(
+        title = "Time from MDD Diagnosis to Index Date",
+        x     = "Days from MDD Diagnosis to Index",
+        y     = "Count",
+        fill  = "Group"
+    )
+```
+
+## KS Test: TFE Distribution
+
+```{r ks-tfe}
+print(r$ks_tfe)
+```
+
+---
+
+# Final Cohort Diagnostics
+
+## Age at Index
+
+```{r age-plot, fig.width=12, fig.height=5}
+ggplot(r$dte_cohort_data3, aes(x = age_at_index_years)) +
+    geom_histogram(aes(y = after_stat(density),
+                       color = treatment_name,
+                       fill  = treatment_name),
+                   alpha    = 0.4,
+                   position = "dodge") +
+    geom_density(aes(color = treatment_name)) +
+    scale_fill_viridis_d(option = "plasma", end = 0.7) +
+    scale_color_viridis_d(option = "plasma", end = 0.7) +
+    theme_minimal(base_size = 14) +
+    labs(
+        title = "Age at Index Date",
+        x     = "Age (years)",
+        y     = "Density",
+        fill  = "Group",
+        color = "Group"
+    )
+```
+
+**KS test — age at index:**
+
+```{r ks-age}
+print(r$ks_age)
+```
+
+## Time from Diagnosis to Index
+
+```{r tdi-plot, fig.width=12, fig.height=5}
+ggplot(r$dte_cohort_data3, aes(x = time_diag_to_index_days)) +
+    geom_histogram(aes(y = after_stat(density),
+                       color = treatment_name,
+                       fill  = treatment_name),
+                   alpha    = 0.4,
+                   position = "dodge") +
+    geom_density(aes(color = treatment_name)) +
+    scale_fill_viridis_d(option = "plasma", end = 0.7) +
+    scale_color_viridis_d(option = "plasma", end = 0.7) +
+    theme_minimal(base_size = 14) +
+    labs(
+        title = "Time from MDD Diagnosis to Index Date",
+        x     = "Days",
+        y     = "Density",
+        fill  = "Group",
+        color = "Group"
+    )
+```
+
+**KS test — time from diagnosis to index:**
+
+```{r ks-tdi}
+print(r$ks_tdi)
+```
+
+## Index Year
+
+```{r year-plot, fig.width=12, fig.height=5}
+ggplot(r$dte_cohort_data3, aes(x = index_year)) +
+    geom_histogram(aes(y = after_stat(density),
+                       color = treatment_name,
+                       fill  = treatment_name),
+                   alpha    = 0.4,
+                   position = "dodge") +
+    geom_density(aes(color = treatment_name)) +
+    scale_fill_viridis_d(option = "plasma", end = 0.7) +
+    scale_color_viridis_d(option = "plasma", end = 0.7) +
+    theme_minimal(base_size = 14) +
+    labs(
+        title = "Index Year",
+        x     = "Year",
+        y     = "Density",
+        fill  = "Group",
+        color = "Group"
+    )
+```
+
+**KS test — index year:**
+
+```{r ks-year}
+print(r$ks_year)
+```
+
+---
+
+# Data Integrity Check
+
+```{r uniqueness-check}
+if (r$uniqueness_check) {
+    cat("PASS: Each patient appears in exactly one selected nontreatment period row.\n")
+} else {
+    cat("WARNING: Some patients appear in more than one selected nontreatment period row.\n")
+}
+```
