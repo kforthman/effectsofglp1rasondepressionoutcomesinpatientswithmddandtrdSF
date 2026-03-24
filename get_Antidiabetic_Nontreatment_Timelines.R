@@ -15,11 +15,9 @@
 #                       tfe_at_index_end computed)
 #   target_drug       — Name of target treatment (default: "Semaglutide")
 #
-# Saves:
-#   Data/dte_cohort_wNontreat_data.rds — primary cohort dataset
-#
 # Returns:
-#   List of diagnostic objects for report_Antidiabetic_Nontreatment_Timelines.Rmd
+#   List of diagnostic objects for report_Antidiabetic_Nontreatment_Timelines.Rmd,
+#   plus dte_cohort_data2 (saved to disk by main.R as Data/dte_cohort_wNontreat_data.rds)
 
 get_Antidiabetic_Nontreatment_Timelines <- function(mdd_data,
                                        dte_cohort_data,
@@ -177,14 +175,10 @@ get_Antidiabetic_Nontreatment_Timelines <- function(mdd_data,
     c_samp_yr  <- dte_cohort_data3 %>% filter(treatment_name == "Nontreatment") %>% pull(index_year)
     ks_year    <- ks.test(s_samp_yr, c_samp_yr)
 
-    # ── Save primary cohort output ────────────────────────────────────────────
-
-    this.data <- dte_cohort_data2
-    save(this.data, file = "Data/dte_cohort_wNontreat_data.rds")
-
     # ── Return diagnostic results for reporting ───────────────────────────────
 
     list(
+        dte_cohort_data2   = dte_cohort_data2,
         target_drug        = target_drug,
         n_sema             = n_sema,
         n_comp             = n_comp,
