@@ -402,9 +402,9 @@ analysis_Propensity_Scoring <- function(comparator_drug,
     balance_table            <- do.call(rbind, results_list)
     row.names(balance_table) <- NULL
 
-    # ── Return all results ───────────────────────────────────────────────────
+    # ── Save and return all results ──────────────────────────────────────────
 
-    list(
+    result <- list(
         target_drug                  = target_drug,
         comparator_drug              = comparator_drug,
         this.data                    = this.data,
@@ -447,4 +447,9 @@ analysis_Propensity_Scoring <- function(comparator_drug,
         total_small_weights_matched  = total_small_weights_matched,
         total_big_weights_matched    = total_big_weights_matched
     )
+
+    saveRDS(result,
+            paste0("Data/propensity_scoring_result-", target_drug, "Vs", comparator_drug, ".rds"))
+
+    result
 }

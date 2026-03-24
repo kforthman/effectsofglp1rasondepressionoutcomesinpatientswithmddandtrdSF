@@ -11,8 +11,7 @@ output:
 params:
   target_drug: "Semaglutide"
   comparator_drug: "DPP4i"
-  cohort_file: "dte_cohort_wNontreat_data.rds"
-  covariates_file: "ps_covariates.csv"
+  result_file: "Data/propensity_scoring_result-SemaglutideVsDPP4i.rds"
 ---
 
 ```{r setup, include=FALSE}
@@ -21,11 +20,9 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 source("workbench_functions.txt")
 source("easy_delete_copy_R.txt")
 source("my_table1.txt")
-source("analysis_Propensity_Scoring.R")
 notebook_setup()
 
-r <- analysis_Propensity_Scoring(params$comparator_drug, params$target_drug,
-                            params$cohort_file, params$covariates_file)
+r <- readRDS(params$result_file)
 ```
 
 # Data Summary

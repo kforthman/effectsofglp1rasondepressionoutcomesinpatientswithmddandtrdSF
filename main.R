@@ -181,9 +181,18 @@ render(
     envir = new.env()
 )
 
-# ── Render propensity scoring reports ─────────────────────────────────────────
+# ── Run propensity scoring and render reports ─────────────────────────────────
+
+source("analysis_Propensity_Scoring.R")
 
 for (drug in comparator_drugs) {
+    message("Running propensity scoring for: ", drug)
+    analysis_Propensity_Scoring(drug, target_drug,
+                                "dte_cohort_wNontreat_data.rds",
+                                "ps_covariates.csv")
+
+    result_file <- paste0("Data/propensity_scoring_result-", target_drug, "Vs", drug, ".rds")
+
     message("Rendering report for: ", drug)
     render(
         input       = "report_Propensity_Scoring.Rmd",
@@ -191,8 +200,7 @@ for (drug in comparator_drugs) {
         params      = list(
             target_drug     = target_drug,
             comparator_drug = drug,
-            cohort_file     = "dte_cohort_wNontreat_data.rds",
-            covariates_file = "ps_covariates.csv"
+            result_file     = result_file
         ),
         envir = new.env()
     )
