@@ -1,22 +1,12 @@
 # %%
 source("workbench_functions.txt")
 source("easy_delete_copy_R.txt")
-source("my_table1.txt")
 notebook_setup()
-
-# %%
-load("dte_cohort_wNontreat_data.rds")
-dte_cohort_data <- this.data
-
-dte_cohort_data %>% head(10)
 
 # %%
 drug_class <- read.csv("DrugClasses.csv") %>%
 mutate(Type = recode(Type, "Other" = "Other Antidepressants")) %>% 
 rename(concept_category_level_5 = "Type")
-
-drug_class %>%
-head
 
 # %%
 load("Data_Prepped/Prepped_Data-All_Participants-Antidepressants-Drug_Exposure-Translate.rds", verbose = TRUE)
@@ -29,70 +19,12 @@ mutate(concept_category_level_5 = "Other Antipsychotics") %>%
 relocate(concept_category_level_5, .before = concept_category_level_4)
 
 # %%
-drug_matchedDS_info <- c("Insulins", "PS_Matched_Dataset-Insulins.rds",
-                        "Metformin", "PS_Matched_Dataset-Metformin.rds",
-                        "DPP4i", "PS_Matched_Dataset-DPP4i.rds",
-                        "SGLT2i", "PS_Matched_Dataset-SGLT2i.rds",
-                        "SU", "PS_Matched_Dataset-SU.rds",
-                        #"TZD", "PS_Matched_Dataset-TZD.rds",
-                        "GLP1RA", "PS_Matched_Dataset-GLP1RA.rds",
-                        "Nontreatment", "PS_Matched_Dataset-Nontreatment.rds"
-                        ) %>%
-matrix(ncol = 2, byrow = TRUE) %>%
-as.data.frame(stringsAsFactors = FALSE) %>%
-setNames(c("drug", "file_path"))
-
-drug_matchedDS_info
-
-# %%
-for(i in 1:nrow(drug_matchedDS_info)){
-    paste0("Loading file \"", drug_matchedDS_info$file_path[i], "\"\n") %>% cat
-    load(drug_matchedDS_info$file_path[i])
-    
-    index_ext <- ifelse(drug_matchedDS_info$drug[i] == "Nontreatment", "_index", "_first_drug_record")
-
-    matched.data <- matched.data %>%
-    mutate(first_drug_record = if_else(treatment_name == "Semaglutide", 
-                                       Semaglutide_first_drug_record, 
-                                       !!sym(paste0(drug_matchedDS_info$drug[i], index_ext)))) %>%
-    dplyr::select(person_id, first_drug_record, treatment, treatment_name) %>%
-    mutate(study_cohort = paste0("Semaglutide vs ", drug_matchedDS_info$drug[i]))
-
-
-    var_name <- paste0("dte_cohort_ids_", drug_matchedDS_info$drug[i])
-    paste0("Creating variable ", var_name, "\n") %>% cat
-    assign(var_name, matched.data)
-}
-
-dte_cohort_ids_allSets <- rbind(
-    dte_cohort_ids_Insulins,
-    dte_cohort_ids_Metformin,
-    dte_cohort_ids_DPP4i,
-    dte_cohort_ids_SGLT2i,
-    dte_cohort_ids_SU,
-    #dte_cohort_ids_TZD,
-    dte_cohort_ids_GLP1RA,
-    dte_cohort_ids_Nontreatment
-)
-
-dte_cohort_ids_allSets <- dte_cohort_ids_allSets %>% mutate(study_cohort = as.factor(study_cohort))
-
-dte_cohort_ids_allSets %>% head(10)
-
-dte_cohort_ids_allSets %>% dim
-
-dte_cohort_ids_allSets$study_cohort %>% table()
-
-# %%
 simp_drug_record <- rbind(ad_drug_record, aa_drug_record)  %>%
 arrange(person_id, concept_name_detail, start_datetime) %>%
 mutate(
     quantity = as.numeric(quantity),
     days_supply = as.numeric(days_supply)
 )
-
-# %%
-simp_drug_record %>% head(200)
 
 # %%
 filename <- "antidepressant_antipsychotic_consecutive_instance.rds"
@@ -152,11 +84,7 @@ if(!file.exists(filename) | overwrite){
 }
 
 # %%
-consecutive_instance_tab %>% head(100)
-
-# %%
 overwrite <- TRUE
-my_progress <- 0
 filename <- "antidepressant_antipsychotic_consecutive_period.rds"
 if(!file.exists(filename) | overwrite){
     assign_period <- function(this_data){
@@ -333,21 +261,9 @@ if(!file.exists(filename) | overwrite){
         bind_rows(removal_rows) %>%
         arrange(person_id, first_record, concept_name_detail)
 
-    consecutive_period_tab %>% write.csv(filename, row.names = F)
     save(consecutive_period_tab, file = filename)
 }else{
     load(filename)
 }
-
-# %%
-consecutive_period_tab %>% head(100) # %>% group_by(person_id) %>% slice(1) %>% ungroup %>% count(period)
-
-# %%
-consecutive_instance_tab %>%
-left_join(dte_cohort_ids_Insulins, by = "person_id") %>%
-filter(study_cohort == "Semaglutide vs Insulins") %>%
-mutate(time_from_index_days = time_length(interval(first_drug_record, first_record), "days")) %>%
-filter(time_from_index_days >= 15 & time_from_index_days < 360) %>%
-count(person_id)
 
 # %%
