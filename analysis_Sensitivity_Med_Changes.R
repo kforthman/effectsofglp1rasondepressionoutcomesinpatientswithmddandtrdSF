@@ -5,8 +5,8 @@
 # %%
 source("workbench_functions.txt")
 source("easy_delete_copy_R.txt")
-source("my_table1.txt")
 notebook_setup()
+source("helper_functions.R")
 
 # %% [markdown]
 # # Custom Functions
