@@ -1,33 +1,24 @@
-# %%
-source("workbench_functions.txt")
-source("easy_delete_copy_R.txt")
-notebook_setup()
 
 # %%
-drug_class <- read.csv("DrugClasses.csv") %>%
+drug_class <- read.csv("Data/DrugClasses.csv") %>%
 mutate(Type = recode(Type, "Other" = "Other Antidepressants")) %>% 
-rename(concept_category_level_5 = "Type")
+rename(Category_Level_5 = "Type")
 
 # %%
-load("Data_Prepped/Prepped_Data-All_Participants-Antidepressants-Drug_Exposure-Translate.rds", verbose = TRUE)
-ad_drug_record <- data_prep %>% 
-left_join(drug_class, by = join_by("concept_name_detail" == "Name")) %>%
-relocate(concept_category_level_5, .before = concept_category_level_4)
-load("Data_Prepped/Prepped_Data-All_Participants-Atypical_Antipsychotics-Drug_Exposure-Translate.rds", verbose = TRUE)
-aa_drug_record <- data_prep %>%
-mutate(concept_category_level_5 = "Other Antipsychotics") %>%
-relocate(concept_category_level_5, .before = concept_category_level_4)
+ad_drug_record <- antidepressant_table %>% 
+left_join(drug_class, by = join_by("SimpleGenericName" == "Name")) %>%
+relocate(Category_Level_5, .before = Category_Level_4)
+
+aa_drug_record <- antipsychotics_table %>%
+mutate(Category_Level_5 = "Other Antipsychotics") %>%
+relocate(Category_Level_5, .before = Category_Level_4)
 
 # %%
 simp_drug_record <- rbind(ad_drug_record, aa_drug_record)  %>%
-arrange(person_id, concept_name_detail, start_datetime) %>%
-mutate(
-    quantity = as.numeric(quantity),
-    days_supply = as.numeric(days_supply)
-)
+arrange(PatientEpicId_SH, SimpleGenericName, MedicationStartDate)
 
 # %%
-filename <- "antidepressant_antipsychotic_consecutive_instance.rds"
+filename <- "OutputData/antidepressant_antipsychotic_consecutive_instance.rds"
 overwrite <- TRUE
 if(!file.exists(filename) | overwrite){
     df <- simp_drug_record
@@ -38,44 +29,43 @@ if(!file.exists(filename) | overwrite){
     # rather than start-to-start. This avoids falsely splitting a consecutive
     # instance when a long prescription is followed immediately by a refill.
     df <- df %>%
-      arrange(person_id, concept_name_detail, start_datetime) %>%
+      arrange(PatientEpicId_SH, SimpleGenericName, MedicationStartDate) %>%
       mutate(
         effective_end = as.Date(ifelse(
-          !is.na(end_datetime) & end_datetime > start_datetime,
-          end_datetime,
-          start_datetime + ifelse(!is.na(days_supply), days_supply, 30)
+          !is.na(MedicationEndDate) & MedicationEndDate > MedicationStartDate,
+          MedicationEndDate,
+          MedicationStartDate + ifelse(!is.na(DaysSupply), DaysSupply, 30)
         ))
       ) %>%
-      group_by(person_id, concept_name_detail) %>%
+      group_by(PatientEpicId_SH, SimpleGenericName) %>%
       mutate(
-        interval = as.numeric(difftime(start_datetime, lag(start_datetime), units = "days")),
+        interval = as.numeric(difftime(MedicationStartDate, lag(MedicationStartDate), units = "days")),
         interval = ifelse(row_number() == 1, 1, interval),
         consecutive_instance = interval > 180,
         consecutive_instance = ifelse(row_number() == 1, TRUE, consecutive_instance),
         consecutive_instance = cumsum(consecutive_instance)
       ) %>% 
-    relocate(effective_end, .after = "end_datetime")
+    relocate(effective_end, .after = "MedicationEndDate")
 
     # Calculate first and last records
     consecutive_instance_tab <- df %>%
-      group_by(person_id, concept_name_detail, consecutive_instance) %>%
+      group_by(PatientEpicId_SH, SimpleGenericName, consecutive_instance) %>%
       summarise(
-        first_record = first(start_datetime),
-        last_record = last(start_datetime),
-        last_record_end_datetime = last(end_datetime),
-        last_record_refills = last(refills),
-        last_record_quantity = last(quantity),
-        last_record_days_supply = last(days_supply),
+        first_record = first(MedicationStartDate),
+        last_record = last(MedicationStartDate),
+        last_record_end_datetime = last(MedicationEndDate),
+        last_record_refills = last(RefillsWritten),
+        last_record_days_supply = last(DaysSupply),
         effective_end = last(effective_end),
         total_collapsed_records = n(),
-        concept_category_level_3 = first(concept_category_level_3),
-        concept_category_level_4 = first(concept_category_level_4),
-        concept_category_level_5 = first(concept_category_level_5),
-        concept_atc_code = first(concept_atc_code),
+        Category_Level_3 = first(Category_Level_3),
+        Category_Level_4 = first(Category_Level_4),
+        Category_Level_5 = first(Category_Level_5),
+        ATC_code = first(ATC_code),
         .groups = 'drop'
       ) %>%
       dplyr::select(-consecutive_instance) %>%
-      arrange(person_id, first_record, concept_name_detail) %>%
+      arrange(PatientEpicId_SH, first_record, SimpleGenericName) %>%
       mutate(last_record = replace(last_record, last_record == first_record, as.Date(NA))) %>%
       as.data.frame
       save(consecutive_instance_tab, file = filename)
@@ -85,7 +75,7 @@ if(!file.exists(filename) | overwrite){
 
 # %%
 overwrite <- TRUE
-filename <- "antidepressant_antipsychotic_consecutive_period.rds"
+filename <- "OutputData/antidepressant_antipsychotic_consecutive_period.rds"
 if(!file.exists(filename) | overwrite){
     assign_period <- function(this_data){
         n <- nrow(this_data)
@@ -121,15 +111,15 @@ if(!file.exists(filename) | overwrite){
         this_data$treatment_type                     <- NA_character_
         this_data$ref_drug_name                      <- NA_character_
         this_data$ref_effective_end                  <- as.Date(NA)
-        this_data$different_chemical_subgroup        <- NA   # concept_category_level_5 differs from ref
-        this_data$different_pharmacological_subgroup <- NA   # concept_category_level_3 differs from ref
+        this_data$different_chemical_subgroup        <- NA   # Category_Level_5 differs from ref
+        this_data$different_pharmacological_subgroup <- NA   # Category_Level_3 differs from ref
         this_data$change_index                       <- NA_integer_
 
         all_first  <- as.Date(this_data$first_record)
         all_end    <- this_data$effective_end
-        all_level3 <- this_data$concept_category_level_3
-        all_level5 <- this_data$concept_category_level_5
-        all_names  <- this_data$concept_name_detail
+        all_level3 <- this_data$Category_Level_3
+        all_level5 <- this_data$Category_Level_5
+        all_names  <- this_data$SimpleGenericName
 
         ref_i_vec <- rep(NA_integer_, n)
 
@@ -202,7 +192,7 @@ if(!file.exists(filename) | overwrite){
         period_start = NA,
         period_time_from_start = NA
     ) %>%
-    split(consecutive_instance_tab$person_id)
+    split(consecutive_instance_tab$PatientEpicId_SH)
 
     # Register the parallel backend
     num_cores <- detectCores()
@@ -228,7 +218,7 @@ if(!file.exists(filename) | overwrite){
     switch_sources <- consecutive_period_tab %>%
         filter(treatment_type == "switch") %>%
         transmute(
-            person_id,
+            PatientEpicId_SH,
             switched_from_drug = ref_drug_name,
             switched_from_end  = as.Date(ref_effective_end)
         ) %>%
@@ -237,18 +227,18 @@ if(!file.exists(filename) | overwrite){
     removal_rows <- consecutive_period_tab %>%
         left_join(
             switch_sources %>% mutate(is_switched_from = TRUE),
-            by = c("person_id",
-                   "concept_name_detail" = "switched_from_drug",
+            by = c("PatientEpicId_SH",
+                   "SimpleGenericName"   = "switched_from_drug",
                    "effective_end"       = "switched_from_end")
         ) %>%
         filter(!replace_na(is_switched_from, FALSE)) %>%
         transmute(
-            person_id,
-            concept_name_detail,
-            concept_category_level_3,
-            concept_category_level_4,
-            concept_category_level_5,
-            concept_atc_code,
+            PatientEpicId_SH,
+            SimpleGenericName,
+            Category_Level_3,
+            Category_Level_4,
+            Category_Level_5,
+            ATC_code,
             first_record           = as.Date(effective_end),
             effective_end          = as.Date(NA),
             period,
@@ -259,7 +249,7 @@ if(!file.exists(filename) | overwrite){
 
     consecutive_period_tab <- consecutive_period_tab %>%
         bind_rows(removal_rows) %>%
-        arrange(person_id, first_record, concept_name_detail)
+        arrange(PatientEpicId_SH, first_record, SimpleGenericName)
 
     save(consecutive_period_tab, file = filename)
 }else{
