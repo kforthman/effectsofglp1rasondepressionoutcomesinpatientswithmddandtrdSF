@@ -323,6 +323,17 @@ get_Antidepressant_Treatment_Timeline(
     overwrite            = TRUE
 )
 
+# ── Build hydrochlorothiazide treatment timelines ─────────────────────────────
+
+source("get_Hydrochlorothiazide_Treatment_Timeline.R")
+
+message("Building hydrochlorothiazide treatment timelines")
+get_Hydrochlorothiazide_Treatment_Timeline(
+    hydrochlorothiazide_table = hydrochlorothiazide_table,
+    instance_filename         = "OutputData/hydrochlorothiazide_consecutive_instance.rds",
+    overwrite                 = TRUE
+)
+
 # ── Build nontreatment cohort ─────────────────────────────────────────────────
 
 source("get_Antidiabetic_Nontreatment_Timelines.R")
