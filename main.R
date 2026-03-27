@@ -359,6 +359,22 @@ hydrochlorothiazide_table <- med_table %>% filter(PharmaceuticalClass == "Antihy
 
 rm(med_table)
 
+# ── Identify TRD patients ─────────────────────────────────────────────────────
+
+source("get_TRD.R")
+
+message("Identifying TRD patients")
+get_TRD(
+    mdd_data                  = mdd_data,
+    antidepressant_table      = antidepressant_table,
+    instance_filename         = "OutputData/antidepressant_consecutive_instance.csv",
+    period_filename           = "OutputData/antidepressant_consecutive_period.csv",
+    period_summ_filename      = "OutputData/antidepressant_consecutive_period_tab_summ.csv",
+    period_max_drugs_filename = "OutputData/antidepressant_consecutive_period_maxDrugs.csv",
+    trd_ids_filename          = "OutputData/IDs-TRD.csv",
+    overwrite                 = TRUE
+)
+
 # ── Build antidepressant/antipsychotic treatment timelines ────────────────────
 
 drug_class <- read.csv("Data/DrugClasses.csv")
