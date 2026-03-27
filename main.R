@@ -439,6 +439,22 @@ render(
   envir = new.env()
 )
 
+# ── Build diagnosis timeline variables ────────────────────────────────────────
+
+source("get_Diagnosis_Timeline.R")
+
+message("Building diagnosis timeline variables")
+get_Diagnosis_Timeline(
+    target_drug      = target_drug,
+    comparator_drugs = comparator_drugs,
+    all_diagnoses    = c("T1DM", "T2DM", "Hypertension", "Heart_Disease", "Hyperlipidemia",
+                         "Obesity", "Hypercholesterolemia", "Chronic_Kidney_Disease",
+                         "A1C_over_8p5", "Pancreatitis", "Stroke", "Thyroid_Cancer", "Gastroparesis"),
+    index_dataset    = nontreat_result$dte_cohort_data2,
+    diag_table       = diag_table,
+    output_filename  = "OutputData/data_DTE_DiagnosisTimelineVars.rds"
+)
+
 # ── Run propensity scoring and render reports ─────────────────────────────────
 
 source("analysis_Propensity_Scoring.R")
