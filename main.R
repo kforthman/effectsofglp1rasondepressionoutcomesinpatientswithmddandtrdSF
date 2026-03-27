@@ -15,7 +15,18 @@ diag_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1100/C
                          EligibilityLabel   = col_character(),
                          FirstDiagnosisDate = col_date(format = "%Y-%m-%d")
                        )
-)
+) %>%
+  rename(Diagnosis = "EligibilityLabel") %>%
+  mutate(Diagnosis = recode(Diagnosis,
+                            "Type 1 Diabetes" = "T1DM",
+                            "Type 2 Diabetes Mellitus" = "T2DM",
+                            "Depression" = "MDD",
+                            "Heart Disease" = "Heart_Disease",
+                            "Chronic Kidney Disease" = "Chronic_Kidney_Disease",
+                            "A1C" = "A1C_over_8p5",
+                            "Thyroid Cancer" = "Thyroid_Cancer"
+                            
+  ))
 
 # Patients with MDD, no Bipolar Disorder, no Schizophrenia
 mdd_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1100/CCM-MDDPatientList_Table-26_03_27-v1.csv",
@@ -365,14 +376,14 @@ source("get_TRD.R")
 
 message("Identifying TRD patients")
 get_TRD(
-    mdd_data                  = mdd_data,
-    antidepressant_table      = antidepressant_table,
-    instance_filename         = "OutputData/antidepressant_consecutive_instance.csv",
-    period_filename           = "OutputData/antidepressant_consecutive_period.csv",
-    period_summ_filename      = "OutputData/antidepressant_consecutive_period_tab_summ.csv",
-    period_max_drugs_filename = "OutputData/antidepressant_consecutive_period_maxDrugs.csv",
-    trd_ids_filename          = "OutputData/IDs-TRD.csv",
-    overwrite                 = TRUE
+  mdd_data                  = mdd_data,
+  antidepressant_table      = antidepressant_table,
+  instance_filename         = "OutputData/antidepressant_consecutive_instance.csv",
+  period_filename           = "OutputData/antidepressant_consecutive_period.csv",
+  period_summ_filename      = "OutputData/antidepressant_consecutive_period_tab_summ.csv",
+  period_max_drugs_filename = "OutputData/antidepressant_consecutive_period_maxDrugs.csv",
+  trd_ids_filename          = "OutputData/IDs-TRD.csv",
+  overwrite                 = TRUE
 )
 
 # ── Build antidepressant/antipsychotic treatment timelines ────────────────────
