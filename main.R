@@ -8,7 +8,17 @@ comparator_drugs <- c("DPP4i", "GLP1RA", "Insulins", "Metformin",
 
 # ── Read input data ───────────────────────────────────────────────────────────
 
-mdd_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260318-1500/MDDPatientList_Table-26_03_18-v1.csv",
+diag_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1100/CCM-FirstDiagnosis_Table-26_03_27-v1.csv",
+                       na = c("", "NA", "NULL", "null"),
+                       col_types = cols(
+                         PatientDurableKey  = col_character(),
+                         EligibilityLabel   = col_character(),
+                         FirstDiagnosisDate = col_date(format = "%Y-%m-%d")
+                       )
+)
+
+# Patients with MDD, no Bipolar Disorder, no Schizophrenia
+mdd_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1100/CCM-MDDPatientList_Table-26_03_27-v1.csv",
                      na = c("", "NA", "NULL", "null"),
                      col_types = cols(
                        PatientDurableKey    = col_character(),
@@ -21,6 +31,13 @@ mdd_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260318-1500/MDD
                        Eligibility_Group_E  = col_logical(),
                        First_Patient_Record = col_date(format = "%Y-%m-%d %H:%M:%S"),
                        Last_Patient_Record  = col_date(format = "%Y-%m-%d %H:%M:%S"),
+                       EHRLengthYrs         = col_integer(),
+                       TotalEncounters      = col_integer(),
+                       AvgYearlyEncounters  = col_integer(),
+                       TotalOutpatientEncounters         = col_integer(),
+                       AvgYearlyOutpatientEncounters     = col_integer(),
+                       TotalPatientPsychVisits           = col_integer(),
+                       AvgYearlyPatientPsychVisits = col_integer(),
                        HasInclA             = col_logical(),
                        HasOrInclA           = col_logical(),
                        HasInclB             = col_logical(),
@@ -28,12 +45,47 @@ mdd_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260318-1500/MDD
                        HasExclA             = col_logical(),
                        HasExclB             = col_logical(),
                        HasExclC             = col_logical(),
-                       BirthDate            = col_date(format = "%Y-%m-%d")
+                       HasADHD              = col_logical(),
+                       HasAgoraphobia  = col_logical(),
+                       HasAnxiety_Disorder_NOS  = col_logical(),
+                       HasGeneralized_Anxiety  = col_logical(),
+                       HasOCD  = col_logical(),
+                       HasPanic_Disorder  = col_logical(),
+                       HasPTSD  = col_logical(),
+                       HasSocial_Anxiety_Disorder  = col_logical(),
+                       HasAlcohol_Abuse  = col_logical(),
+                       HasAlcohol_Dependence  = col_logical(),
+                       HasCannabis_Abuse  = col_logical(),
+                       HasCannabis_Dependence  = col_logical(),
+                       HasCocaine_Abuse  = col_logical(),
+                       HasCocaine_Dependence  = col_logical(),
+                       HasOpioid_Abuse  = col_logical(),
+                       HasOpioid_Dependence  = col_logical(),
+                       HasSedative_Abuse  = col_logical(),
+                       HasSedative_Dependence         = col_logical(),
+                       HasDiseases_of_the_Arteries_Artrioles_and_Capillaries  = col_logical(),
+                       BirthDate            = col_date(format = "%Y-%m-%d"),
+                       PatientSex = col_character(),
+                       FirstRace = col_character(),
+                       SecondRace = col_character(),
+                       ThirdRace = col_character(),
+                       FourthRace = col_character(),
+                       FifthRace = col_character(),
+                       MultiRacial = col_logical()
                      )) %>%
   mutate(First_Patient_Record = as.Date(First_Patient_Record),
-         Last_Patient_Record  = as.Date(Last_Patient_Record))
+         Last_Patient_Record  = as.Date(Last_Patient_Record)) %>%
+  mutate(Race = case_when(
+    !is.na(SecondRace) | !is.na(ThirdRace) | !is.na(FourthRace) | !is.na(FifthRace) | MultiRacial ~ "Multi-Race",
+    FirstRace == "American Indian or Alaska Native" ~ "American Indian or Alaska Native",
+    FirstRace == "Asian" ~ "Asian",
+    FirstRace == "Black or African American" ~ "Black or African American",
+    FirstRace == "Native Hawaiian or Other Pacific Islander" ~ "Native Hawaiian or Other Pacific Islander",
+    FirstRace == "White or Caucasian" ~ "White or Caucasian"
+  )) %>%
+  filter(PatientSex != "Unknown" & !is.na(PatientSex) & !is.na(Race))
 
-dte_cohort_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260318-1500/Treatment_Table-26_03_18-v1.csv",
+dte_cohort_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1100/CCM-Treatment_Table-26_03_27-v1.csv",
                             na = c("", "NA", "NULL", "null"),
                             col_types = cols(
                               PatientDurableKey                          = col_character(),
@@ -140,7 +192,7 @@ dte_cohort_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260318-1
             by = "PatientDurableKey") %>%
   filter(Eligibility_Group_B)
 
-nonswitch_periods <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260318-1500/Nontreatment_Table-26_03_18-v1.csv",
+nonswitch_periods <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1100/CCM-Nontreatment_Table-26_03_27-v1.csv",
                               col_types = cols(
                                 PatientDurableKey = col_character(),
                                 StartConcept      = col_character(),
@@ -160,10 +212,10 @@ nonswitch_periods <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260318
     tfe_at_index_end = floor(time_length(interval(MDD_Index, at_12_months_before_end_date), "days")),
   )
 
-med_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260326-1400/CCM-Medication_Table-26_03_26-v1.csv",
+med_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1100/CCM-Medication_Table-26_03_27-v1.csv",
                       na = c("", "NA", "NULL", "null"),
                       col_types = cols(
-                        PatientEpicId_SH         = col_character(),
+                        PatientDurableKey        = col_character(),
                         AntidiabeticIndexLabel   = col_character(),
                         AntidiabeticIndexDate    = col_date(format = "%Y-%m-%d"),
                         SimpleGenericName        = col_character(),
@@ -315,12 +367,12 @@ source("get_Antidepressant_Treatment_Timeline.R")
 
 message("Building antidepressant/antipsychotic treatment timelines")
 get_Antidepressant_Treatment_Timeline(
-    drug_class           = drug_class,
-    antidepressant_table = antidepressant_table,
-    antipsychotics_table = antipsychotics_table,
-    instance_filename    = "OutputData/antidepressant_antipsychotic_consecutive_instance.rds",
-    period_filename      = "OutputData/antidepressant_antipsychotic_consecutive_period.rds",
-    overwrite            = TRUE
+  drug_class           = drug_class,
+  antidepressant_table = antidepressant_table,
+  antipsychotics_table = antipsychotics_table,
+  instance_filename    = "OutputData/antidepressant_antipsychotic_consecutive_instance.rds",
+  period_filename      = "OutputData/antidepressant_antipsychotic_consecutive_period.rds",
+  overwrite            = TRUE
 )
 
 # ── Build hydrochlorothiazide treatment timelines ─────────────────────────────
@@ -329,9 +381,9 @@ source("get_Hydrochlorothiazide_Treatment_Timeline.R")
 
 message("Building hydrochlorothiazide treatment timelines")
 get_Hydrochlorothiazide_Treatment_Timeline(
-    hydrochlorothiazide_table = hydrochlorothiazide_table,
-    instance_filename         = "OutputData/hydrochlorothiazide_consecutive_instance.rds",
-    overwrite                 = TRUE
+  hydrochlorothiazide_table = hydrochlorothiazide_table,
+  instance_filename         = "OutputData/hydrochlorothiazide_consecutive_instance.rds",
+  overwrite                 = TRUE
 )
 
 # ── Build nontreatment cohort ─────────────────────────────────────────────────

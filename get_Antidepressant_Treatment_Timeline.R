@@ -35,7 +35,7 @@ get_Antidepressant_Treatment_Timeline <- function(
     relocate(Category_Level_5, .before = Category_Level_4)
 
     simp_drug_record <- rbind(ad_drug_record, aa_drug_record) %>%
-    arrange(PatientEpicId_SH, SimpleGenericName, MedicationStartDate)
+    arrange(PatientDurableKey, SimpleGenericName, MedicationStartDate)
 
     if(!file.exists(instance_filename) | overwrite){
         df <- simp_drug_record
@@ -46,7 +46,7 @@ get_Antidepressant_Treatment_Timeline <- function(
         # rather than start-to-start. This avoids falsely splitting a consecutive
         # instance when a long prescription is followed immediately by a refill.
         df <- df %>%
-          arrange(PatientEpicId_SH, SimpleGenericName, MedicationStartDate) %>%
+          arrange(PatientDurableKey, SimpleGenericName, MedicationStartDate) %>%
           mutate(
             effective_end = as.Date(ifelse(
               !is.na(MedicationEndDate) & MedicationEndDate > MedicationStartDate,
@@ -54,7 +54,7 @@ get_Antidepressant_Treatment_Timeline <- function(
               MedicationStartDate + ifelse(!is.na(DaysSupply), DaysSupply, 30)
             ))
           ) %>%
-          group_by(PatientEpicId_SH, SimpleGenericName) %>%
+          group_by(PatientDurableKey, SimpleGenericName) %>%
           mutate(
             interval = as.numeric(difftime(MedicationStartDate, lag(MedicationStartDate), units = "days")),
             interval = ifelse(row_number() == 1, 1, interval),
@@ -66,7 +66,7 @@ get_Antidepressant_Treatment_Timeline <- function(
 
         # Calculate first and last records
         consecutive_instance_tab <- df %>%
-          group_by(PatientEpicId_SH, SimpleGenericName, consecutive_instance) %>%
+          group_by(PatientDurableKey, SimpleGenericName, consecutive_instance) %>%
           summarise(
             first_record = first(MedicationStartDate),
             last_record = last(MedicationStartDate),
@@ -82,7 +82,7 @@ get_Antidepressant_Treatment_Timeline <- function(
             .groups = 'drop'
           ) %>%
           dplyr::select(-consecutive_instance) %>%
-          arrange(PatientEpicId_SH, first_record, SimpleGenericName) %>%
+          arrange(PatientDurableKey, first_record, SimpleGenericName) %>%
           mutate(last_record = replace(last_record, last_record == first_record, as.Date(NA))) %>%
           as.data.frame
           save(consecutive_instance_tab, file = instance_filename)
@@ -206,7 +206,7 @@ get_Antidepressant_Treatment_Timeline <- function(
             period_start = NA,
             period_time_from_start = NA
         ) %>%
-        split(consecutive_instance_tab$PatientEpicId_SH)
+        split(consecutive_instance_tab$PatientDurableKey)
 
         # Register the parallel backend
         num_cores <- detectCores()
@@ -232,7 +232,7 @@ get_Antidepressant_Treatment_Timeline <- function(
         switch_sources <- consecutive_period_tab %>%
             filter(treatment_type == "switch") %>%
             transmute(
-                PatientEpicId_SH,
+                PatientDurableKey,
                 switched_from_drug = ref_drug_name,
                 switched_from_end  = as.Date(ref_effective_end)
             ) %>%
@@ -241,13 +241,13 @@ get_Antidepressant_Treatment_Timeline <- function(
         removal_rows <- consecutive_period_tab %>%
             left_join(
                 switch_sources %>% mutate(is_switched_from = TRUE),
-                by = c("PatientEpicId_SH",
+                by = c("PatientDurableKey",
                        "SimpleGenericName"   = "switched_from_drug",
                        "effective_end"       = "switched_from_end")
             ) %>%
             filter(!replace_na(is_switched_from, FALSE)) %>%
             transmute(
-                PatientEpicId_SH,
+                PatientDurableKey,
                 SimpleGenericName,
                 Category_Level_3,
                 Category_Level_4,
@@ -263,7 +263,7 @@ get_Antidepressant_Treatment_Timeline <- function(
 
         consecutive_period_tab <- consecutive_period_tab %>%
             bind_rows(removal_rows) %>%
-            arrange(PatientEpicId_SH, first_record, SimpleGenericName)
+            arrange(PatientDurableKey, first_record, SimpleGenericName)
 
         save(consecutive_period_tab, file = period_filename)
     }else{

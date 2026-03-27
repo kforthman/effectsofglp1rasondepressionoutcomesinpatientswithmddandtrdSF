@@ -16,15 +16,15 @@ get_Hydrochlorothiazide_Treatment_Timeline <- function(
 ) {
 
     simp_drug_record <- hydrochlorothiazide_table %>%
-    arrange(PatientEpicId_SH, SimpleGenericName, MedicationStartDate)
+    arrange(PatientDurableKey, SimpleGenericName, MedicationStartDate)
 
     if(!file.exists(instance_filename) | overwrite){
         df <- simp_drug_record
 
         # Calculate intervals and instances
         df <- df %>%
-          arrange(PatientEpicId_SH, SimpleGenericName, MedicationStartDate) %>%
-          group_by(PatientEpicId_SH, SimpleGenericName) %>%
+          arrange(PatientDurableKey, SimpleGenericName, MedicationStartDate) %>%
+          group_by(PatientDurableKey, SimpleGenericName) %>%
           mutate(
             interval = as.numeric(difftime(MedicationStartDate, lag(MedicationStartDate), units = "days")),
             interval = ifelse(row_number() == 1, 1, interval),
@@ -35,7 +35,7 @@ get_Hydrochlorothiazide_Treatment_Timeline <- function(
 
         # Calculate first and last records
         consecutive_instance_tab <- df %>%
-          group_by(PatientEpicId_SH, SimpleGenericName, consecutive_instance) %>%
+          group_by(PatientDurableKey, SimpleGenericName, consecutive_instance) %>%
           summarise(
             first_record = first(MedicationStartDate),
             last_record = last(MedicationStartDate),
@@ -46,7 +46,7 @@ get_Hydrochlorothiazide_Treatment_Timeline <- function(
             .groups = 'drop'
           ) %>%
           dplyr::select(-consecutive_instance) %>%
-          arrange(PatientEpicId_SH, first_record, SimpleGenericName) %>%
+          arrange(PatientDurableKey, first_record, SimpleGenericName) %>%
           mutate(last_record = replace(last_record, last_record == first_record, as.Date(NA))) %>%
           mutate(
             effective_end = as.Date(ifelse(
