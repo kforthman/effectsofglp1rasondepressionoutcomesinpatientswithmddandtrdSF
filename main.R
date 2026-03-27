@@ -307,6 +307,21 @@ hydrochlorothiazide_table <- med_table %>% filter(PharmaceuticalClass == "Antihy
 
 rm(med_table)
 
+# ── Build antidepressant/antipsychotic treatment timelines ────────────────────
+
+drug_class <- read.csv("Data/DrugClasses.csv")
+
+source("get_Antidepressant_Treatment_Timeline.R")
+
+message("Building antidepressant/antipsychotic treatment timelines")
+get_Antidepressant_Treatment_Timeline(
+    drug_class           = drug_class,
+    antidepressant_table = antidepressant_table,
+    antipsychotics_table = antipsychotics_table,
+    instance_filename    = "OutputData/antidepressant_antipsychotic_consecutive_instance.rds",
+    period_filename      = "OutputData/antidepressant_antipsychotic_consecutive_period.rds",
+    overwrite            = TRUE
+)
 
 # ── Build nontreatment cohort ─────────────────────────────────────────────────
 
