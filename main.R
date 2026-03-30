@@ -29,7 +29,7 @@ diag_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1100/C
   ))
 
 # Patients with MDD, no Bipolar Disorder, no Schizophrenia
-mdd_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1100/CCM-MDDPatientList_Table-26_03_27-v1.csv",
+mdd_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1600/CCM-MDDPatientList_Table-26_03_27-v2.csv",
                      na = c("", "NA", "NULL", "null"),
                      col_types = cols(
                        PatientDurableKey    = col_character(),
@@ -42,13 +42,13 @@ mdd_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1100/CCM
                        Eligibility_Group_E  = col_logical(),
                        First_Patient_Record = col_date(format = "%Y-%m-%d %H:%M:%S"),
                        Last_Patient_Record  = col_date(format = "%Y-%m-%d %H:%M:%S"),
-                       EHRLengthYrs         = col_integer(),
+                       EHRLengthYrs         = col_double(),
                        TotalEncounters      = col_integer(),
-                       AvgYearlyEncounters  = col_integer(),
+                       AvgYearlyEncounters  = col_double(),
                        TotalOutpatientEncounters         = col_integer(),
-                       AvgYearlyOutpatientEncounters     = col_integer(),
+                       AvgYearlyOutpatientEncounters     = col_double(),
                        TotalPatientPsychVisits           = col_integer(),
-                       AvgYearlyPatientPsychVisits = col_integer(),
+                       AvgYearlyPatientPsychVisits = col_double(),
                        HasInclA             = col_logical(),
                        HasOrInclA           = col_logical(),
                        HasInclB             = col_logical(),
@@ -56,25 +56,25 @@ mdd_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1100/CCM
                        HasExclA             = col_logical(),
                        HasExclB             = col_logical(),
                        HasExclC             = col_logical(),
-                       HasADHD              = col_logical(),
-                       HasAgoraphobia  = col_logical(),
-                       HasAnxiety_Disorder_NOS  = col_logical(),
-                       HasGeneralized_Anxiety  = col_logical(),
-                       HasOCD  = col_logical(),
-                       HasPanic_Disorder  = col_logical(),
-                       HasPTSD  = col_logical(),
-                       HasSocial_Anxiety_Disorder  = col_logical(),
-                       HasAlcohol_Abuse  = col_logical(),
-                       HasAlcohol_Dependence  = col_logical(),
-                       HasCannabis_Abuse  = col_logical(),
-                       HasCannabis_Dependence  = col_logical(),
-                       HasCocaine_Abuse  = col_logical(),
-                       HasCocaine_Dependence  = col_logical(),
-                       HasOpioid_Abuse  = col_logical(),
-                       HasOpioid_Dependence  = col_logical(),
-                       HasSedative_Abuse  = col_logical(),
-                       HasSedative_Dependence         = col_logical(),
-                       HasDiseases_of_the_Arteries_Artrioles_and_Capillaries  = col_logical(),
+                       ADHD_FirstDiagnosis = col_date(format = "%Y-%m-%d"),
+                       Agoraphobia_FirstDiagnosis = col_date(format = "%Y-%m-%d"),
+                       Anxiety_Disorder_NOS_FirstDiagnosis = col_date(format = "%Y-%m-%d"),
+                       Generalized_Anxiety_FirstDiagnosis = col_date(format = "%Y-%m-%d"),
+                       OCD_FirstDiagnosis = col_date(format = "%Y-%m-%d"),
+                       Panic_Disorder_FirstDiagnosis = col_date(format = "%Y-%m-%d"),
+                       PTSD_FirstDiagnosis = col_date(format = "%Y-%m-%d"),
+                       Social_Anxiety_Disorder_FirstDiagnosis = col_date(format = "%Y-%m-%d"),
+                       Alcohol_Abuse_FirstDiagnosis = col_date(format = "%Y-%m-%d"),
+                       Alcohol_Dependence_FirstDiagnosis = col_date(format = "%Y-%m-%d"),
+                       Cannabis_Abuse_FirstDiagnosis = col_date(format = "%Y-%m-%d"),
+                       Cannabis_Dependence_FirstDiagnosis = col_date(format = "%Y-%m-%d"),
+                       Cocaine_Abuse_FirstDiagnosis = col_date(format = "%Y-%m-%d"),
+                       Cocaine_Dependence_FirstDiagnosis = col_date(format = "%Y-%m-%d"),
+                       Opioid_Abuse_FirstDiagnosis = col_date(format = "%Y-%m-%d"),
+                       Opioid_Dependence_FirstDiagnosis = col_date(format = "%Y-%m-%d"),
+                       Sedative_Abuse_FirstDiagnosis = col_date(format = "%Y-%m-%d"),
+                       Sedative_Dependence_FirstDiagnosis = col_date(format = "%Y-%m-%d"),
+                       Diseases_of_the_Arteries_Artrioles_and_Capillaries_FirstDiagnosis = col_date(format = "%Y-%m-%d"),
                        BirthDate            = col_date(format = "%Y-%m-%d"),
                        PatientSex = col_character(),
                        FirstRace = col_character(),
@@ -82,7 +82,8 @@ mdd_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1100/CCM
                        ThirdRace = col_character(),
                        FourthRace = col_character(),
                        FifthRace = col_character(),
-                       MultiRacial = col_logical()
+                       MultiRacial = col_logical(),
+                       Ethnicity = col_character()
                      )) %>%
   mutate(First_Patient_Record = as.Date(First_Patient_Record),
          Last_Patient_Record  = as.Date(Last_Patient_Record)) %>%
@@ -93,8 +94,13 @@ mdd_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1100/CCM
     FirstRace == "Black or African American" ~ "Black or African American",
     FirstRace == "Native Hawaiian or Other Pacific Islander" ~ "Native Hawaiian or Other Pacific Islander",
     FirstRace == "White or Caucasian" ~ "White or Caucasian"
-  )) %>%
-  filter(PatientSex != "Unknown" & !is.na(PatientSex) & !is.na(Race))
+  ),
+  Race_Ethnicity = case_when(
+    !is.na(Ethnicity) & Ethnicity == "Hispanic or Latino" ~ "Hispanic or Latino",
+    TRUE ~ Race
+  )
+  ) %>%
+  filter(PatientSex != "Unknown" & !is.na(PatientSex) & !is.na(Race_Ethnicity))
 
 dte_cohort_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1100/CCM-Treatment_Table-26_03_27-v1.csv",
                             na = c("", "NA", "NULL", "null"),
@@ -223,7 +229,17 @@ nonswitch_periods <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327
     tfe_at_index_end = floor(time_length(interval(MDD_Index, at_12_months_before_end_date), "days")),
   )
 
-med_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1100/CCM-Medication_Table-26_03_27-v1.csv",
+psych_proc_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1600/CCM-Outcomes_Table-26_03_27-v1.csv",
+                             na = c("", "NA", "NULL", "null"),
+                             col_types = cols(
+                               PatientDurableKey   = col_character(),
+                               OutcomeDate         = col_date(format = "%Y-%m-%d"),
+                               OutcomeName         = col_character(),
+                               CPTCode             = col_character()
+                             )
+)
+
+med_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1800/CCM-Medication_Table-26_03_27-v2.csv",
                       na = c("", "NA", "NULL", "null"),
                       col_types = cols(
                         PatientDurableKey        = col_character(),
@@ -368,7 +384,108 @@ hydrochlorothiazide_table <- med_table %>% filter(PharmaceuticalClass == "Antihy
   left_join(atc_drugs, by = join_by("SimpleGenericName" == "Name")) %>%
   filter(ATC_code == "C03AA03")
 
+antidiabetics_table <-  med_table %>% filter(PharmaceuticalClass == "Antidiabetic") %>%
+  mutate(SimpleGenericName = recode(SimpleGenericName,
+                                    "Acarbose" = "acarbose",
+                                    "Alogliptin Benzoate" = "alogliptin",
+                                    "Alogliptin-metFORMIN HCl" = "alogliptin/metformin",
+                                    "Alogliptin-Pioglitazone" = "alogliptin/pioglitazone",
+                                    "Bexagliflozin" = "bexagliflozin",
+                                    "Canagliflozin" = "canagliflozin",
+                                    "Canagliflozin-metFORMIN HCl" = "canagliflozin/metformin",
+                                    "ChlorproPAMIDE" = "chlorpropamide",
+                                    "Dapagliflozin Prop-metFORMIN" = "dapagliflozin/metformin",
+                                    "Dapagliflozin Propanediol" = "dapagliflozin",
+                                    "Dapagliflozin-sAXagliptin" = "dapagliflozin/saxagliptin",
+                                    "Dulaglutide" = "dulaglutide",
+                                    "Empagliflozin" = "empagliflozin",
+                                    "Empagliflozin-Linaglip-Metform" = "empagliflozin/linagliptin/metformin",
+                                    "Empagliflozin-linaGLIPtin" = "empagliflozin/linagliptin",
+                                    "Empagliflozin-metFORMIN HCl" = "empagliflozin/metformin",
+                                    "Ertugliflozin L-PyroglutamicAc" = "ertugliflozin",
+                                    "Ertugliflozin-metFORMIN HCl" = "ertugliflozin/metformin",
+                                    "Ertugliflozin-SITagliptin" = "ertugliflozin/sitagliptin",
+                                    "Exenatide" = "exenatide",
+                                    "Glimepiride" = "glimepiride",
+                                    "glipiZIDE" = "glipizide",
+                                    "glipiZIDE-metFORMIN HCl" = "glipizide/metformin",
+                                    "glyBURIDE" = "glibenclamide",
+                                    "glyBURIDE Micronized" = "glibenclamide",
+                                    "glyBURIDE-metFORMIN" = "glibenclamide/metformin",
+                                    "Insulin Aspart" = "insulin",
+                                    "Insulin Aspart (w/Niacinamide)" = "insulin",
+                                    "Insulin Aspart Prot & Aspart" = "insulin",
+                                    "Insulin Degludec" = "insulin",
+                                    "Insulin Degludec-Liraglutide" = "insulin/liraglutide",
+                                    "Insulin Detemir" = "insulin",
+                                    "Insulin Glargine" = "insulin",
+                                    "Insulin Glargine-aglr" = "insulin",
+                                    "Insulin Glargine-Lixisenatide" = "insulin/lixisenatide",
+                                    "Insulin Glargine-yfgn" = "insulin",
+                                    "Insulin Glulisine" = "insulin",
+                                    "Insulin Lispro" = "insulin",
+                                    "Insulin Lispro Prot & Lispro" = "insulin",
+                                    "Insulin Lispro-aabc" = "insulin",
+                                    "linaGLIPtin" = "linagliptin",
+                                    "linaGLIPtin-metFORMIN HCl" = "linagliptin/metformin",
+                                    "Liraglutide" = "liraglutide",
+                                    "Lixisenatide" = "lixisenatide",
+                                    "metFORMIN HCl" = "metformin",
+                                    "Miglitol" = "miglitol",
+                                    "Pioglitazone HCl-Glimepiride" = "pioglitazone/glimepiride",
+                                    "Pioglitazone HCl-metFORMIN HCl" = "pioglitazone/metformin",
+                                    "sAXagliptin HCl" = "saxagliptin",
+                                    "sAXagliptin-metFORMIN" = "saxagliptin/metformin",
+                                    "Semaglutide" = "semaglutide",
+                                    "Sitagliptin" = "sitagliptin",
+                                    "Sitagliptin Base-Metformin HCl" = "sitagliptin/metformin",
+                                    "SITagliptin Phos-metFORMIN HCl" = "sitagliptin/metformin",
+                                    "SITagliptin Phosphate" = "sitagliptin",
+                                    "TOLBUTamide" = "tolbutamide"
+  )
+  ) %>%
+  separate_rows(
+    SimpleGenericName,
+    sep = "/"
+  ) %>%
+  mutate(PharmaceuticalSubclass = case_when(
+    SimpleGenericName == "acarbose"       ~ "TZD",
+    SimpleGenericName == "alogliptin"     ~ "DPP4i",
+    SimpleGenericName == "bexagliflozin"  ~ "SGLT2i",
+    SimpleGenericName == "canagliflozin"  ~ "SGLT2i",
+    SimpleGenericName == "chlorpropamide" ~ "SU",
+    SimpleGenericName == "dapagliflozin"  ~ "SGLT2i",
+    SimpleGenericName == "dulaglutide"    ~ "GLP1RA",
+    SimpleGenericName == "empagliflozin"  ~ "SGLT2i",
+    SimpleGenericName == "ertugliflozin"  ~ "SGLT2i",
+    SimpleGenericName == "exenatide"      ~ "GLP1RA",
+    SimpleGenericName == "glibenclamide"  ~ "SU",
+    SimpleGenericName == "glimepiride"    ~ "SU",
+    SimpleGenericName == "glipizide"      ~ "SU",
+    SimpleGenericName == "insulin"        ~ "Insulins",
+    SimpleGenericName == "linagliptin"    ~ "DPP4i",
+    SimpleGenericName == "liraglutide"    ~ "GLP1RA",
+    SimpleGenericName == "lixisenatide"   ~ "GLP1RA",
+    SimpleGenericName == "metformin"      ~ "Metformin",
+    SimpleGenericName == "miglitol"       ~ "TZD",
+    SimpleGenericName == "pioglitazone"   ~ "Other",
+    SimpleGenericName == "saxagliptin"    ~ "DPP4i",
+    SimpleGenericName == "semaglutide"    ~ "Semaglutide",
+    SimpleGenericName == "sitagliptin"    ~ "DPP4i",
+    SimpleGenericName == "tolbutamide"    ~ "SU"
+  ))
+
+antidiabetics_Semaglutide_table <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "Semaglutide")
+antidiabetics_Insulins_table <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "Insulins")
+antidiabetics_Metformin_table <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "Metformin")
+antidiabetics_DPP4i_table <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "DPP4i")
+antidiabetics_SGLT2i_table <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "SGLT2i")
+antidiabetics_SU_table <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "SU")
+antidiabetics_TZD_table <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "TZD")
+antidiabetics_GLP1RA_table <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "GLP1RA")
+
 rm(med_table)
+rm(antidiabetics_table)
 
 # ── Identify TRD patients ─────────────────────────────────────────────────────
 
@@ -445,14 +562,14 @@ source("get_Diagnosis_Timeline.R")
 
 message("Building diagnosis timeline variables")
 get_Diagnosis_Timeline(
-    target_drug      = target_drug,
-    comparator_drugs = comparator_drugs,
-    all_diagnoses    = c("T1DM", "T2DM", "Hypertension", "Heart_Disease", "Hyperlipidemia",
-                         "Obesity", "Hypercholesterolemia", "Chronic_Kidney_Disease",
-                         "A1C_over_8p5", "Pancreatitis", "Stroke", "Thyroid_Cancer", "Gastroparesis"),
-    index_dataset    = nontreat_result$dte_cohort_data2,
-    diag_table       = diag_table,
-    output_filename  = "OutputData/data_DTE_DiagnosisTimelineVars.rds"
+  target_drug      = target_drug,
+  comparator_drugs = comparator_drugs,
+  all_diagnoses    = c("T1DM", "T2DM", "Hypertension", "Heart_Disease", "Hyperlipidemia",
+                       "Obesity", "Hypercholesterolemia", "Chronic_Kidney_Disease",
+                       "A1C_over_8p5", "Pancreatitis", "Stroke", "Thyroid_Cancer", "Gastroparesis"),
+  index_dataset    = nontreat_result$dte_cohort_data2,
+  diag_table       = diag_table,
+  output_filename  = "OutputData/data_DTE_DiagnosisTimelineVars.rds"
 )
 
 # ── Run propensity scoring and render reports ─────────────────────────────────
