@@ -2,6 +2,7 @@ library(rmarkdown)
 library(tidyverse)
 library(doParallel)
 
+data_pull_date <- as.Date("2026-03-27")
 target_drug      <- "Semaglutide"
 comparator_drugs <- c("DPP4i", "GLP1RA", "Insulins", "Metformin",
                       "Nontreatment", "SGLT2i", "SU", "TZD")
@@ -18,7 +19,7 @@ diag_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1100/C
 ) %>%
   rename(Diagnosis = "EligibilityLabel") %>%
   mutate(Diagnosis = recode(Diagnosis,
-                            "Type 1 Diabetes" = "T1DM",
+                            "Type 1 Diabetes"          = "T1DM",
                             "Type 2 Diabetes Mellitus" = "T2DM",
                             "Depression"               = "MDD",
                             "Heart Disease"            = "Heart_Disease",
@@ -85,8 +86,6 @@ mdd_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1600/CCM
                        MultiRacial          = col_logical(),
                        Ethnicity            = col_character()
                      )) %>%
-  mutate(First_Patient_Record = as.Date(First_Patient_Record),
-         Last_Patient_Record  = as.Date(Last_Patient_Record)) %>%
   mutate(Race = case_when(
     !is.na(SecondRace) | !is.na(ThirdRace) | !is.na(FourthRace) | !is.na(FifthRace) | MultiRacial ~ "Multi-Race",
     FirstRace == "American Indian or Alaska Native" ~ "American Indian or Alaska Native",
@@ -98,9 +97,150 @@ mdd_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1600/CCM
   Race_Ethnicity = case_when(
     !is.na(Ethnicity) & Ethnicity == "Hispanic or Latino" ~ "Hispanic or Latino",
     TRUE ~ Race
-  )
+  ),
+  Age = time_length(interval(BirthDate, data_pull_date), "years")
   ) %>%
-  filter(PatientSex != "Unknown" & !is.na(PatientSex) & !is.na(Race_Ethnicity))
+  dplyr::select(
+    -Mo6_Before_MDD_Index,
+    -Eligibility_Group_A,
+    -Eligibility_Group_C,
+    -Eligibility_Group_D,
+    -Eligibility_Group_E,
+    -HasInclA,
+    -HasOrInclA,
+    -HasInclB,
+    -HasOrInclB,
+    -HasExclA,
+    -HasExclB,
+    -HasExclC,
+    -FirstRace,
+    -SecondRace,
+    -ThirdRace,
+    -FourthRace,
+    -FifthRace,
+    -MultiRacial,
+    -Ethnicity
+  ) %>%
+  filter(PatientSex != "Unknown" & !is.na(PatientSex) & !is.na(Race_Ethnicity)) %>%
+  filter(Eligibility_Group_B) %>%
+  rename(meets_diagnosis_eligibility_criteria = "Eligibility_Group_B")
+
+antidiabetic_overlap_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1100/CCM-OverlapWide_Table-26_03_27-v1.csv",
+                                       na = c("", "NA", "NULL", "null"),
+                                       col_types = cols(PatientDurableKey = col_character(),
+                                                        `DPP-4i_Overlaps_Semaglutide_-6m_12m` = col_logical(),
+                                                        `GLP-1RA_Overlaps_Semaglutide_-6m_12m` = col_logical(),
+                                                        `Insulins_Overlaps_Semaglutide_-6m_12m` = col_logical(),
+                                                        `Metformin_Overlaps_Semaglutide_-6m_12m` = col_logical(),
+                                                        `SGLT2i_Overlaps_Semaglutide_-6m_12m` = col_logical(),
+                                                        `SU_Overlaps_Semaglutide_-6m_12m` = col_logical(),
+                                                        `TZD_Overlaps_Semaglutide_-6m_12m` = col_logical(),
+                                                        `DPP-4i_Overlaps_Insulins_-6m_12m` = col_logical(),
+                                                        `GLP-1RA_Overlaps_Insulins_-6m_12m` = col_logical(),
+                                                        `Metformin_Overlaps_Insulins_-6m_12m` = col_logical(),
+                                                        `Semaglutide_Overlaps_Insulins_-6m_12m` = col_logical(),
+                                                        `SGLT2i_Overlaps_Insulins_-6m_12m` = col_logical(),
+                                                        `SU_Overlaps_Insulins_-6m_12m` = col_logical(),
+                                                        `TZD_Overlaps_Insulins_-6m_12m` = col_logical(),
+                                                        `DPP-4i_Overlaps_Metformin_-6m_12m` = col_logical(),
+                                                        `GLP-1RA_Overlaps_Metformin_-6m_12m` = col_logical(),
+                                                        `Insulins_Overlaps_Metformin_-6m_12m` = col_logical(),
+                                                        `Semaglutide_Overlaps_Metformin_-6m_12m` = col_logical(),
+                                                        `SGLT2i_Overlaps_Metformin_-6m_12m` = col_logical(),
+                                                        `SU_Overlaps_Metformin_-6m_12m` = col_logical(),
+                                                        `TZD_Overlaps_Metformin_-6m_12m` = col_logical(),
+                                                        `GLP-1RA_Overlaps_DPP-4i_-6m_12m` = col_logical(),
+                                                        `Insulins_Overlaps_DPP-4i_-6m_12m` = col_logical(),
+                                                        `Metformin_Overlaps_DPP-4i_-6m_12m` = col_logical(),
+                                                        `Semaglutide_Overlaps_DPP-4i_-6m_12m` = col_logical(),
+                                                        `SGLT2i_Overlaps_DPP-4i_-6m_12m` = col_logical(),
+                                                        `SU_Overlaps_DPP-4i_-6m_12m` = col_logical(),
+                                                        `TZD_Overlaps_DPP-4i_-6m_12m` = col_logical(),
+                                                        `DPP-4i_Overlaps_SGLT2i_-6m_12m` = col_logical(),
+                                                        `GLP-1RA_Overlaps_SGLT2i_-6m_12m` = col_logical(),
+                                                        `Insulins_Overlaps_SGLT2i_-6m_12m` = col_logical(),
+                                                        `Metformin_Overlaps_SGLT2i_-6m_12m` = col_logical(),
+                                                        `Semaglutide_Overlaps_SGLT2i_-6m_12m` = col_logical(),
+                                                        `SU_Overlaps_SGLT2i_-6m_12m` = col_logical(),
+                                                        `TZD_Overlaps_SGLT2i_-6m_12m` = col_logical(),
+                                                        `DPP-4i_Overlaps_SU_-6m_12m` = col_logical(),
+                                                        `GLP-1RA_Overlaps_SU_-6m_12m` = col_logical(),
+                                                        `Insulins_Overlaps_SU_-6m_12m` = col_logical(),
+                                                        `Metformin_Overlaps_SU_-6m_12m` = col_logical(),
+                                                        `Semaglutide_Overlaps_SU_-6m_12m` = col_logical(),
+                                                        `SGLT2i_Overlaps_SU_-6m_12m` = col_logical(),
+                                                        `TZD_Overlaps_SU_-6m_12m` = col_logical(),
+                                                        `DPP-4i_Overlaps_TZD_-6m_12m` = col_logical(),
+                                                        `GLP-1RA_Overlaps_TZD_-6m_12m` = col_logical(),
+                                                        `Insulins_Overlaps_TZD_-6m_12m` = col_logical(),
+                                                        `Metformin_Overlaps_TZD_-6m_12m` = col_logical(),
+                                                        `Semaglutide_Overlaps_TZD_-6m_12m` = col_logical(),
+                                                        `SGLT2i_Overlaps_TZD_-6m_12m` = col_logical(),
+                                                        `SU_Overlaps_TZD_-6m_12m` = col_logical(),
+                                                        `DPP-4i_Overlaps_GLP-1RA_-6m_12m` = col_logical(),
+                                                        `Insulins_Overlaps_GLP-1RA_-6m_12m` = col_logical(),
+                                                        `Metformin_Overlaps_GLP-1RA_-6m_12m` = col_logical(),
+                                                        `Semaglutide_Overlaps_GLP-1RA_-6m_12m` = col_logical(),
+                                                        `SGLT2i_Overlaps_GLP-1RA_-6m_12m` = col_logical(),
+                                                        `SU_Overlaps_GLP-1RA_-6m_12m` = col_logical(),
+                                                        `TZD_Overlaps_GLP-1RA_-6m_12m` = col_logical())
+) %>%
+  rename(DPP4i_Overlaps_Semaglutide_Index = "DPP-4i_Overlaps_Semaglutide_-6m_12m",
+         GLP1RA_Overlaps_Semaglutide_Index = "GLP-1RA_Overlaps_Semaglutide_-6m_12m",
+         Insulins_Overlaps_Semaglutide_Index = "Insulins_Overlaps_Semaglutide_-6m_12m",
+         Metformin_Overlaps_Semaglutide_Index = "Metformin_Overlaps_Semaglutide_-6m_12m",
+         SGLT2i_Overlaps_Semaglutide_Index = "SGLT2i_Overlaps_Semaglutide_-6m_12m",
+         SU_Overlaps_Semaglutide_Index = "SU_Overlaps_Semaglutide_-6m_12m",
+         TZD_Overlaps_Semaglutide_Index = "TZD_Overlaps_Semaglutide_-6m_12m",
+         DPP4i_Overlaps_Insulins_Index = "DPP-4i_Overlaps_Insulins_-6m_12m",
+         GLP1RA_Overlaps_Insulins_Index = "GLP-1RA_Overlaps_Insulins_-6m_12m",
+         Metformin_Overlaps_Insulins_Index = "Metformin_Overlaps_Insulins_-6m_12m",
+         Semaglutide_Overlaps_Insulins_Index = "Semaglutide_Overlaps_Insulins_-6m_12m",
+         SGLT2i_Overlaps_Insulins_Index = "SGLT2i_Overlaps_Insulins_-6m_12m",
+         SU_Overlaps_Insulins_Index = "SU_Overlaps_Insulins_-6m_12m",
+         TZD_Overlaps_Insulins_Index = "TZD_Overlaps_Insulins_-6m_12m",
+         DPP4i_Overlaps_Metformin_Index = "DPP-4i_Overlaps_Metformin_-6m_12m",
+         GLP1RA_Overlaps_Metformin_Index = "GLP-1RA_Overlaps_Metformin_-6m_12m",
+         Insulins_Overlaps_Metformin_Index = "Insulins_Overlaps_Metformin_-6m_12m",
+         Semaglutide_Overlaps_Metformin_Index = "Semaglutide_Overlaps_Metformin_-6m_12m",
+         SGLT2i_Overlaps_Metformin_Index = "SGLT2i_Overlaps_Metformin_-6m_12m",
+         SU_Overlaps_Metformin_Index = "SU_Overlaps_Metformin_-6m_12m",
+         TZD_Overlaps_Metformin_Index = "TZD_Overlaps_Metformin_-6m_12m",
+         GLP1RA_Overlaps_DPP4i_Index = "GLP-1RA_Overlaps_DPP-4i_-6m_12m",
+         Insulins_Overlaps_DPP4i_Index = "Insulins_Overlaps_DPP-4i_-6m_12m",
+         Metformin_Overlaps_DPP4i_Index = "Metformin_Overlaps_DPP-4i_-6m_12m",
+         Semaglutide_Overlaps_DPP4i_Index = "Semaglutide_Overlaps_DPP-4i_-6m_12m",
+         SGLT2i_Overlaps_DPP4i_Index = "SGLT2i_Overlaps_DPP-4i_-6m_12m",
+         SU_Overlaps_DPP4i_Index = "SU_Overlaps_DPP-4i_-6m_12m",
+         TZD_Overlaps_DPP4i_Index = "TZD_Overlaps_DPP-4i_-6m_12m",
+         DPP4i_Overlaps_SGLT2i_Index = "DPP-4i_Overlaps_SGLT2i_-6m_12m",
+         GLP1RA_Overlaps_SGLT2i_Index = "GLP-1RA_Overlaps_SGLT2i_-6m_12m",
+         Insulins_Overlaps_SGLT2i_Index = "Insulins_Overlaps_SGLT2i_-6m_12m",
+         Metformin_Overlaps_SGLT2i_Index = "Metformin_Overlaps_SGLT2i_-6m_12m",
+         Semaglutide_Overlaps_SGLT2i_Index = "Semaglutide_Overlaps_SGLT2i_-6m_12m",
+         SU_Overlaps_SGLT2i_Index = "SU_Overlaps_SGLT2i_-6m_12m",
+         TZD_Overlaps_SGLT2i_Index = "TZD_Overlaps_SGLT2i_-6m_12m",
+         DPP4i_Overlaps_SU_Index = "DPP-4i_Overlaps_SU_-6m_12m",
+         GLP1RA_Overlaps_SU_Index = "GLP-1RA_Overlaps_SU_-6m_12m",
+         Insulins_Overlaps_SU_Index = "Insulins_Overlaps_SU_-6m_12m",
+         Metformin_Overlaps_SU_Index = "Metformin_Overlaps_SU_-6m_12m",
+         Semaglutide_Overlaps_SU_Index = "Semaglutide_Overlaps_SU_-6m_12m",
+         SGLT2i_Overlaps_SU_Index = "SGLT2i_Overlaps_SU_-6m_12m",
+         TZD_Overlaps_SU_Index = "TZD_Overlaps_SU_-6m_12m",
+         DPP4i_Overlaps_TZD_Index = "DPP-4i_Overlaps_TZD_-6m_12m",
+         GLP1RA_Overlaps_TZD_Index = "GLP-1RA_Overlaps_TZD_-6m_12m",
+         Insulins_Overlaps_TZD_Index = "Insulins_Overlaps_TZD_-6m_12m",
+         Metformin_Overlaps_TZD_Index = "Metformin_Overlaps_TZD_-6m_12m",
+         Semaglutide_Overlaps_TZD_Index = "Semaglutide_Overlaps_TZD_-6m_12m",
+         SGLT2i_Overlaps_TZD_Index = "SGLT2i_Overlaps_TZD_-6m_12m",
+         SU_Overlaps_TZD_Index = "SU_Overlaps_TZD_-6m_12m",
+         DPP4i_Overlaps_GLP1RA_Index = "DPP-4i_Overlaps_GLP-1RA_-6m_12m",
+         Insulins_Overlaps_GLP1RA_Index = "Insulins_Overlaps_GLP-1RA_-6m_12m",
+         Metformin_Overlaps_GLP1RA_Index = "Metformin_Overlaps_GLP-1RA_-6m_12m",
+         Semaglutide_Overlaps_GLP1RA_Index = "Semaglutide_Overlaps_GLP-1RA_-6m_12m",
+         SGLT2i_Overlaps_GLP1RA_Index = "SGLT2i_Overlaps_GLP-1RA_-6m_12m",
+         SU_Overlaps_GLP1RA_Index = "SU_Overlaps_GLP-1RA_-6m_12m",
+         TZD_Overlaps_GLP1RA_Index = "TZD_Overlaps_GLP-1RA_-6m_12m")
 
 dte_cohort_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1100/CCM-Treatment_Table-26_03_27-v1.csv",
                             na = c("", "NA", "NULL", "null"),
@@ -201,13 +341,80 @@ dte_cohort_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1
          GLP1RA_PreIndexEncounterCount        = "GLP-1RA_PreIndexEncounterCount",
          GLP1RA_PostIndexEncounterCount       = "GLP-1RA_PostIndexEncounterCount",
          GLP1RA_PrePostInclusionCriteriaMet   = "GLP-1RA_PrePostInclusionCriteriaMet",
-         Semaglutide_vs_DPP4i_AllCriteriaMet  = "Semaglutide_vs_DPP-4i_AllCriteriaMet",
-         Semaglutide_vs_GLP1RA_AllCriteriaMet = "Semaglutide_vs_GLP-1RA_AllCriteriaMet",
-         DPP4i_vs_Semaglutide_AllCriteriaMet  = "DPP-4i_vs_Semaglutide_AllCriteriaMet",
-         GLP1RA_vs_Semaglutide_AllCriteriaMet = "GLP-1RA_vs_Semaglutide_AllCriteriaMet") %>%
-  left_join(mdd_data %>% dplyr::select(PatientDurableKey, MDD_Index, Eligibility_Group_B),
+         
+         Semaglutide_Population_for_Semaglutide_vs_Insulins = "Semaglutide_vs_Insulins_AllCriteriaMet",
+         Semaglutide_Population_for_Semaglutide_vs_DPP4i = "Semaglutide_vs_DPP-4i_AllCriteriaMet",
+         Semaglutide_Population_for_Semaglutide_vs_GLP1RA = "Semaglutide_vs_GLP-1RA_AllCriteriaMet",
+         Semaglutide_Population_for_Semaglutide_vs_Metformin = "Semaglutide_vs_Metformin_AllCriteriaMet",
+         Semaglutide_Population_for_Semaglutide_vs_SGLT2i = "Semaglutide_vs_SGLT2i_AllCriteriaMet",
+         Semaglutide_Population_for_Semaglutide_vs_SU = "Semaglutide_vs_SU_AllCriteriaMet",
+         Semaglutide_Population_for_Semaglutide_vs_TZD = "Semaglutide_vs_TZD_AllCriteriaMet",
+         Insulins_Population_for_Semaglutide_vs_Insulins = "Insulins_vs_Semaglutide_AllCriteriaMet",
+         DPP4i_Population_for_Semaglutide_vs_DPP4i = "DPP-4i_vs_Semaglutide_AllCriteriaMet",
+         GLP1RA_Population_for_Semaglutide_vs_GLP1RA = "GLP-1RA_vs_Semaglutide_AllCriteriaMet",
+         Metformin_Population_for_Semaglutide_vs_Metformin = "Metformin_vs_Semaglutide_AllCriteriaMet",
+         SGLT2i_Population_for_Semaglutide_vs_SGLT2i = "SGLT2i_vs_Semaglutide_AllCriteriaMet",
+         SU_Population_for_Semaglutide_vs_SU = "SU_vs_Semaglutide_AllCriteriaMet",
+         TZD_Population_for_Semaglutide_vs_TZD = "TZD_vs_Semaglutide_AllCriteriaMet"
+  ) %>%
+  mutate(
+    Semaglutide_meets_timeline_criteria = Semaglutide_PrePostInclusionCriteriaMet & MDD_before_Semaglutide,
+    Insulins_meets_timeline_criteria = Insulins_PrePostInclusionCriteriaMet & MDD_before_Insulins,
+    DPP4i_meets_timeline_criteria = DPP4i_PrePostInclusionCriteriaMet & MDD_before_DPP4i,
+    GLP1RA_meets_timeline_criteria = GLP1RA_PrePostInclusionCriteriaMet & MDD_before_GLP1RA,
+    Metformin_meets_timeline_criteria = Metformin_PrePostInclusionCriteriaMet & MDD_before_Metformin,
+    SGLT2i_meets_timeline_criteria = SGLT2i_PrePostInclusionCriteriaMet & MDD_before_SGLT2i,
+    SU_meets_timeline_criteria = SU_PrePostInclusionCriteriaMet & MDD_before_SU,
+    TZD_meets_timeline_criteria = TZD_PrePostInclusionCriteriaMet & MDD_before_TZD
+  ) %>%
+  dplyr::select(
+    -Semaglutide_Exposure,
+    -Semaglutide_Iplus15,
+    -Semaglutide_Iplus365,
+    -MDD_before_Semaglutide,
+    -Semaglutide_PrePostInclusionCriteriaMet,
+    -Insulins_Exposure,
+    -Insulins_Iplus15,
+    -Insulins_Iplus365,
+    -MDD_before_Insulins,
+    -Insulins_PrePostInclusionCriteriaMet,
+    -DPP4i_Exposure,
+    -DPP4i_Iplus15,
+    -DPP4i_Iplus365,
+    -MDD_before_DPP4i,
+    -DPP4i_PrePostInclusionCriteriaMet,
+    -GLP1RA_Exposure,
+    -GLP1RA_Iplus15,
+    -GLP1RA_Iplus365,
+    -MDD_before_GLP1RA,
+    -GLP1RA_PrePostInclusionCriteriaMet,
+    -Metformin_Exposure,
+    -Metformin_Iplus15,
+    -Metformin_Iplus365,
+    -MDD_before_Metformin,
+    -Metformin_PrePostInclusionCriteriaMet,
+    -SGLT2i_Exposure,
+    -SGLT2i_Iplus15,
+    -SGLT2i_Iplus365,
+    -MDD_before_SGLT2i,
+    -SGLT2i_PrePostInclusionCriteriaMet,
+    -SU_Exposure,
+    -SU_Iplus15,
+    -SU_Iplus365,
+    -MDD_before_SU,
+    -SU_PrePostInclusionCriteriaMet,
+    -TZD_Exposure,
+    -TZD_Iplus15,
+    -TZD_Iplus365,
+    -MDD_before_TZD,
+    -TZD_PrePostInclusionCriteriaMet
+  ) %>%
+  left_join(mdd_data %>% dplyr::select(PatientDurableKey, MDD_Index, meets_diagnosis_eligibility_criteria),
             by = "PatientDurableKey") %>%
-  filter(Eligibility_Group_B)
+  filter(meets_diagnosis_eligibility_criteria) %>% 
+  left_join(antidiabetic_overlap_table, by = "PatientDurableKey")
+
+rm(antidiabetic_overlap_table)
 
 nonswitch_periods <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1100/CCM-Nontreatment_Table-26_03_27-v1.csv",
                               col_types = cols(
@@ -219,9 +426,9 @@ nonswitch_periods <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327
                               )) %>%
   mutate(StartDate = as.Date(StartDate),
          EndDate   = as.Date(EndDate)) %>%
-  left_join(mdd_data %>% dplyr::select(PatientDurableKey, MDD_Index, Eligibility_Group_B),
+  left_join(mdd_data %>% dplyr::select(PatientDurableKey, MDD_Index, meets_diagnosis_eligibility_criteria),
             by = "PatientDurableKey") %>%
-  filter(Eligibility_Group_B) %>%
+  filter(meets_diagnosis_eligibility_criteria) %>%
   mutate(
     at_6_months_after_start_date = StartDate + days(180),
     at_12_months_before_end_date = EndDate - days(365),
@@ -487,6 +694,8 @@ antidiabetics_GLP1RA_table      <- antidiabetics_table %>% filter(Pharmaceutical
 rm(med_table)
 rm(antidiabetics_table)
 
+drug_class <- read.csv("Data/DrugClasses.csv")
+
 # ── Identify TRD patients ─────────────────────────────────────────────────────
 
 source("get_TRD.R")
@@ -504,8 +713,6 @@ get_TRD(
 )
 
 # ── Build antidepressant/antipsychotic treatment timelines ────────────────────
-
-drug_class <- read.csv("Data/DrugClasses.csv")
 
 source("get_Antidepressant_Treatment_Timeline.R")
 

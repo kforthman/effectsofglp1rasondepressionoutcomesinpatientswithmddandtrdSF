@@ -24,18 +24,17 @@ get_Antidiabetic_Nontreatment_Timelines <- function(mdd_data,
                                        nonswitch_periods,
                                        target_drug = "Semaglutide") {
 
-    col_PrePostCriteria <- paste0(target_drug, "_PrePostInclusionCriteriaMet")
-    col_MDD_before      <- paste0("MDD_before_", target_drug)
+    col_TimelineCriteria <- paste0(target_drug, "_meets_timeline_criteria")
     col_mdd_to_index    <- paste0(target_drug, "_mdd_to_index_days")
     col_Index           <- paste0(target_drug, "_Index")
-    col_vs_Nontreat     <- paste0(target_drug, "_vs_Nontreatment_AllCriteriaMet")
-    col_Nontreat_vs     <- paste0("Nontreatment_vs_", target_drug, "_AllCriteriaMet")
+    col_vs_Nontreat     <- paste0(target_drug, "_Population_for_", target_drug, "_vs_Nontreatment")
+    col_Nontreat_vs     <- paste0("Nontreatment_Population_for_", target_drug, "_vs_Nontreatment")
     col_age_at_index    <- paste0(target_drug, "_age_at_index_years")
 
     # ── Identify the eligible treatment group ─────────────────────────────────
 
     target_data <- dte_cohort_data %>%
-        filter(!!sym(col_PrePostCriteria) == 1 & !!sym(col_MDD_before) == 1) %>%
+        filter(!!sym(col_TimelineCriteria) == 1) %>%
         mutate(!!col_mdd_to_index := as.numeric(
             difftime(!!sym(col_Index), MDD_Index, units = "days")
         ))
@@ -120,12 +119,7 @@ get_Antidiabetic_Nontreatment_Timelines <- function(mdd_data,
             by = "PatientDurableKey"
         ) %>%
         mutate(
-            Nontreatment_Iplus15                     = Nontreatment_Index + days(15),
-            Nontreatment_Iplus365                    = Nontreatment_Index + days(365),
-            MDD_before_Nontreatment                  = PatientDurableKey %in% nonswitch_selected$PatientDurableKey,
-            Nontreatment_PreIndexEncounterCount      = NA,
-            Nontreatment_PostIndexEncounterCount     = NA,
-            Nontreatment_PrePostInclusionCriteriaMet = PatientDurableKey %in% nonswitch_selected$PatientDurableKey,
+            Nontreatment_meets_timeline_criteria     = PatientDurableKey %in% nonswitch_selected$PatientDurableKey,
             !!col_vs_Nontreat                        := PatientDurableKey %in% target_data$PatientDurableKey,
             !!col_Nontreat_vs                        := PatientDurableKey %in% nonswitch_selected$PatientDurableKey
         )
