@@ -7,7 +7,7 @@
 #
 # Usage:
 #   source("analysis_Propensity_Scoring.R")
-#   result <- analysis_Propensity_Scoring(comparator_drug = "DPP4i",
+#   result <- analysis_Propensity_Scoring(comparator_group = "DPP4i",
 #                                    cohort_file     = "dte_cohort_wNontreat_data.rds",
 #                                    covariates_file = "ps_covariates.csv")
 #
@@ -95,7 +95,7 @@ stat_ks <- function(var, treat, data) {
 # Main propensity scoring function
 # ---------------------------------------------------------------------------
 
-analysis_Propensity_Scoring <- function(comparator_drug,
+analysis_Propensity_Scoring <- function(comparator_group,
                                    target_drug     = "Semaglutide",
                                    cohort_file     = "dte_cohort_wNontreat_data.rds",
                                    covariates_file = "ps_covariates.csv") {
@@ -119,19 +119,19 @@ analysis_Propensity_Scoring <- function(comparator_drug,
     matchingVars    <- read.csv(covariates_file) %>% mutate(issues = NA)
     matchingFormula <- as.formula(paste0("treatment ~ ", paste(matchingVars$var, collapse = " + ")))
 
-    target_pop_colname     <- paste0(target_drug, "_Population_for_", target_drug, "_vs_", comparator_drug)
-    comparator_pop_colname <- paste0(comparator_drug, "_Population_for_", target_drug, "_vs_", comparator_drug)
+    target_pop_colname     <- paste0(target_drug, "_Population_for_", target_drug, "_vs_", comparator_group)
+    comparator_pop_colname <- paste0(comparator_group, "_Population_for_", target_drug, "_vs_", comparator_group)
 
     varname_target_age_at_index_years     <- paste0(target_drug, "_age_at_index_years")
-    varname_comparator_age_at_index_years <- paste0(comparator_drug, "_age_at_index_years")
+    varname_comparator_age_at_index_years <- paste0(comparator_group, "_age_at_index_years")
 
     varname_target_mdd_to_index_days     <- paste0(target_drug, "_mdd_to_index_days")
-    varname_comparator_mdd_to_index_days <- paste0(comparator_drug, "_mdd_to_index_days")
+    varname_comparator_mdd_to_index_days <- paste0(comparator_group, "_mdd_to_index_days")
 
     varname_target_first_drug_record     <- paste0(target_drug, "_first_drug_record")
     varname_comparator_first_drug_record <- ifelse(
-        comparator_drug == "Nontreatment", "Nontreatment_index",
-        paste0(comparator_drug, "_first_drug_record")
+        comparator_group == "Nontreatment", "Nontreatment_index",
+        paste0(comparator_group, "_first_drug_record")
     )
 
     this.data <- dte_cohort_data %>%
@@ -319,7 +319,7 @@ analysis_Propensity_Scoring <- function(comparator_drug,
     )
 
     this.data.ps              <- this.data %>%
-        mutate(treatment_name = ifelse(treatment, target_drug, comparator_drug))
+        mutate(treatment_name = ifelse(treatment, target_drug, comparator_group))
     this.data.ps$weight       <- get.weights(ps.out, stop.method = "es.mean")
     this.data.ps$pscore       <- ps.out$ps$es.mean.ATT
     this.data.ps$logit_pscore <- log(this.data.ps$pscore / (1 - this.data.ps$pscore))
@@ -331,14 +331,14 @@ analysis_Propensity_Scoring <- function(comparator_drug,
     sema_weight_sum <- sum(this.data.ps %>%
                            filter(treatment_name == target_drug) %>% pull(weight))
     alte_weight_sum <- sum(this.data.ps %>%
-                           filter(treatment_name == comparator_drug) %>% pull(weight))
+                           filter(treatment_name == comparator_group) %>% pull(weight))
 
     total_n_alternate_weighted   <- this.data.ps %>%
-        filter(treatment_name == comparator_drug) %>% nrow()
+        filter(treatment_name == comparator_group) %>% nrow()
     total_small_weights_weighted <- this.data.ps %>%
-        filter(treatment_name == comparator_drug & weight < 0.01) %>% nrow()
+        filter(treatment_name == comparator_group & weight < 0.01) %>% nrow()
     total_big_weights_weighted   <- this.data.ps %>%
-        filter(treatment_name == comparator_drug & weight > 0.99) %>% nrow()
+        filter(treatment_name == comparator_group & weight > 0.99) %>% nrow()
 
     design.ps <- svydesign(ids = ~person_id, weights = ~weight, data = this.data.ps)
 
@@ -355,11 +355,11 @@ analysis_Propensity_Scoring <- function(comparator_drug,
     matched.data <- match.data(m.out)
 
     total_n_alternate_matched   <- matched.data %>%
-        filter(treatment_name == comparator_drug) %>% nrow()
+        filter(treatment_name == comparator_group) %>% nrow()
     total_small_weights_matched <- matched.data %>%
-        filter(treatment_name == comparator_drug & weight < 0.01) %>% nrow()
+        filter(treatment_name == comparator_group & weight < 0.01) %>% nrow()
     total_big_weights_matched   <- matched.data %>%
-        filter(treatment_name == comparator_drug & weight > 0.99) %>% nrow()
+        filter(treatment_name == comparator_group & weight > 0.99) %>% nrow()
 
     # ── 6. Matched-data balance table ────────────────────────────────────────
 
@@ -402,7 +402,7 @@ analysis_Propensity_Scoring <- function(comparator_drug,
 
     result <- list(
         target_drug                  = target_drug,
-        comparator_drug              = comparator_drug,
+        comparator_group              = comparator_group,
         this.data                    = this.data,
         matchingVars                 = matchingVars,
         nzv                          = nzv,

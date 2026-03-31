@@ -1,11 +1,18 @@
 library(rmarkdown)
 library(tidyverse)
 library(doParallel)
+library(corrplot)
+library(libRtheme)
+library(plotrix)
 
 data_pull_date <- as.Date("2026-03-27")
 target_drug      <- "Semaglutide"
 comparator_drugs <- c("DPP4i", "GLP1RA", "Insulins", "Metformin",
-                      "Nontreatment", "SGLT2i", "SU", "TZD")
+                      "SGLT2i", "SU", "TZD")
+all_drugs <- c(target_drug, comparator_drugs)
+nontreatment_group <- "Nontreatment"
+comparator_groups <- c(nontreatment_group, comparator_drugs)
+all_groups <- c(target_drug, comparator_groups)
 
 # ── Read input data ───────────────────────────────────────────────────────────
 
@@ -409,10 +416,32 @@ dte_cohort_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1
     -MDD_before_TZD,
     -TZD_PrePostInclusionCriteriaMet
   ) %>%
-  left_join(mdd_data %>% dplyr::select(PatientDurableKey, MDD_Index, meets_diagnosis_eligibility_criteria),
+  left_join(mdd_data %>% dplyr::select(PatientDurableKey, MDD_Index, BirthDate, meets_diagnosis_eligibility_criteria),
             by = "PatientDurableKey") %>%
   filter(meets_diagnosis_eligibility_criteria) %>% 
   left_join(antidiabetic_overlap_table, by = "PatientDurableKey")
+
+for(i in 1:length(all_drugs)){
+  this_drug <-  all_drugs[i]
+  
+  var_name_index <- paste0(this_drug, "_Index")
+  var_name_age_at_index_years <- paste0(this_drug, "_age_at_index_years")
+  var_name_mdd_to_index_days <- paste0(this_drug, "_mdd_to_index_days")
+  
+  dte_cohort_data <- dte_cohort_data %>% 
+    mutate(
+      !!sym(var_name_mdd_to_index_days) := time_length(interval(MDD_Index, !!sym(var_name_index)), "days"),
+      !!sym(var_name_age_at_index_years) := time_length(interval(BirthDate, !!sym(var_name_index)), "years")
+    )
+}
+
+dte_cohort_data <- dte_cohort_data %>% 
+  select(PatientDurableKey, 
+         meets_diagnosis_eligibility_criteria, 
+         MDD_Index, 
+         BirthDate, 
+         sort(setdiff(names(.), c("PatientDurableKey", "meets_diagnosis_eligibility_criteria", "MDD_Index", "BirthDate")))
+         )
 
 rm(antidiabetic_overlap_table)
 
@@ -742,7 +771,7 @@ get_Hydrochlorothiazide_Treatment_Timeline(
 source("get_Antidiabetic_Nontreatment_Timelines.R")
 
 message("Building nontreatment cohort for: ", target_drug)
-nontreat_result <- get_Antidiabetic_Nontreatment_Timelines(mdd_data, dte_cohort_data, nonswitch_periods, target_drug)
+nontreat_result <- get_Antidiabetic_Nontreatment_Timelines(dte_cohort_data, nonswitch_periods, target_drug)
 
 this.data <- nontreat_result$dte_cohort_data2
 save(this.data, file = "OutputData/dte_cohort_wNontreat_data.rds")
@@ -770,7 +799,7 @@ source("get_Diagnosis_Timeline.R")
 message("Building diagnosis timeline variables")
 get_Diagnosis_Timeline(
   target_drug      = target_drug,
-  comparator_drugs = comparator_drugs,
+  comparator_groups = comparator_groups,
   all_diagnoses    = c("T1DM", "T2DM", "Hypertension", "Heart_Disease", "Hyperlipidemia",
                        "Obesity", "Hypercholesterolemia", "Chronic_Kidney_Disease",
                        "A1C_over_8p5", "Pancreatitis", "Stroke", "Thyroid_Cancer", "Gastroparesis"),
@@ -783,32 +812,32 @@ get_Diagnosis_Timeline(
 
 source("analysis_Propensity_Scoring.R")
 
-for (drug in comparator_drugs) {
-  message("Running propensity scoring for: ", drug)
-  ps_result <- analysis_Propensity_Scoring(drug, target_drug,
+for (group in comparator_groups) {
+  message("Running propensity scoring for: ", group)
+  ps_result <- analysis_Propensity_Scoring(group, target_drug,
                                            "OutputData/dte_cohort_wNontreat_data.rds",
                                            "Data/ps_covariates.csv")
   
   write.csv(ps_result$matchingVars.final,
-            paste0("OutputData/PS_Covariates-", drug, ".csv"),
+            paste0("OutputData/PS_Covariates-", group, ".csv"),
             row.names = FALSE)
   
   weighted.data <- ps_result$weighted.data
-  save(weighted.data, file = paste0("OutputData/PS_Weighted_Dataset-", drug, ".rds"))
+  save(weighted.data, file = paste0("OutputData/PS_Weighted_Dataset-", group, ".rds"))
   
   matched.data <- ps_result$matched.data
-  save(matched.data, file = paste0("OutputData/PS_Matched_Dataset-", drug, ".rds"))
+  save(matched.data, file = paste0("OutputData/PS_Matched_Dataset-", group, ".rds"))
   
-  result_file <- paste0("OutputData/propensity_scoring_result-", target_drug, "Vs", drug, ".rds")
+  result_file <- paste0("OutputData/propensity_scoring_result-", target_drug, "Vs", group, ".rds")
   saveRDS(ps_result, result_file)
   
-  message("Rendering report for: ", drug)
+  message("Rendering report for: ", group)
   render(
     input       = "report_Propensity_Scoring.Rmd",
-    output_file = paste0("Reports/report_Propensity_Scoring-", target_drug, "Vs", drug, ".html"),
+    output_file = paste0("Reports/report_Propensity_Scoring-", target_drug, "Vs", group, ".html"),
     params      = list(
       target_drug     = target_drug,
-      comparator_drug = drug,
+      comparator_group = group,
       result_file     = result_file
     ),
     envir = new.env()

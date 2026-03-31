@@ -23,7 +23,7 @@ define_before_diagnosis_ids <- function(index_drug_record, diagnosis_timeline){
 #
 # Arguments:
 #   target_drug      — Name of the target drug (e.g. "Semaglutide")
-#   comparator_drugs — Character vector of comparator drug names
+#   comparator_groups — Character vector of comparator drug names
 #   all_diagnoses    — Character vector of diagnosis names to evaluate
 #   index_dataset    — Cohort data frame with PatientDurableKey and {drug}_Index columns
 #   diag_table       — Diagnosis data frame with PatientDurableKey, Diagnosis, FirstDiagnosisDate
@@ -34,14 +34,14 @@ define_before_diagnosis_ids <- function(index_drug_record, diagnosis_timeline){
 
 get_Diagnosis_Timeline <- function(
     target_drug,
-    comparator_drugs,
+    comparator_groups,
     all_diagnoses,
     index_dataset,
     diag_table,
     output_filename
 ) {
   
-  all_drugs <- c(target_drug, comparator_drugs)
+  all_drugs <- c(target_drug, comparator_groups)
   
   all.data <- index_dataset %>% dplyr::select(PatientDurableKey) %>% distinct()
   for(i in 1:length(all_diagnoses)){
