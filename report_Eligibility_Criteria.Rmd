@@ -140,18 +140,20 @@ for (this_drug in all_drugs) {
                                  !!sym(target_col), !!sym(other_col)))
   }
 
-  my_table1(this.data     = this.data,
-            my_strata     = Drug_Population_for_Target_vs_Drug,
-            filename      = paste0(target_drug, "_vs_", this_drug, "-Eligibility_Criteria"),
-            varsToFactor  = varsToFactor,
-            new_colnames  = c("Variable",
-                              "",
-                              paste0("TOTAL ", target_drug, " vs ", this_drug, " Population"),
-                              paste0(target_drug, " Population"),
-                              paste0(this_drug, " Population"),
-                              "p"),
-            verbose       = FALSE,
-            new_titles    = new_titles,
-            new_names     = new_names)
+  html <- my_table1(this.data     = this.data,
+                    my_strata     = Drug_Population_for_Target_vs_Drug,
+                    filename      = paste0(target_drug, "_vs_", this_drug, "-Eligibility_Criteria"),
+                    varsToFactor  = varsToFactor,
+                    new_colnames  = c("Variable",
+                                      "",
+                                      paste0("TOTAL ", target_drug, " vs ", this_drug, " Population"),
+                                      paste0(target_drug, " Population"),
+                                      paste0(this_drug, " Population"),
+                                      "p"),
+                    verbose       = FALSE,
+                    new_titles    = new_titles,
+                    new_names     = new_names)
+  cat("\n\n##", target_drug, "vs", this_drug, "\n\n")
+  cat(html)
 }
 ```
