@@ -829,6 +829,19 @@ render(
   envir = new.env()
 )
 
+# ── Render antidiabetic overlap report ───────────────────────────────────────
+
+render(
+  input       = "report_Antidiabetic_Overlap.Rmd",
+  output_file = paste0("Reports/report_Antidiabetic_Overlap-", target_drug, ".html"),
+  params      = list(
+    dte_cohort_data2   = nontreat_result$dte_cohort_data2,
+    all_groups         = all_groups,
+    nontreatment_group = nontreatment_group
+  ),
+  envir = new.env()
+)
+
 # ── Build diagnosis timeline variables ────────────────────────────────────────
 
 source("get_Diagnosis_Timeline.R")
