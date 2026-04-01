@@ -19,7 +19,7 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 library(tidyverse)
 library(corrplot)
 library(plotrix)
-library(LIBR)
+library(libRtheme)
 
 this.data         <- params$dte_cohort_data2
 all_groups        <- params$all_groups
@@ -76,13 +76,13 @@ corrplot(co_occurrence,
          col             = my_palette,
          family          = "Poppins")
 
-mtext("Lifetime Co-occurrence Counts of Antidiabetic Medications",
-      side   = 3,
-      line   = -15,
-      adj    = 0.75,
-      cex    = 2,
-      col    = "black",
-      family = "Poppins")
+# mtext("Lifetime Co-occurrence Counts of Antidiabetic Medications",
+#       side   = 3,
+#       line   = -15,
+#       adj    = 0.75,
+#       cex    = 2,
+#       col    = "black",
+#       family = "Poppins")
 
 formatted_numbers <- apply(co_occurrence, c(1, 2), function(x) format(x, big.mark = ",", scientific = FALSE))
 
@@ -153,13 +153,13 @@ corrplot(use_matrix,
          col             = my_palette,
          family          = "Poppins")
 
-mtext("Lifetime Co-occurrence Counts of Antidiabetic Medications",
-      side   = 3,
-      line   = -20,
-      adj    = 0.75,
-      cex    = 2,
-      col    = "black",
-      family = "Poppins")
+# mtext("Lifetime Co-occurrence Counts of Antidiabetic Medications",
+#       side   = 3,
+#       line   = -20,
+#       adj    = 0.75,
+#       cex    = 2,
+#       col    = "black",
+#       family = "Poppins")
 
 formatted_numbers <- apply(use_matrix, c(1, 2), function(x) format(x, big.mark = ",", scientific = FALSE))
 

@@ -53,23 +53,6 @@ ggplot(r$tfe_dist, aes(x = tfe_at_index_days, y = n)) +
 
 ---
 
-# Index Date Emulation
-
-## Selected Nontreatment Periods
-
-```{r nonswitch-nrow}
-cat(sprintf("%s nontreatment period rows selected after emulation filter.\n",
-            comma(nrow(r$nonswitch_selected))))
-```
-
-```{r nonswitch-head}
-r$nonswitch_selected %>% head() %>% knitr::kable(caption = "First rows of selected nontreatment periods")
-```
-
-```{r nonswitch2-head}
-r$nonswitch_selected2 %>% head() %>% knitr::kable(caption = "First rows after assigning Nontreatment_Index")
-```
-
 ## TFE Distribution: Treatment vs. Comparison
 
 ```{r tfe-comparison-plot, fig.width=12, fig.height=5}
