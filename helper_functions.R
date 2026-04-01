@@ -203,8 +203,7 @@ my_table1 <- function(this.data, my_strata, filename, varsToFactor, new_names = 
 
     save(frmt_dataset, file = frmt_filename)
     html_text <- kbl(frmt_dataset, escape = F, align = "r") %>%
-    kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE, font_size = 16)%>%
-    scroll_box(width = "100%", height = "1000px")
+    kable_styling(bootstrap_options = c("striped", "hover"), full_width = TRUE, font_size = 16)
 
     html_text <- as.character(html_text)
 
