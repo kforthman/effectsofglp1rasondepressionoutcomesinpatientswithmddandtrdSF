@@ -4,6 +4,9 @@ library(doParallel)
 library(corrplot)
 library(libRtheme)
 library(plotrix)
+library(tableone)
+library(kableExtra)
+library(viridis)
 
 data_pull_date <- as.Date("2026-03-27")
 target_drug      <- "Semaglutide"
@@ -13,6 +16,22 @@ all_drugs <- c(target_drug, comparator_drugs)
 nontreatment_group <- "Nontreatment"
 comparator_groups <- c(nontreatment_group, comparator_drugs)
 all_groups <- c(target_drug, comparator_groups)
+
+var_name_to_pretty <- read.csv("Data/var_name_to_pretty.csv")
+
+eligibility_inclusion_diagnoses <- c("T1DM", 
+                                     "T2DM", 
+                                     "Obesity", 
+                                     "Hypertension", 
+                                     "Hypercholesterolemia", 
+                                     "Hyperlipidemia", 
+                                     "Heart_Disease", 
+                                     "Stroke", 
+                                     "Chronic_Kidney_Disease", 
+                                     "A1C_over_8p5", 
+                                     "Pancreatitis", 
+                                     "Thyroid_Cancer", 
+                                     "Gastroparesis")
 
 # ── Read input data ───────────────────────────────────────────────────────────
 
@@ -93,6 +112,24 @@ mdd_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1600/CCM
                        MultiRacial          = col_logical(),
                        Ethnicity            = col_character()
                      )) %>%
+  mutate(ADHD                    = if_else(is.na(ADHD_FirstDiagnosis), FALSE, TRUE),
+         Agoraphobia             = if_else(is.na(Agoraphobia_FirstDiagnosis), FALSE, TRUE),
+         Anxiety_Disorder_NOS    = if_else(is.na(Anxiety_Disorder_NOS_FirstDiagnosis), FALSE, TRUE),
+         Generalized_Anxiety     = if_else(is.na(Generalized_Anxiety_FirstDiagnosis), FALSE, TRUE),
+         OCD                     = if_else(is.na(OCD_FirstDiagnosis), FALSE, TRUE),
+         Panic_Disorder          = if_else(is.na(Panic_Disorder_FirstDiagnosis), FALSE, TRUE),
+         PTSD                    = if_else(is.na(PTSD_FirstDiagnosis), FALSE, TRUE),
+         Social_Anxiety_Disorder = if_else(is.na(Social_Anxiety_Disorder_FirstDiagnosis), FALSE, TRUE),
+         Alcohol_Abuse           = if_else(is.na(Alcohol_Abuse_FirstDiagnosis), FALSE, TRUE),
+         Alcohol_Dependence      = if_else(is.na(Alcohol_Dependence_FirstDiagnosis), FALSE, TRUE),
+         Cannabis_Abuse          = if_else(is.na(Cannabis_Abuse_FirstDiagnosis), FALSE, TRUE),
+         Cannabis_Dependence     = if_else(is.na(Cannabis_Dependence_FirstDiagnosis), FALSE, TRUE),
+         Cocaine_Abuse           = if_else(is.na(Cocaine_Abuse_FirstDiagnosis), FALSE, TRUE),
+         Cocaine_Dependence      = if_else(is.na(Cocaine_Dependence_FirstDiagnosis), FALSE, TRUE),
+         Opioid_Abuse            = if_else(is.na(Opioid_Abuse_FirstDiagnosis), FALSE, TRUE),
+         Opioid_Dependence       = if_else(is.na(Opioid_Dependence_FirstDiagnosis), FALSE, TRUE),
+         Sedative_Abuse          = if_else(is.na(Sedative_Abuse_FirstDiagnosis), FALSE, TRUE),
+         Sedative_Dependence     = if_else(is.na(Sedative_Dependence_FirstDiagnosis), FALSE, TRUE)) %>%
   mutate(Race = case_when(
     !is.na(SecondRace) | !is.na(ThirdRace) | !is.na(FourthRace) | !is.na(FifthRace) | MultiRacial ~ "Multi-Race",
     FirstRace == "American Indian or Alaska Native" ~ "American Indian or Alaska Native",
@@ -441,7 +478,7 @@ dte_cohort_data <- dte_cohort_data %>%
          MDD_Index, 
          BirthDate, 
          sort(setdiff(names(.), c("PatientDurableKey", "meets_diagnosis_eligibility_criteria", "MDD_Index", "BirthDate")))
-         )
+  )
 
 rm(antidiabetic_overlap_table)
 
@@ -800,13 +837,14 @@ message("Building diagnosis timeline variables")
 get_Diagnosis_Timeline(
   target_drug      = target_drug,
   comparator_groups = comparator_groups,
-  all_diagnoses    = c("T1DM", "T2DM", "Hypertension", "Heart_Disease", "Hyperlipidemia",
-                       "Obesity", "Hypercholesterolemia", "Chronic_Kidney_Disease",
-                       "A1C_over_8p5", "Pancreatitis", "Stroke", "Thyroid_Cancer", "Gastroparesis"),
+  all_diagnoses    = eligibility_inclusion_diagnoses,
   index_dataset    = nontreat_result$dte_cohort_data2,
   diag_table       = diag_table,
   output_filename  = "OutputData/data_DTE_DiagnosisTimelineVars.rds"
 )
+
+load("OutputData/data_DTE_DiagnosisTimelineVars.rds", verbose = T)
+diagnosis_timeline_data <- this.data
 
 # ── Run propensity scoring and render reports ─────────────────────────────────
 

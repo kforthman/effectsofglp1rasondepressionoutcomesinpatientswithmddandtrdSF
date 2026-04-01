@@ -207,9 +207,9 @@ my_table1 <- function(this.data, my_strata, filename, varsToFactor, new_names = 
     scroll_box(width = "100%", height = "1000px")
 
     html_text <- as.character(html_text)
-    IRdisplay::display_html(
-        html_text
-    )
+    # IRdisplay::display_html(
+    #     html_text
+    # )
 
     system(paste0("rm ", html_filename))
     writeLines(html_text, html_filename)
