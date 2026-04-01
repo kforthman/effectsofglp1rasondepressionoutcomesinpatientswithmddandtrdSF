@@ -28,8 +28,9 @@ all.data <- nontreat_result$dte_cohort_data2 %>%
                 ~ if_else(is.na(.), FALSE, TRUE),
                 .names = "{sub('_Index$', '_Use', .col)}")) %>%
   filter(eval(parse(text = paste(cohort_names, collapse = " | "))))  %>%
-  left_join(diag_table %>% 
-              pivot_wider(names_from = Diagnosis, values_from = FirstDiagnosisDate, values_fill = NA, names_glue = "{Diagnosis}_Index")) %>%
+  left_join(diag_table %>%
+              pivot_wider(names_from = Diagnosis, values_from = FirstDiagnosisDate, values_fill = NA, names_glue = "{Diagnosis}_Index"),
+            by = "PatientDurableKey") %>%
   mutate(across(paste0(unique(diag_table$Diagnosis), "_Index"),
                 ~ if_else(is.na(.), FALSE, TRUE),
                 .names = "{sub('_Index$', '', .col)}"))
