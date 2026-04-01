@@ -859,6 +859,25 @@ get_Diagnosis_Timeline(
 load("OutputData/data_DTE_DiagnosisTimelineVars.rds", verbose = T)
 diagnosis_timeline_data <- this.data
 
+# ── Render eligibility criteria report ───────────────────────────────────────
+
+render(
+  input       = "report_Eligibility_Criteria.Rmd",
+  output_file = paste0("Reports/report_Eligibility_Criteria-", target_drug, ".html"),
+  params      = list(
+    eligibility_inclusion_diagnoses = eligibility_inclusion_diagnoses,
+    all_drugs                       = all_drugs,
+    var_name_to_pretty              = var_name_to_pretty,
+    comparator_drugs                = comparator_drugs,
+    target_drug                     = target_drug,
+    diagnosis_timeline_data         = diagnosis_timeline_data,
+    dte_cohort_data2                = nontreat_result$dte_cohort_data2,
+    diag_table                      = diag_table,
+    nontreatment_group              = nontreatment_group
+  ),
+  envir = new.env()
+)
+
 # ── Run propensity scoring and render reports ─────────────────────────────────
 
 source("analysis_Propensity_Scoring.R")
