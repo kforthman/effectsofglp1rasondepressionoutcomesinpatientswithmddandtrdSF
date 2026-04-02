@@ -808,7 +808,7 @@ get_Hydrochlorothiazide_Treatment_Timeline(
 source("get_Antidiabetic_Nontreatment_Timelines.R")
 
 message("Building nontreatment cohort for: ", target_drug)
-nontreat_result <- get_Antidiabetic_Nontreatment_Timelines(dte_cohort_data, nonswitch_periods, target_drug)
+nontreat_result <- get_Antidiabetic_Nontreatment_Timelines(dte_cohort_data, nonswitch_periods, target_drug, mdd_data)
 
 this.data <- nontreat_result$dte_cohort_data2
 save(this.data, file = "OutputData/dte_cohort_wNontreat_data.rds")

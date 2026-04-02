@@ -13,6 +13,8 @@
 #                       Eligibility_Group_B, and with tfe_at_index_bgn /
 #                       tfe_at_index_end computed)
 #   target_drug       — Name of target treatment (default: "Semaglutide")
+#   mdd_data          — Patient-level MDD data (used to populate demographic
+#                       columns for nontreatment-only patients added as new rows)
 #
 # Returns:
 #   List of diagnostic objects for report_Antidiabetic_Nontreatment_Timelines.Rmd,
@@ -20,7 +22,8 @@
 
 get_Antidiabetic_Nontreatment_Timelines <- function(dte_cohort_data,
                                                     nonswitch_periods,
-                                                    target_drug = "Semaglutide") {
+                                                    target_drug = "Semaglutide",
+                                                    mdd_data) {
   
   col_TimelineCriteria <- paste0(target_drug, "_meets_timeline_criteria")
   col_mdd_to_index    <- paste0(target_drug, "_mdd_to_index_days")
@@ -120,6 +123,24 @@ get_Antidiabetic_Nontreatment_Timelines <- function(dte_cohort_data,
       Nontreatment_age_at_index_years = time_length(interval(BirthDate, Nontreatment_Index), "years")
     )
   
+  # ── Add nontreatment-only patients as new rows ───────────────────────────
+  # Patients in the nontreatment arm who never had any antidiabetic drug
+  # treatment episode are not in dte_cohort_data and must be added explicitly.
+
+  nontreat_only <- nonswitch_selected2 %>%
+    filter(!PatientDurableKey %in% dte_cohort_data$PatientDurableKey) %>%
+    distinct(PatientDurableKey, .keep_all = TRUE) %>%
+    dplyr::select(PatientDurableKey, Nontreatment_Index, Nontreatment_mdd_to_index_days) %>%
+    left_join(mdd_data, by = "PatientDurableKey") %>%
+    mutate(
+      Nontreatment_meets_timeline_criteria = TRUE,
+      !!col_vs_Nontreat                   := FALSE,
+      !!col_Nontreat_vs                   := TRUE,
+      Nontreatment_age_at_index_years      = time_length(interval(BirthDate, Nontreatment_Index), "years")
+    )
+
+  dte_cohort_data2 <- bind_rows(dte_cohort_data2, nontreat_only)
+
   # ── Diagnostic dataset for reporting ─────────────────────────────────────
   
   dte_cohort_data3 <- dte_cohort_data2 %>%
