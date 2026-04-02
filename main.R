@@ -20,8 +20,6 @@ all_groups <- c(target_drug, comparator_groups)
 var_name_to_pretty <- read.csv("Data/var_name_to_pretty.csv")
 ps_covariates      <- read.csv("Data/ps_covariates.csv")
 
-ps_covariates <- read.csv("Data/ps_covariates.csv")
-
 eligibility_inclusion_diagnoses <- c("T1DM", 
                                      "T2DM", 
                                      "Obesity", 
