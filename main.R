@@ -34,7 +34,7 @@ eligibility_inclusion_diagnoses <- c("T1DM",
                                      "Thyroid_Cancer", 
                                      "Gastroparesis")
 
-# ── Read input data ───────────────────────────────────────────────────────────
+# ── Read input data ───────────────────────────────────────────────────────────----
 
 med_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1800/CCM-Medication_Table-26_03_27-v2.csv",
                       na = c("", "NA", "NULL", "null"),
@@ -762,7 +762,7 @@ psych_proc_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-
 
 drug_class <- read.csv("Data/DrugClasses.csv")
 
-# ── Identify TRD patients ─────────────────────────────────────────────────────
+# ── Identify TRD patients ─────────────────────────────────────────────────────----
 
 source("get_TRD.R")
 
@@ -778,7 +778,7 @@ get_TRD(
   overwrite                 = TRUE
 )
 
-# ── Build antidepressant/antipsychotic treatment timelines ────────────────────
+# ── Build antidepressant/antipsychotic treatment timelines ────────────────────----
 
 source("get_Antidepressant_Treatment_Timeline.R")
 
@@ -792,7 +792,7 @@ get_Antidepressant_Treatment_Timeline(
   overwrite            = TRUE
 )
 
-# ── Build hydrochlorothiazide treatment timelines ─────────────────────────────
+# ── Build hydrochlorothiazide treatment timelines ─────────────────────────────----
 
 source("get_Hydrochlorothiazide_Treatment_Timeline.R")
 
@@ -803,7 +803,7 @@ get_Hydrochlorothiazide_Treatment_Timeline(
   overwrite                 = TRUE
 )
 
-# ── Build nontreatment cohort ─────────────────────────────────────────────────
+# ── Build nontreatment cohort ─────────────────────────────────────────────────----
 
 source("get_Antidiabetic_Nontreatment_Timelines.R")
 
@@ -817,7 +817,7 @@ result_file <- paste0("OutputData/nontreatment_timelines_result-", target_drug, 
 
 saveRDS(nontreat_result, result_file)
 
-# ── Render nontreatment timelines report ──────────────────────────────────────
+# ── Render nontreatment timelines report ──────────────────────────────────────----
 
 render(
   input       = "report_Antidiabetic_Nontreatment_Timelines.Rmd",
@@ -829,7 +829,7 @@ render(
   envir = new.env()
 )
 
-# ── Render antidiabetic overlap report ───────────────────────────────────────
+# ── Render antidiabetic overlap report ───────────────────────────────────────----
 
 render(
   input       = "report_Antidiabetic_Overlap.Rmd",
@@ -842,7 +842,7 @@ render(
   envir = new.env()
 )
 
-# ── Build diagnosis timeline variables ────────────────────────────────────────
+# ── Build diagnosis timeline variables ────────────────────────────────────────----
 
 source("get_Diagnosis_Timeline.R")
 
@@ -859,7 +859,7 @@ get_Diagnosis_Timeline(
 load("OutputData/data_DTE_DiagnosisTimelineVars.rds", verbose = T)
 diagnosis_timeline_data <- this.data
 
-# ── Render eligibility criteria report ───────────────────────────────────────
+# ── Render eligibility criteria report ───────────────────────────────────────----
 
 render(
   input       = "report_Eligibility_Criteria.Rmd",
@@ -878,7 +878,7 @@ render(
   envir = new.env()
 )
 
-# ── Render propensity covariates report ──────────────────────────────────────
+# ── Render propensity covariates report ──────────────────────────────────────----
 
 render(
   input       = "report_Propensity_Covariates.Rmd",
@@ -893,7 +893,7 @@ render(
   envir = new.env()
 )
 
-# ── Run propensity scoring and render reports ─────────────────────────────────
+# ── Run propensity scoring and render reports ─────────────────────────────────----
 
 source("analysis_Propensity_Scoring.R")
 
