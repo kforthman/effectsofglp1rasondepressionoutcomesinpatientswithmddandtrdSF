@@ -18,6 +18,7 @@ comparator_groups <- c(nontreatment_group, comparator_drugs)
 all_groups <- c(target_drug, comparator_groups)
 
 var_name_to_pretty <- read.csv("Data/var_name_to_pretty.csv")
+ps_covariates      <- read.csv("Data/ps_covariates.csv")
 
 ps_covariates <- read.csv("Data/ps_covariates.csv")
 
@@ -875,6 +876,21 @@ render(
     dte_cohort_data2                = nontreat_result$dte_cohort_data2,
     diag_table                      = diag_table,
     nontreatment_group              = nontreatment_group
+  ),
+  envir = new.env()
+)
+
+# ── Render propensity covariates report ──────────────────────────────────────
+
+render(
+  input       = "report_Propensity_Covariates.Rmd",
+  output_file = paste0("Reports/report_Propensity_Covariates-", target_drug, ".html"),
+  params      = list(
+    dte_cohort_data2   = nontreat_result$dte_cohort_data2,
+    all_groups         = all_groups,
+    target_drug        = target_drug,
+    ps_covariates      = ps_covariates,
+    var_name_to_pretty = var_name_to_pretty
   ),
   envir = new.env()
 )

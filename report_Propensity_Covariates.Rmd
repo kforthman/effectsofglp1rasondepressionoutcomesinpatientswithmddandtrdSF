@@ -1,0 +1,99 @@
+---
+title: "Propensity Score Covariates: `r params$target_drug` Cohorts"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    theme: flatly
+params:
+  dte_cohort_data2:   NULL
+  all_groups:         NULL
+  target_drug:        "Semaglutide"
+  ps_covariates:      NULL
+  var_name_to_pretty: NULL
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+library(tidyverse)
+library(tableone)
+library(kableExtra)
+
+source("helper_functions.R")
+
+this.data          <- params$dte_cohort_data2
+all_groups         <- params$all_groups
+target_drug        <- params$target_drug
+```
+
+```{r var-info}
+var_info <- params$ps_covariates %>%
+  left_join(params$var_name_to_pretty, by = join_by("var" == "var_name")) %>%
+  arrange(pretty_var_category) %>%
+  filter(!var %in% c("Type_2_Diabetes_Mellitus_with_Complications", "Bariatric_Surgery", "Tobacco_Use_Disorder"))
+
+varsToFactor <- var_info %>% pull(var)
+
+new_titles <- c("n",
+                var_info %>%
+                  mutate(pretty_var_category = ifelse(pretty_var_category == lag(pretty_var_category, default = ""),
+                                                      "", pretty_var_category)) %>%
+                  pull(pretty_var_category))
+
+new_names <- c("",
+               var_info %>% pull(pretty_name))
+```
+
+```{r tables, results='asis'}
+for (this_drug in all_groups) {
+
+  if (this_drug == target_drug) { next }
+
+  Target_Population_for_Target_vs_Drug <- paste0(target_drug, "_Population_for_", target_drug, "_vs_", this_drug)
+  Drug_Population_for_Target_vs_Drug   <- paste0(this_drug,   "_Population_for_", target_drug, "_vs_", this_drug)
+
+  varname_target_age_at_index_years  <- paste0(target_drug, "_age_at_index_years")
+  varname_thisdrug_age_at_index_years <- paste0(this_drug,  "_age_at_index_years")
+
+  varname_target_mdd_to_index_days  <- paste0(target_drug, "_mdd_to_index_days")
+  varname_thisdrug_mdd_to_index_days <- paste0(this_drug,  "_mdd_to_index_days")
+
+  varname_target_index  <- paste0(target_drug, "_Index")
+  varname_thisdrug_index <- paste0(this_drug,  "_Index")
+
+  this.data.subset <- this.data %>%
+    filter(!!sym(Target_Population_for_Target_vs_Drug) | !!sym(Drug_Population_for_Target_vs_Drug)) %>%
+    mutate(treatment = ifelse(!!sym(Target_Population_for_Target_vs_Drug) == TRUE, 1, 0)) %>%
+    mutate(age_at_index_years = ifelse(treatment,
+                                       !!sym(varname_target_age_at_index_years),
+                                       !!sym(varname_thisdrug_age_at_index_years))) %>%
+    mutate(mdd_to_index_days  = ifelse(treatment,
+                                       !!sym(varname_target_mdd_to_index_days),
+                                       !!sym(varname_thisdrug_mdd_to_index_days)),
+           mdd_to_index_years = time_length(ddays(mdd_to_index_days), "years")) %>%
+    mutate(index      = as.Date(ifelse(treatment,
+                                       !!sym(varname_target_index),
+                                       !!sym(varname_thisdrug_index))),
+           index_year = year(index))
+
+  html <- my_table1(this.data    = this.data.subset,
+                    my_strata    = Drug_Population_for_Target_vs_Drug,
+                    filename     = paste0(target_drug, "_vs_", this_drug, "-Basic_Demographics"),
+                    varsToFactor = varsToFactor,
+                    new_colnames = c("Variable",
+                                     "",
+                                     paste0("TOTAL ", target_drug, " vs ", this_drug, " Population"),
+                                     paste0(target_drug, " Population"),
+                                     paste0(this_drug, " Population"),
+                                     "p"),
+                    verbose      = FALSE,
+                    new_titles   = new_titles,
+                    new_names    = new_names)
+
+  cat("\n\n##", target_drug, "vs", this_drug, "\n\n")
+  cat(html)
+}
+```
