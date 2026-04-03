@@ -147,7 +147,7 @@ get_Antidiabetic_Nontreatment_Timelines <- function(dte_cohort_data,
     names()
 
   if (length(na_logical_cols) > 0) {
-    warning("The following logical columns contain NA for nontreatment-only rows and will be set to FALSE:\n  ",
+    message("The following logical columns contain NA for nontreatment-only rows and will be set to FALSE:\n  ",
             paste(na_logical_cols, collapse = "\n  "))
   }
 
