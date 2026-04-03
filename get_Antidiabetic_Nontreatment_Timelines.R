@@ -139,7 +139,8 @@ get_Antidiabetic_Nontreatment_Timelines <- function(dte_cohort_data,
       Nontreatment_age_at_index_years      = time_length(interval(BirthDate, Nontreatment_Index), "years")
     )
 
-  dte_cohort_data2 <- bind_rows(dte_cohort_data2, nontreat_only)
+  dte_cohort_data2 <- bind_rows(dte_cohort_data2, nontreat_only) %>%
+    mutate(across(where(is.logical), ~ replace_na(., FALSE)))
 
   # ── Diagnostic dataset for reporting ─────────────────────────────────────
   
