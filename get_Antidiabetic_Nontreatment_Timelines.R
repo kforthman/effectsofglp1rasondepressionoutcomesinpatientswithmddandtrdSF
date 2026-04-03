@@ -139,7 +139,19 @@ get_Antidiabetic_Nontreatment_Timelines <- function(dte_cohort_data,
       Nontreatment_age_at_index_years      = time_length(interval(BirthDate, Nontreatment_Index), "years")
     )
 
-  dte_cohort_data2 <- bind_rows(dte_cohort_data2, nontreat_only) %>%
+  dte_cohort_data2 <- bind_rows(dte_cohort_data2, nontreat_only)
+
+  na_logical_cols <- dte_cohort_data2 %>%
+    dplyr::select(where(is.logical)) %>%
+    dplyr::select(where(~ any(is.na(.)))) %>%
+    names()
+
+  if (length(na_logical_cols) > 0) {
+    warning("The following logical columns contain NA for nontreatment-only rows and will be set to FALSE:\n  ",
+            paste(na_logical_cols, collapse = "\n  "))
+  }
+
+  dte_cohort_data2 <- dte_cohort_data2 %>%
     mutate(across(where(is.logical), ~ replace_na(., FALSE)))
 
   # ── Diagnostic dataset for reporting ─────────────────────────────────────
