@@ -22,31 +22,28 @@ define_before_diagnosis_ids <- function(index_drug_record, diagnosis_timeline){
 # flags whether each participant had that diagnosis before their index date.
 #
 # Arguments:
-#   target_drug      — Name of the target drug (e.g. "Semaglutide")
-#   comparator_groups — Character vector of comparator drug names
+#   all_drugs        — Character vector of target and comparator drug names
 #   all_diagnoses    — Character vector of diagnosis names to evaluate
 #   index_dataset    — Cohort data frame with PatientDurableKey and {drug}_Index columns
-#   diag_table       — Diagnosis data frame with PatientDurableKey, Diagnosis, FirstDiagnosisDate
 #   output_filename  — Output path for the diagnosis timeline variables (.rds)
 #
 # Saves (written to disk, no return value):
 #   {output_filename} — this.data (PatientDurableKey + one logical column per diagnosis/drug combo)
 
 get_Diagnosis_Timeline <- function(
-    target_drug,
-    comparator_groups,
+    all_drugs,
     all_diagnoses,
     index_dataset,
-    diag_table,
     output_filename
 ) {
-  
-  all_drugs <- c(target_drug, comparator_groups)
   
   all.data <- index_dataset %>% dplyr::select(PatientDurableKey) %>% distinct()
   for(i in 1:length(all_diagnoses)){
     this_diagnosis <- all_diagnoses[i]
-    this_diagnosis_data <- diag_table %>% filter(Diagnosis == this_diagnosis)
+    this_diagnosis_data <- index_dataset %>% 
+      dplyr::select(PatientDurableKey, !!sym(paste0(this_diagnosis, "_FirstDiagnosis"))) %>%
+      rename(FirstDiagnosisDate = paste0(this_diagnosis, "_FirstDiagnosis")) %>%
+      filter(!is.na(FirstDiagnosisDate))
     for(j in 1:length(all_drugs)){
       this_drug <- all_drugs[j]
       this_index_drug_data <- index_dataset %>%

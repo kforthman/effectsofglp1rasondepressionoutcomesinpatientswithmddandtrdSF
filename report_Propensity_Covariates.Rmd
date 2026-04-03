@@ -32,8 +32,7 @@ target_drug        <- params$target_drug
 ```{r var-info}
 var_info <- params$ps_covariates %>%
   left_join(params$var_name_to_pretty, by = join_by("var" == "var_name")) %>%
-  arrange(pretty_var_category) %>%
-  filter(!var %in% c("Type_2_Diabetes_Mellitus_with_Complications", "Bariatric_Surgery", "Tobacco_Use_Disorder"))
+  arrange(pretty_var_category)
 
 varsToFactor <- var_info %>% pull(var)
 

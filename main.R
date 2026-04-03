@@ -284,7 +284,7 @@ antidiabetics_GLP1RA_table      <- antidiabetics_table %>% filter(Pharmaceutical
 rm(med_table)
 rm(antidiabetics_table)
 
-diag_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1100/CCM-FirstDiagnosis_Table-26_03_27-v1.csv",
+diag_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260403-1200/CCM-FirstDiagnosis_Table-26_04_02-v1.csv",
                        na = c("", "NA", "NULL", "null"),
                        col_types = cols(
                          PatientDurableKey  = col_character(),
@@ -302,10 +302,11 @@ diag_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1100/C
                             "A1C"                      = "A1C_over_8p5",
                             "Thyroid Cancer"           = "Thyroid_Cancer"
                             
-  ))
+  )) %>% 
+  group_by(PatientDurableKey, Diagnosis) %>% summarise(FirstDiagnosisDate = min(FirstDiagnosisDate))
 
 # Patients with MDD, no Bipolar Disorder, no Schizophrenia
-mdd_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1600/CCM-MDDPatientList_Table-26_03_27-v2.csv",
+mdd_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260403-1200/CCM-MDDPatientList_Table-26_04_02-v1.csv",
                      na = c("", "NA", "NULL", "null"),
                      col_types = cols(
                        PatientDurableKey    = col_character(),
@@ -332,6 +333,8 @@ mdd_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1600/CCM
                        HasExclA             = col_logical(),
                        HasExclB             = col_logical(),
                        HasExclC             = col_logical(),
+                       Type_2_Diabetes_Mellitus_with_Complications_FirstDiagnosis = col_date(format = "%Y-%m-%d"),
+                       Bariatric_Surgery_FirstDiagnosis       = col_date(format = "%Y-%m-%d"),
                        ADHD_FirstDiagnosis                    = col_date(format = "%Y-%m-%d"),
                        Agoraphobia_FirstDiagnosis             = col_date(format = "%Y-%m-%d"),
                        Anxiety_Disorder_NOS_FirstDiagnosis    = col_date(format = "%Y-%m-%d"),
@@ -350,6 +353,7 @@ mdd_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1600/CCM
                        Opioid_Dependence_FirstDiagnosis       = col_date(format = "%Y-%m-%d"),
                        Sedative_Abuse_FirstDiagnosis          = col_date(format = "%Y-%m-%d"),
                        Sedative_Dependence_FirstDiagnosis     = col_date(format = "%Y-%m-%d"),
+                       Tobacco_Use_Disorder_FirstDiagnosis    = col_date(format = "%Y-%m-%d"),
                        Diseases_of_the_Arteries_Artrioles_and_Capillaries_FirstDiagnosis = col_date(format = "%Y-%m-%d"),
                        BirthDate            = col_date(format = "%Y-%m-%d"),
                        PatientSex           = col_character(),
@@ -403,14 +407,61 @@ mdd_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1600/CCM
   mutate(Race_Ethnicity_white = Race_Ethnicity == "White or Caucasian",
          Sex_male = Sex == "Male") %>%
   left_join(diag_table %>%
-              filter(Diagnosis != "MDD") %>%
+              filter(!Diagnosis %in% c("MDD", "Type_2_Diabetes_Mellitus_with_Complications", "Bariatric_Surgery", "ADHD", "Agoraphobia", "Anxiety_Disorder_NOS", "Generalized_Anxiety", "OCD", "Panic_Disorder", "PTSD", "Social_Anxiety_Disorder", "Alcohol_Abuse", "Alcohol_Dependence", "Cannabis_Abuse", "Cannabis_Dependence", "Cocaine_Abuse", "Cocaine_Dependence", "Opioid_Abuse", "Opioid_Dependence", "Sedative_Abuse", "Sedative_Dependence", "Tobacco_Use_Disorder", "Diseases_of_the_Arteries_Artrioles_and_Capillaries")) %>%
               pivot_wider(names_from = Diagnosis, values_from = FirstDiagnosisDate,
                           values_fill = NA, names_glue = "{Diagnosis}_FirstDiagnosis"),
             by = "PatientDurableKey") %>%
   mutate(across(ends_with("_FirstDiagnosis"),
                 ~ if_else(is.na(.), FALSE, TRUE),
                 .names = "{sub('_FirstDiagnosis$', '', .col)}")) %>%
-  mutate(Antidepressant_Use = PatientDurableKey %in% antidepressant_table$PatientDurableKey)
+  left_join(antidepressant_table %>% 
+              group_by(PatientDurableKey) %>% 
+              summarize(Antidepressant_Index = min(MedicationStartDate)),
+            by = "PatientDurableKey") %>%
+  left_join(antidiabetics_DPP4i_table %>% 
+               group_by(PatientDurableKey) %>% 
+               summarize(DPP4i_Index = min(MedicationStartDate)),
+             by = "PatientDurableKey") %>%
+  left_join(antidiabetics_GLP1RA_table %>% 
+              group_by(PatientDurableKey) %>% 
+              summarize(GLP1RA_Index = min(MedicationStartDate)),
+            by = "PatientDurableKey") %>%
+  left_join(antidiabetics_Insulins_table %>% 
+              group_by(PatientDurableKey) %>% 
+              summarize(Insulins_Index = min(MedicationStartDate)),
+            by = "PatientDurableKey") %>%
+  left_join(antidiabetics_Metformin_table %>% 
+              group_by(PatientDurableKey) %>% 
+              summarize(Metformin_Index = min(MedicationStartDate)),
+            by = "PatientDurableKey") %>%
+  left_join(antidiabetics_Semaglutide_table %>% 
+              group_by(PatientDurableKey) %>% 
+              summarize(Semaglutide_Index = min(MedicationStartDate)),
+            by = "PatientDurableKey") %>%
+  left_join(antidiabetics_SGLT2i_table %>% 
+              group_by(PatientDurableKey) %>% 
+              summarize(SGLT2i_Index = min(MedicationStartDate)),
+            by = "PatientDurableKey") %>%
+  left_join(antidiabetics_SU_table %>% 
+              group_by(PatientDurableKey) %>% 
+              summarize(SU_Index = min(MedicationStartDate)),
+            by = "PatientDurableKey") %>%
+  left_join(antidiabetics_TZD_table %>% 
+              group_by(PatientDurableKey) %>% 
+              summarize(TZD_Index = min(MedicationStartDate)),
+            by = "PatientDurableKey") %>%
+  left_join(antipsychotics_table %>% 
+              group_by(PatientDurableKey) %>% 
+              summarize(Antipsychotic_Index = min(MedicationStartDate)),
+            by = "PatientDurableKey") %>%
+  left_join(hydrochlorothiazide_table %>% 
+              group_by(PatientDurableKey) %>% 
+              summarize(Hydrochlorothiazide_Index = min(MedicationStartDate)),
+            by = "PatientDurableKey") %>%
+  mutate(across(paste0(all_drugs, "_Index"),
+                ~ if_else(is.na(.), FALSE, TRUE),
+                .names = "{sub('_Index$', '_Use', .col)}"))
+
 
 antidiabetic_overlap_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1100/CCM-OverlapWide_Table-26_03_27-v1.csv",
                                        na = c("", "NA", "NULL", "null"),
@@ -655,50 +706,55 @@ dte_cohort_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1
     TZD_meets_timeline_criteria = TZD_PrePostInclusionCriteriaMet & MDD_before_TZD
   ) %>%
   dplyr::select(
+    -Semaglutide_Index,
     -Semaglutide_Exposure,
     -Semaglutide_Iplus15,
     -Semaglutide_Iplus365,
     -MDD_before_Semaglutide,
     -Semaglutide_PrePostInclusionCriteriaMet,
+    -Insulins_Index,
     -Insulins_Exposure,
     -Insulins_Iplus15,
     -Insulins_Iplus365,
     -MDD_before_Insulins,
     -Insulins_PrePostInclusionCriteriaMet,
+    -DPP4i_Index,
     -DPP4i_Exposure,
     -DPP4i_Iplus15,
     -DPP4i_Iplus365,
     -MDD_before_DPP4i,
     -DPP4i_PrePostInclusionCriteriaMet,
+    -GLP1RA_Index,
     -GLP1RA_Exposure,
     -GLP1RA_Iplus15,
     -GLP1RA_Iplus365,
     -MDD_before_GLP1RA,
     -GLP1RA_PrePostInclusionCriteriaMet,
+    -Metformin_Index,
     -Metformin_Exposure,
     -Metformin_Iplus15,
     -Metformin_Iplus365,
     -MDD_before_Metformin,
     -Metformin_PrePostInclusionCriteriaMet,
+    -SGLT2i_Index,
     -SGLT2i_Exposure,
     -SGLT2i_Iplus15,
     -SGLT2i_Iplus365,
     -MDD_before_SGLT2i,
     -SGLT2i_PrePostInclusionCriteriaMet,
+    -SU_Index,
     -SU_Exposure,
     -SU_Iplus15,
     -SU_Iplus365,
     -MDD_before_SU,
     -SU_PrePostInclusionCriteriaMet,
+    -TZD_Index,
     -TZD_Exposure,
     -TZD_Iplus15,
     -TZD_Iplus365,
     -MDD_before_TZD,
     -TZD_PrePostInclusionCriteriaMet
-  )  %>%
-  mutate(across(paste0(all_drugs, "_Index"),
-                ~ if_else(is.na(.), FALSE, TRUE),
-                .names = "{sub('_Index$', '_Use', .col)}")) %>%
+  ) %>%
   left_join(mdd_data,
             by = "PatientDurableKey") %>%
   filter(meets_diagnosis_eligibility_criteria) %>% 
@@ -848,11 +904,9 @@ source("get_Diagnosis_Timeline.R")
 
 message("Building diagnosis timeline variables")
 get_Diagnosis_Timeline(
-  target_drug      = target_drug,
-  comparator_groups = comparator_groups,
+  all_drugs        = all_drugs,
   all_diagnoses    = eligibility_inclusion_diagnoses,
   index_dataset    = nontreat_result$dte_cohort_data2,
-  diag_table       = diag_table,
   output_filename  = "OutputData/data_DTE_DiagnosisTimelineVars.rds"
 )
 
