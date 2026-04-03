@@ -409,7 +409,8 @@ mdd_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1600/CCM
             by = "PatientDurableKey") %>%
   mutate(across(ends_with("_FirstDiagnosis"),
                 ~ if_else(is.na(.), FALSE, TRUE),
-                .names = "{sub('_FirstDiagnosis$', '', .col)}"))
+                .names = "{sub('_FirstDiagnosis$', '', .col)}")) %>%
+  mutate(Antidepressant_Use = PatientDurableKey %in% antidepressant_table$PatientDurableKey)
 
 antidiabetic_overlap_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1100/CCM-OverlapWide_Table-26_03_27-v1.csv",
                                        na = c("", "NA", "NULL", "null"),
@@ -701,8 +702,7 @@ dte_cohort_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1
   left_join(mdd_data,
             by = "PatientDurableKey") %>%
   filter(meets_diagnosis_eligibility_criteria) %>% 
-  left_join(antidiabetic_overlap_table, by = "PatientDurableKey") %>%
-  mutate(Antidepressant_Use = PatientDurableKey %in% antidepressant_table$PatientDurableKey)
+  left_join(antidiabetic_overlap_table, by = "PatientDurableKey")
 
 for(i in 1:length(all_drugs)){
   this_drug <-  all_drugs[i]
