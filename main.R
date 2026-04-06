@@ -460,7 +460,8 @@ mdd_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260403-1200/CCM
             by = "PatientDurableKey") %>%
   mutate(across(paste0(all_drugs, "_Index"),
                 ~ if_else(is.na(.), FALSE, TRUE),
-                .names = "{sub('_Index$', '_Use', .col)}"))
+                .names = "{sub('_Index$', '_Use', .col)}")) %>%
+  mutate(Antidepressant_Use = PatientDurableKey %in% antidepressant_table$PatientDurableKey)
 
 
 antidiabetic_overlap_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1100/CCM-OverlapWide_Table-26_03_27-v1.csv",
