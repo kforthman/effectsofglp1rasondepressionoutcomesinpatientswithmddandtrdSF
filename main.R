@@ -7,6 +7,13 @@ library(plotrix)
 library(tableone)
 library(kableExtra)
 library(viridis)
+library(caret)
+library(twang)
+library(MatchIt)
+library(ggplot2)
+library(ggcorrplot)
+library(survey)
+library(scales)
 
 data_pull_date <- as.Date("2026-03-27")
 target_drug      <- "Semaglutide"
@@ -964,12 +971,15 @@ for (group in comparator_groups) {
   
   weighted.data <- ps_result$weighted.data
   save(weighted.data, file = paste0("OutputData/PS_Weighted_Dataset-", group, ".rds"))
+  rm(weighted.data)
   
   matched.data <- ps_result$matched.data
   save(matched.data, file = paste0("OutputData/PS_Matched_Dataset-", group, ".rds"))
+  rm(matched.data)
   
   result_file <- paste0("OutputData/propensity_scoring_result-", target_drug, "Vs", group, ".rds")
   saveRDS(ps_result, result_file)
+  rm(ps_result)
   
   message("Rendering report for: ", group)
   render(

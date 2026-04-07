@@ -97,8 +97,8 @@ stat_ks <- function(var, treat, data) {
 
 analysis_Propensity_Scoring <- function(comparator_group,
                                    target_drug     = "Semaglutide",
-                                   cohort_file     = "dte_cohort_wNontreat_data.rds",
-                                   covariates_file = "ps_covariates.csv") {
+                                   cohort_file     = "OutputData/dte_cohort_wNontreat_data.rds",
+                                   covariates_file = "Data/ps_covariates.csv") {
 
     # ── 1. Load and prepare data ─────────────────────────────────────────────
 
@@ -128,11 +128,8 @@ analysis_Propensity_Scoring <- function(comparator_group,
     varname_target_mdd_to_index_days     <- paste0(target_drug, "_mdd_to_index_days")
     varname_comparator_mdd_to_index_days <- paste0(comparator_group, "_mdd_to_index_days")
 
-    varname_target_first_drug_record     <- paste0(target_drug, "_first_drug_record")
-    varname_comparator_first_drug_record <- ifelse(
-        comparator_group == "Nontreatment", "Nontreatment_index",
-        paste0(comparator_group, "_first_drug_record")
-    )
+    varname_target_index     <- paste0(target_drug, "_Index")
+    varname_comparator_index <- paste0(comparator_group, "_Index")
 
     this.data <- dte_cohort_data %>%
         filter(!!sym(target_pop_colname) |
@@ -144,10 +141,10 @@ analysis_Propensity_Scoring <- function(comparator_group,
         mutate(mdd_to_index_days = ifelse(treatment,
                                           !!sym(varname_target_mdd_to_index_days),
                                           !!sym(varname_comparator_mdd_to_index_days))) %>%
-        mutate(first_drug_record = as.Date(ifelse(treatment,
-                                                  !!sym(varname_target_first_drug_record),
-                                                  !!sym(varname_comparator_first_drug_record))),
-               first_drug_record_year = year(first_drug_record)) %>%
+        mutate(index = as.Date(ifelse(treatment,
+                                                  !!sym(varname_target_index),
+                                                  !!sym(varname_comparator_index))),
+               index_year = year(index)) %>%
         as.data.frame()
 
     # ── 2. Variable selection ────────────────────────────────────────────────
@@ -340,7 +337,7 @@ analysis_Propensity_Scoring <- function(comparator_group,
     total_big_weights_weighted   <- this.data.ps %>%
         filter(treatment_name == comparator_group & weight > 0.99) %>% nrow()
 
-    design.ps <- svydesign(ids = ~person_id, weights = ~weight, data = this.data.ps)
+    design.ps <- svydesign(ids = ~PatientDurableKey, weights = ~weight, data = this.data.ps)
 
     # ── 5. Nearest-neighbour matched dataset ─────────────────────────────────
 
