@@ -17,7 +17,8 @@ params:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 
-r <- readRDS(params$result_file)
+load(params$result_file)
+r <- ps_result
 ```
 
 # Data Summary

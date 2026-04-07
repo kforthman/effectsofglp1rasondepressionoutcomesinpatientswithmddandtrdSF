@@ -879,7 +879,7 @@ save(this.data, file = "OutputData/dte_cohort_wNontreat_data.rds")
 
 result_file <- paste0("OutputData/nontreatment_timelines_result-", target_drug, ".rds")
 
-saveRDS(nontreat_result, result_file)
+save(nontreat_result, file = result_file)
 
 # ── Render nontreatment timelines report ──────────────────────────────────────----
 
@@ -978,7 +978,7 @@ for (group in comparator_groups) {
   rm(matched.data)
   
   result_file <- paste0("OutputData/propensity_scoring_result-", target_drug, "Vs", group, ".rds")
-  saveRDS(ps_result, result_file)
+  save(ps_result, file = result_file)
   rm(ps_result)
   
   message("Rendering report for: ", group)

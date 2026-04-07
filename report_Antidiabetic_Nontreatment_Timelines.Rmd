@@ -19,7 +19,8 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 library(tidyverse)
 library(scales)
 
-r <- readRDS(params$result_file)
+load(params$result_file)
+r <- nontreat_result
 ```
 
 # Eligible Population Summary
