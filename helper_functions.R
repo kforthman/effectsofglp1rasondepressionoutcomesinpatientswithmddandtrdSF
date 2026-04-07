@@ -118,10 +118,10 @@ number_to_viridis <- function(x) {
 
 my_table1 <- function(this.data, my_strata, filename, varsToFactor, new_names = NULL, new_titles = NULL, new_colnames = NULL, verbose = FALSE){
 
-    csv_filename <- paste0(filename, ".csv")
-    frmt_filename <- paste0(filename, "-frmt.rds")
+    csv_filename <- paste0("OutputData/", filename, ".csv")
+    frmt_filename <- paste0("OutputData/", filename, "-frmt.rds")
     html_filename <- paste0("html_tables/", filename, ".html")
-    png_filename <- paste0(filename, ".png")
+    png_filename <- paste0("html_tables/", filename, ".png")
 
     tableOne <- CreateTableOne(vars = varsToFactor, strata = my_strata,
                                data = this.data,
