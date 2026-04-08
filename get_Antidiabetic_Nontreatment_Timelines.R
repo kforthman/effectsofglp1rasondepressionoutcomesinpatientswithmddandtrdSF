@@ -27,12 +27,17 @@ get_Antidiabetic_Nontreatment_Timelines <- function(dte_cohort_data,
                                                     nontreatment_group = "Nontreatment",
                                                     mdd_data) {
   
-  col_TimelineCriteria <- paste0(target_drug, "_meets_timeline_criteria")
-  col_mdd_to_index    <- paste0(target_drug, "_mdd_to_index_days")
-  col_Index           <- paste0(target_drug, "_Index")
-  col_vs_Nontreat     <- paste0(target_drug, "_Population_for_", target_drug, "_vs_", nontreatment_group)
+  col_TimelineCriteria <- paste0(target_drug,        "_meets_timeline_criteria")
+  col_mdd_to_index    <- paste0(target_drug,        "_mdd_to_index_days")
+  col_Index           <- paste0(target_drug,        "_Index")
+  col_vs_Nontreat     <- paste0(target_drug,        "_Population_for_", target_drug, "_vs_", nontreatment_group)
   col_Nontreat_vs     <- paste0(nontreatment_group, "_Population_for_", target_drug, "_vs_", nontreatment_group)
-  col_age_at_index    <- paste0(target_drug, "_age_at_index_years")
+  col_age_at_index    <- paste0(target_drug,        "_age_at_index_years")
+
+  col_nt_Index          <- paste0(nontreatment_group, "_Index")
+  col_nt_mdd_to_index   <- paste0(nontreatment_group, "_mdd_to_index_days")
+  col_nt_meets_criteria <- paste0(nontreatment_group, "_meets_timeline_criteria")
+  col_nt_age_at_index   <- paste0(nontreatment_group, "_age_at_index_years")
   
   # ── Identify the eligible treatment group ─────────────────────────────────
   
@@ -108,21 +113,21 @@ get_Antidiabetic_Nontreatment_Timelines <- function(dte_cohort_data,
   # ── Finalize: assign nontreatment index dates ─────────────────────────────
   
   nonswitch_selected2 <- nonswitch_selected %>%
-    mutate(Nontreatment_Index = MDD_Index + days(emu_tfe_at_index_days)) %>%
-    rename(Nontreatment_mdd_to_index_days = "emu_tfe_at_index_days")
+    mutate(!!col_nt_Index        := MDD_Index + days(emu_tfe_at_index_days)) %>%
+    rename(!!col_nt_mdd_to_index := "emu_tfe_at_index_days")
   
   # ── Combine into main cohort dataset ─────────────────────────────────────
   
   dte_cohort_data2 <- dte_cohort_data %>%
     left_join(
-      nonswitch_selected2 %>% dplyr::select(PatientDurableKey, Nontreatment_Index, Nontreatment_mdd_to_index_days),
+      nonswitch_selected2 %>% dplyr::select(PatientDurableKey, all_of(c(col_nt_Index, col_nt_mdd_to_index))),
       by = "PatientDurableKey"
     ) %>%
     mutate(
-      Nontreatment_meets_timeline_criteria     = PatientDurableKey %in% nonswitch_selected2$PatientDurableKey,
-      !!col_vs_Nontreat                        := PatientDurableKey %in% target_data$PatientDurableKey,
-      !!col_Nontreat_vs                        := PatientDurableKey %in% nonswitch_selected2$PatientDurableKey,
-      Nontreatment_age_at_index_years = time_length(interval(BirthDate, Nontreatment_Index), "years")
+      !!col_nt_meets_criteria                   := PatientDurableKey %in% nonswitch_selected2$PatientDurableKey,
+      !!col_vs_Nontreat                         := PatientDurableKey %in% target_data$PatientDurableKey,
+      !!col_Nontreat_vs                         := PatientDurableKey %in% nonswitch_selected2$PatientDurableKey,
+      !!col_nt_age_at_index                     := time_length(interval(BirthDate, !!sym(col_nt_Index)), "years")
     )
   
   # ── Add nontreatment-only patients as new rows ───────────────────────────
@@ -132,13 +137,13 @@ get_Antidiabetic_Nontreatment_Timelines <- function(dte_cohort_data,
   nontreat_only <- nonswitch_selected2 %>%
     filter(!PatientDurableKey %in% dte_cohort_data$PatientDurableKey) %>%
     distinct(PatientDurableKey, .keep_all = TRUE) %>%
-    dplyr::select(PatientDurableKey, Nontreatment_Index, Nontreatment_mdd_to_index_days) %>%
+    dplyr::select(PatientDurableKey, all_of(c(col_nt_Index, col_nt_mdd_to_index))) %>%
     left_join(mdd_data, by = "PatientDurableKey") %>%
     mutate(
-      Nontreatment_meets_timeline_criteria = TRUE,
-      !!col_vs_Nontreat                   := FALSE,
-      !!col_Nontreat_vs                   := TRUE,
-      Nontreatment_age_at_index_years      = time_length(interval(BirthDate, Nontreatment_Index), "years")
+      !!col_nt_meets_criteria  := TRUE,
+      !!col_vs_Nontreat        := FALSE,
+      !!col_Nontreat_vs        := TRUE,
+      !!col_nt_age_at_index    := time_length(interval(BirthDate, !!sym(col_nt_Index)), "years")
     )
 
   dte_cohort_data2 <- bind_rows(dte_cohort_data2, nontreat_only)
@@ -164,14 +169,14 @@ get_Antidiabetic_Nontreatment_Timelines <- function(dte_cohort_data,
     mutate(treatment_name = ifelse(treatment, target_drug, nontreatment_group)) %>%
     mutate(index_date     = as.Date(ifelse(treatment,
                                            !!sym(col_Index),
-                                           Nontreatment_Index))) %>%
+                                           !!sym(col_nt_Index)))) %>%
     mutate(index_year     = year(index_date)) %>%
     mutate(time_diag_to_index_days = ifelse(treatment,
                                             !!sym(col_mdd_to_index),
-                                            Nontreatment_mdd_to_index_days)) %>%
+                                            !!sym(col_nt_mdd_to_index))) %>%
     mutate(age_at_index_years      = ifelse(treatment,
                                             !!sym(col_age_at_index),
-                                            Nontreatment_age_at_index_years))
+                                            !!sym(col_nt_age_at_index)))
   
   # ── KS tests for final diagnostic distributions ──────────────────────────
   
