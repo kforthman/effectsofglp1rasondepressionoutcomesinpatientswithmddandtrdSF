@@ -991,3 +991,17 @@ for (group in comparator_groups) {
     envir = new.env()
   )
 }
+
+# ── Render PS covariate summary report ───────────────────────────────────────
+
+render(
+  input       = "report_PS_Covariate_Summary.Rmd",
+  output_file = paste0("Reports/report_PS_Covariate_Summary-", target_drug, ".html"),
+  params      = list(
+    comparator_groups = comparator_groups,
+    ps_covariates     = ps_covariates,
+    target_drug       = target_drug,
+    output_filename   = paste0("OutputData/PS_Covariates-Summary-", target_drug, ".csv")
+  ),
+  envir = new.env()
+)
