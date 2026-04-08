@@ -29,3 +29,7 @@ IDs*.txt
 
 # Track CLAUDE.md
 !CLAUDE.md
+
+# ignore error demos
+errorDemos/
+
