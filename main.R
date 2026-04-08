@@ -15,7 +15,7 @@ library(ggcorrplot)
 library(survey)
 library(scales)
 
-data_pull_date <- as.Date("2026-03-27")
+data_pull_date <- as.Date("2026-04-06")
 target_drug      <- "Semaglutide"
 comparator_drugs <- c("DPP4i", "GLP1RA", "Insulins", "Metformin",
                       "SGLT2i", "SU", "TZD")
@@ -41,9 +41,15 @@ eligibility_inclusion_diagnoses <- c("T1DM",
                                      "Thyroid_Cancer", 
                                      "Gastroparesis")
 
+atc_drugs <- read.csv("Data/Drug_ATC_Categories.csv") %>% 
+  mutate(length = nchar(Name)) %>%
+  arrange(Name)
+
+drug_class <- read.csv("Data/DrugClasses.csv")
+
 # ── Read input data ───────────────────────────────────────────────────────────----
 
-med_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1800/CCM-Medication_Table-26_03_27-v2.csv",
+med_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-Medication_Table-26_04_06-v1.csv",
                       na = c("", "NA", "NULL", "null"),
                       col_types = cols(
                         PatientDurableKey        = col_character(),
@@ -70,10 +76,6 @@ med_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1800/CC
 ) %>%
   mutate(DaysSupply = as.integer(DaysSupply)) %>%
   dplyr::select(-AntidiabeticIndexLabel, -AntidiabeticIndexDate)
-
-atc_drugs <- read.csv("Data/Drug_ATC_Categories.csv") %>% 
-  mutate(length = nchar(Name)) %>%
-  arrange(Name)
 
 antidepressant_table <- med_table %>% 
   filter(PharmaceuticalClass == "Antidepressants") %>%
@@ -291,7 +293,7 @@ antidiabetics_GLP1RA_table      <- antidiabetics_table %>% filter(Pharmaceutical
 rm(med_table)
 rm(antidiabetics_table)
 
-diag_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260403-1200/CCM-FirstDiagnosis_Table-26_04_02-v1.csv",
+diag_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-FirstDiagnosis_Table-26_04_06-v1.csv",
                        na = c("", "NA", "NULL", "null"),
                        col_types = cols(
                          PatientDurableKey  = col_character(),
@@ -310,10 +312,10 @@ diag_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260403-1200/C
                             "Thyroid Cancer"           = "Thyroid_Cancer"
                             
   )) %>% 
-  group_by(PatientDurableKey, Diagnosis) %>% summarise(FirstDiagnosisDate = min(FirstDiagnosisDate))
+  arrange(PatientDurableKey, Diagnosis)
 
 # Patients with MDD, no Bipolar Disorder, no Schizophrenia
-mdd_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260403-1200/CCM-MDDPatientList_Table-26_04_02-v1.csv",
+mdd_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-MDDPatientList_Table-26_04_06-v1.csv",
                      na = c("", "NA", "NULL", "null"),
                      col_types = cols(
                        PatientDurableKey    = col_character(),
@@ -471,7 +473,7 @@ mdd_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260403-1200/CCM
   mutate(Antidepressant_Use = PatientDurableKey %in% antidepressant_table$PatientDurableKey)
 
 
-antidiabetic_overlap_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1100/CCM-OverlapWide_Table-26_03_27-v1.csv",
+antidiabetic_overlap_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260406-1400//CCM-OverlapWide_Table-26_04_06-v1.csv",
                                        na = c("", "NA", "NULL", "null"),
                                        col_types = cols(PatientDurableKey = col_character(),
                                                         `DPP-4i_Overlaps_Semaglutide_-6m_12m` = col_logical(),
@@ -588,7 +590,7 @@ antidiabetic_overlap_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data
          SU_Overlaps_GLP1RA_Index = "SU_Overlaps_GLP-1RA_-6m_12m",
          TZD_Overlaps_GLP1RA_Index = "TZD_Overlaps_GLP-1RA_-6m_12m")
 
-dte_cohort_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1100/CCM-Treatment_Table-26_03_27-v1.csv",
+dte_cohort_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-Treatment_Table-26_04_06-v1.csv",
                             na = c("", "NA", "NULL", "null"),
                             col_types = cols(
                               PatientDurableKey                          = col_character(),
@@ -792,7 +794,7 @@ dte_cohort_data <- dte_cohort_data %>%
 
 rm(antidiabetic_overlap_table)
 
-nonswitch_periods <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1100/CCM-Nontreatment_Table-26_03_27-v1.csv",
+nonswitch_periods <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-Nontreatment_Table-26_04_06-v1.csv",
                               col_types = cols(
                                 PatientDurableKey = col_character(),
                                 StartConcept      = col_character(),
@@ -812,7 +814,7 @@ nonswitch_periods <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327
     tfe_at_index_end = floor(time_length(interval(MDD_Index, at_12_months_before_end_date), "days")),
   )
 
-psych_proc_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-1600/CCM-Outcomes_Table-26_03_27-v1.csv",
+psych_proc_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-Outcomes_Table-26_04_06-v1.csv",
                              na = c("", "NA", "NULL", "null"),
                              col_types = cols(
                                PatientDurableKey   = col_character(),
@@ -821,10 +823,6 @@ psych_proc_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260327-
                                CPTCode             = col_character()
                              )
 )
-
-
-
-drug_class <- read.csv("Data/DrugClasses.csv")
 
 # ── Identify TRD patients ─────────────────────────────────────────────────────----
 
