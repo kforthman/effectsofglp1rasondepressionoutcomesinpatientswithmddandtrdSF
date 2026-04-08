@@ -12,9 +12,10 @@
 #                       already joined to mdd_data, filtered to
 #                       Eligibility_Group_B, and with tfe_at_index_bgn /
 #                       tfe_at_index_end computed)
-#   target_drug       — Name of target treatment (default: "Semaglutide")
-#   mdd_data          — Patient-level MDD data (used to populate demographic
-#                       columns for nontreatment-only patients added as new rows)
+#   target_drug        — Name of target treatment (default: "Semaglutide")
+#   nontreatment_group — Name of the nontreatment group (default: "Nontreatment")
+#   mdd_data           — Patient-level MDD data (used to populate demographic
+#                        columns for nontreatment-only patients added as new rows)
 #
 # Returns:
 #   List of diagnostic objects for report_Antidiabetic_Nontreatment_Timelines.Rmd,
@@ -23,13 +24,14 @@
 get_Antidiabetic_Nontreatment_Timelines <- function(dte_cohort_data,
                                                     nonswitch_periods,
                                                     target_drug = "Semaglutide",
+                                                    nontreatment_group = "Nontreatment",
                                                     mdd_data) {
   
   col_TimelineCriteria <- paste0(target_drug, "_meets_timeline_criteria")
   col_mdd_to_index    <- paste0(target_drug, "_mdd_to_index_days")
   col_Index           <- paste0(target_drug, "_Index")
-  col_vs_Nontreat     <- paste0(target_drug, "_Population_for_", target_drug, "_vs_Nontreatment")
-  col_Nontreat_vs     <- paste0("Nontreatment_Population_for_", target_drug, "_vs_Nontreatment")
+  col_vs_Nontreat     <- paste0(target_drug, "_Population_for_", target_drug, "_vs_", nontreatment_group)
+  col_Nontreat_vs     <- paste0(nontreatment_group, "_Population_for_", target_drug, "_vs_", nontreatment_group)
   col_age_at_index    <- paste0(target_drug, "_age_at_index_years")
   
   # ── Identify the eligible treatment group ─────────────────────────────────
@@ -159,7 +161,7 @@ get_Antidiabetic_Nontreatment_Timelines <- function(dte_cohort_data,
   dte_cohort_data3 <- dte_cohort_data2 %>%
     filter(!!sym(col_vs_Nontreat) | !!sym(col_Nontreat_vs)) %>%
     mutate(treatment      = ifelse(!!sym(col_vs_Nontreat), 1, 0)) %>%
-    mutate(treatment_name = ifelse(treatment, target_drug, "Nontreatment")) %>%
+    mutate(treatment_name = ifelse(treatment, target_drug, nontreatment_group)) %>%
     mutate(index_date     = as.Date(ifelse(treatment,
                                            !!sym(col_Index),
                                            Nontreatment_Index))) %>%
@@ -174,15 +176,15 @@ get_Antidiabetic_Nontreatment_Timelines <- function(dte_cohort_data,
   # ── KS tests for final diagnostic distributions ──────────────────────────
   
   s_samp_age <- dte_cohort_data3 %>% filter(treatment_name == target_drug)     %>% pull(age_at_index_years)
-  c_samp_age <- dte_cohort_data3 %>% filter(treatment_name == "Nontreatment") %>% pull(age_at_index_years)
+  c_samp_age <- dte_cohort_data3 %>% filter(treatment_name == nontreatment_group) %>% pull(age_at_index_years)
   ks_age     <- ks.test(s_samp_age, c_samp_age)
   
   s_samp_tdi <- dte_cohort_data3 %>% filter(treatment_name == target_drug)     %>% pull(time_diag_to_index_days)
-  c_samp_tdi <- dte_cohort_data3 %>% filter(treatment_name == "Nontreatment") %>% pull(time_diag_to_index_days)
+  c_samp_tdi <- dte_cohort_data3 %>% filter(treatment_name == nontreatment_group) %>% pull(time_diag_to_index_days)
   ks_tdi     <- ks.test(s_samp_tdi, c_samp_tdi)
   
   s_samp_yr  <- dte_cohort_data3 %>% filter(treatment_name == target_drug)     %>% pull(index_year)
-  c_samp_yr  <- dte_cohort_data3 %>% filter(treatment_name == "Nontreatment") %>% pull(index_year)
+  c_samp_yr  <- dte_cohort_data3 %>% filter(treatment_name == nontreatment_group) %>% pull(index_year)
   ks_year    <- ks.test(s_samp_yr, c_samp_yr)
   
   # ── Return diagnostic results for reporting ───────────────────────────────
