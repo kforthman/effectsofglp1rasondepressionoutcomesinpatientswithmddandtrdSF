@@ -1,5 +1,5 @@
 ---
-title: "Antidiabetic Nontreatment Timelines: `r params$target_drug` vs. Nontreatment"
+title: "Antidiabetic Nontreatment Timelines: `r params$target_drug` vs. `r params$nontreatment_group`"
 date: "`r Sys.Date()`"
 output:
   html_document:
@@ -9,8 +9,9 @@ output:
     theme: flatly
     df_print: kable
 params:
-  target_drug: "Semaglutide"
-  result_file: "Data/nontreatment_timelines_result-Semaglutide.rds"
+  target_drug:        "Semaglutide"
+  nontreatment_group: "Nontreatment"
+  result_file:        "Data/nontreatment_timelines_result-Semaglutide.rds"
 ---
 
 ```{r setup, include=FALSE}
@@ -27,8 +28,9 @@ r <- nontreat_result
 
 ```{r population-summary}
 cat(sprintf(
-    "There are %s individuals eligible for the non-treatment population and %s in the %s population. Match ratio of %d to 1.",
+    "There are %s individuals eligible for the %s population and %s in the %s population. Match ratio of %d to 1.",
     comma(r$n_comp),
+    params$nontreatment_group,
     comma(r$n_sema),
     r$target_drug,
     r$match_ratio
@@ -169,8 +171,8 @@ print(r$ks_year)
 
 ```{r uniqueness-check}
 if (r$uniqueness_check) {
-    cat("PASS: Each patient appears in exactly one selected nontreatment period row.\n")
+    cat(sprintf("PASS: Each patient appears in exactly one selected %s period row.\n", params$nontreatment_group))
 } else {
-    cat("WARNING: Some patients appear in more than one selected nontreatment period row.\n")
+    cat(sprintf("WARNING: Some patients appear in more than one selected %s period row.\n", params$nontreatment_group))
 }
 ```

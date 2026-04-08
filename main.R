@@ -885,8 +885,9 @@ render(
   input       = "report_Antidiabetic_Nontreatment_Timelines.Rmd",
   output_file = paste0("Reports/report_Antidiabetic_Nontreatment_Timelines-", target_drug, ".html"),
   params      = list(
-    target_drug = target_drug,
-    result_file = result_file
+    target_drug        = target_drug,
+    nontreatment_group = nontreatment_group,
+    result_file        = result_file
   ),
   envir = new.env()
 )
