@@ -35,6 +35,7 @@ r <- nb_result
 r$dataset %>%
   count(treatment_name) %>%
   rename(Group = treatment_name, N = n) %>%
+  mutate(N = comma(N)) %>%
   knitr::kable()
 ```
 
