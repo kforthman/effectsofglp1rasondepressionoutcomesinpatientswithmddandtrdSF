@@ -1,50 +1,11 @@
-# -*- coding: utf-8 -*-
-# %% [markdown]
-# # Setup
-
-# %%
-source("workbench_functions.txt")
-source("easy_delete_copy_R.txt")
-notebook_setup()
-
-# %% [markdown]
-# ## Load in and preview data
-
-# %%
-load("dte_cohort_wNontreat_data.rds")
-dte_cohort_data <- this.data
-
-dte_cohort_data %>% head(10)
-
-# %%
-load("dte_cohort_visits.rds")
-
-dte_cohort_visits <- visit_data
-
-dte_cohort_visits %>% head(10)
-
-# %%
-load("dte_cohort_psych_visits.rds")
-
-dte_cohort_psych_visits <- psych_visit_data
-
-dte_cohort_psych_visits %>% head(10)
-
-# %%
-load("antidepressant_antipsychotic_consecutive_period.rds", verbose = TRUE)
-
+load("OutputData/dte_cohort_wNontreat_data.rds", verbose = T)
+dte_cohort_data2 <- this.data
+dte_cohort_psych_visits <- psych_proc_table
+load("OutputData/antidepressant_antipsychotic_consecutive_period.rds", verbose = TRUE)
 dte_cohort_drug_use <- consecutive_period_tab
-
-dte_cohort_drug_use %>% head
-
-# %%
-load("hydrochlorothiazide_consecutive_instance.rds", verbose = TRUE)
-
+load("OutputData/hydrochlorothiazide_consecutive_instance.rds", verbose = TRUE)
 dte_cohort_hc_drug_use <- consecutive_instance_tab
 
-dte_cohort_hc_drug_use %>% head
-
-# %%
 # Check that rows are unique
 cat("\nTotal visit records:\n")
 dte_cohort_visits %>% nrow %>% comma %>% cat
