@@ -1055,14 +1055,14 @@ foreach(
   task      = outcome_tasks,
   .packages = c("dplyr", "tidyr", "lubridate", "readr"),
   .export   = c("matched_data_files", "period_info", "target_drug",
-                "nontreatment_group", "comparator_groups",
-                "get_Outcomes_PsychProc", 
+                "comparator_groups",
+                "get_Outcomes_PsychProc",
               # "get_Outcomes_Visits",
-                "get_Outcomes_MedChanges", 
+                "get_Outcomes_MedChanges",
                 "get_Outcomes_HCMedChanges")
 ) %dopar% {
   task$fn(task$src_file, matched_data_files, period_info,
-          target_drug, nontreatment_group, comparator_groups,
+          target_drug, comparator_groups,
           task$out_file)
 }
 
