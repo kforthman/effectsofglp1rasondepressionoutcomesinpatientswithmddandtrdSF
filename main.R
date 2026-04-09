@@ -1074,8 +1074,8 @@ message("All outcome computations complete.")
 load(outcomes_files$psych)
 outcomes_psych <- outcomes
 
-load(outcomes_files$visits)
-outcomes_visits <- outcomes
+# load(outcomes_files$visits)
+# outcomes_visits <- outcomes
 
 load(outcomes_files$med)
 outcomes_med_changes <- outcomes
@@ -1084,12 +1084,12 @@ load(outcomes_files$hc_med)
 outcomes_hc_med_changes <- outcomes
 
 all_outcomes_wide <- outcomes_psych %>%
-  left_join(outcomes_visits           %>% dplyr::select(-person_id, -study_cohort, -period),
-            by = c("person_id", "study_cohort", "period")) %>%
-  left_join(outcomes_med_changes      %>% dplyr::select(-person_id, -study_cohort, -period),
-            by = c("person_id", "study_cohort", "period")) %>%
-  left_join(outcomes_hc_med_changes   %>% dplyr::select(-person_id, -study_cohort, -period),
-            by = c("person_id", "study_cohort", "period"))
+  # left_join(outcomes_visits         %>% dplyr::select(-PatientDurableKey, -study_cohort, -period),
+  #           by = c("PatientDurableKey", "study_cohort", "period")) %>%
+  left_join(outcomes_med_changes    %>% dplyr::select(-PatientDurableKey, -study_cohort, -period),
+            by = c("PatientDurableKey", "study_cohort", "period")) %>%
+  left_join(outcomes_hc_med_changes %>% dplyr::select(-PatientDurableKey, -study_cohort, -period),
+            by = c("PatientDurableKey", "study_cohort", "period"))
 
 all_outcomes <- all_outcomes_wide %>%
   pivot_longer(4:ncol(.), names_to = "var_name", values_to = "value") %>%
