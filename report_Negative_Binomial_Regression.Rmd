@@ -29,6 +29,17 @@ r <- nb_result
 
 ---
 
+## Sample Size
+
+```{r sample-size}
+r$dataset %>%
+  count(treatment_name) %>%
+  rename(Group = treatment_name, N = n) %>%
+  knitr::kable()
+```
+
+---
+
 ## Primary Analysis
 
 ### Poisson — Overdispersion Check
