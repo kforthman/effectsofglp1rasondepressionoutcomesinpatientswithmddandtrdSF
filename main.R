@@ -814,15 +814,7 @@ nonswitch_periods <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260406
     tfe_at_index_end = floor(time_length(interval(MDD_Index, at_12_months_before_end_date), "days")),
   )
 
-psych_proc_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-Outcomes_Table-26_04_06-v1.csv",
-                             na = c("", "NA", "NULL", "null"),
-                             col_types = cols(
-                               PatientDurableKey   = col_character(),
-                               OutcomeDate         = col_date(format = "%Y-%m-%d"),
-                               OutcomeName         = col_character(),
-                               CPTCode             = col_character()
-                             )
-)
+psych_proc_file <- "/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-Outcomes_Table-26_04_06-v1.csv"
 
 # ── Identify TRD patients ─────────────────────────────────────────────────────----
 
@@ -1006,3 +998,97 @@ render(
   ),
   envir = new.env()
 )
+
+# ── Compute outcomes ──────────────────────────────────────────────────────────----
+
+#                period                       bgn_win  end_win
+period_info <- c("6-0 months before index",      -180,       0,
+                 "15 days-3 months after index",   15,      90,
+                 "15 days-6 months after index",   15,     180,
+                 "15 days-12 months after index",  15,     360,
+                 "6-12 months after index",        180,    360) %>%
+  matrix(ncol = 3, byrow = TRUE) %>%
+  as.data.frame(stringsAsFactors = FALSE) %>%
+  setNames(c("period", "bgn_win", "end_win")) %>%
+  mutate(across(c(bgn_win, end_win), as.numeric))
+
+matched_data_files <- setNames(
+  paste0("OutputData/PS_Matched_Dataset-", comparator_groups, ".rds"),
+  comparator_groups
+)
+
+visits_file      <- "OutputData/dte_cohort_visits.rds"
+med_changes_file <- "OutputData/antidepressant_antipsychotic_consecutive_period.rds"
+hc_med_file      <- "OutputData/hydrochlorothiazide_consecutive_instance.rds"
+
+outcomes_files <- list(
+  psych   = paste0("OutputData/outcomes_psych-",         target_drug, ".rds"),
+  visits  = paste0("OutputData/outcomes_visits-",        target_drug, ".rds"),
+  med     = paste0("OutputData/outcomes_med_changes-",   target_drug, ".rds"),
+  hc_med  = paste0("OutputData/outcomes_hc_med_changes-",target_drug, ".rds")
+)
+
+source("get_Outcomes_PsychProc.R")
+source("get_Outcomes_Visits.R")
+source("get_Outcomes_MedChanges.R")
+source("get_Outcomes_HCMedChanges.R")
+
+outcome_tasks <- list(
+  list(fn = get_Outcomes_PsychProc,   src_file = psych_proc_file,   out_file = outcomes_files$psych),
+  list(fn = get_Outcomes_Visits,      src_file = visits_file,       out_file = outcomes_files$visits),
+  list(fn = get_Outcomes_MedChanges,  src_file = med_changes_file,  out_file = outcomes_files$med),
+  list(fn = get_Outcomes_HCMedChanges,src_file = hc_med_file,       out_file = outcomes_files$hc_med)
+)
+
+n_workers <- min(length(outcome_tasks), max(1L, detectCores(logical = TRUE) - 1L))
+cl <- makeCluster(n_workers)
+registerDoParallel(cl)
+
+message("Running outcome computations in parallel (", n_workers, " workers)...")
+foreach(
+  task      = outcome_tasks,
+  .packages = c("dplyr", "tidyr", "lubridate", "readr"),
+  .export   = c("matched_data_files", "period_info", "target_drug",
+                "nontreatment_group", "comparator_groups",
+                "get_Outcomes_PsychProc", "get_Outcomes_Visits",
+                "get_Outcomes_MedChanges", "get_Outcomes_HCMedChanges")
+) %dopar% {
+  task$fn(task$src_file, matched_data_files, period_info,
+          target_drug, nontreatment_group, comparator_groups,
+          task$out_file)
+}
+
+stopCluster(cl)
+message("All outcome computations complete.")
+
+# ── Join outcome tables and pivot to long format ──────────────────────────────----
+
+load(outcomes_files$psych)
+outcomes_psych <- outcomes
+
+load(outcomes_files$visits)
+outcomes_visits <- outcomes
+
+load(outcomes_files$med)
+outcomes_med_changes <- outcomes
+
+load(outcomes_files$hc_med)
+outcomes_hc_med_changes <- outcomes
+
+all_outcomes_wide <- outcomes_psych %>%
+  left_join(outcomes_visits           %>% dplyr::select(-person_id, -study_cohort, -period),
+            by = c("person_id", "study_cohort", "period")) %>%
+  left_join(outcomes_med_changes      %>% dplyr::select(-person_id, -study_cohort, -period),
+            by = c("person_id", "study_cohort", "period")) %>%
+  left_join(outcomes_hc_med_changes   %>% dplyr::select(-person_id, -study_cohort, -period),
+            by = c("person_id", "study_cohort", "period"))
+
+all_outcomes <- all_outcomes_wide %>%
+  pivot_longer(4:ncol(.), names_to = "var_name", values_to = "value") %>%
+  mutate(
+    period       = factor(period,       levels = period_info$period),
+    study_cohort = factor(study_cohort, levels = paste0(target_drug, " vs ", comparator_groups)),
+    var_name     = factor(var_name)
+  )
+
+save(all_outcomes, file = paste0("OutputData/all_outcomes-", target_drug, ".rds"))
