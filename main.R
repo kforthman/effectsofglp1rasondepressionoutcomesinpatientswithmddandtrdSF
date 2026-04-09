@@ -1103,6 +1103,8 @@ all_outcomes <- all_outcomes_wide %>%
     var_name     = factor(var_name)
   )
 
+save(all_outcomes, file = paste0("OutputData/all_outcomes-", target_drug, ".rds"))
+
 # ── Negative Binomial Regression analyses ─────────────────────────────────────
 
 source("analysis_Negative_Binomial_Regression.R")
@@ -1154,4 +1156,3 @@ for (group in comparator_groups) {
   }
 }
 
-save(all_outcomes, file = paste0("OutputData/all_outcomes-", target_drug, ".rds"))
