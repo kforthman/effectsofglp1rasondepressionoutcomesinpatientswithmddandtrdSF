@@ -1099,4 +1099,56 @@ all_outcomes <- all_outcomes_wide %>%
     var_name     = factor(var_name)
   )
 
+# ── Negative Binomial Regression analyses ─────────────────────────────────────
+
+source("analysis_Negative_Binomial_Regression.R")
+
+nb_analyses <- list(
+  list(dep_var    = "n_psych_days",
+       covariates = c("race.ethnicity_White", "sex_Male", "age_at_index_years")),
+  list(dep_var    = "n_med_changes",
+       covariates = c("race.ethnicity_White", "sex_Male", "age_at_index_years"))
+)
+
+nb_period_name <- "d"
+
+dir.create("Reports", showWarnings = FALSE)
+
+for (group in comparator_groups) {
+  for (analysis in nb_analyses) {
+    result_file <- paste0(
+      "OutputData/nb_result-", target_drug, "Vs", group,
+      "-", analysis$dep_var, "-period", nb_period_name, ".rds"
+    )
+
+    message("Fitting NB model: ", target_drug, " vs ", group,
+            " | ", analysis$dep_var, " | period ", nb_period_name)
+
+    analysis_Negative_Binomial_Regression(
+      matched_data_file = matched_data_files[[group]],
+      all_outcomes      = all_outcomes,
+      period_info       = period_info,
+      comparator_group  = group,
+      target_drug       = target_drug,
+      period_name       = nb_period_name,
+      dep_var           = analysis$dep_var,
+      covariates        = analysis$covariates,
+      output_file       = result_file
+    )
+
+    render(
+      input       = "report_Negative_Binomial_Regression.Rmd",
+      output_file = paste0("Reports/report_NB-", target_drug, "Vs", group,
+                           "-", analysis$dep_var, ".html"),
+      params = list(
+        result_file      = result_file,
+        target_drug      = target_drug,
+        comparator_group = group,
+        dep_var          = analysis$dep_var
+      ),
+      envir = new.env()
+    )
+  }
+}
+
 save(all_outcomes, file = paste0("OutputData/all_outcomes-", target_drug, ".rds"))

@@ -1,0 +1,207 @@
+---
+title: "Negative Binomial Regression: `r params$target_drug` vs. `r params$comparator_group` — `r params$dep_var`"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    theme: flatly
+params:
+  result_file:      ""
+  target_drug:      "Semaglutide"
+  comparator_group: "Insulins"
+  dep_var:          "n_psych_days"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+source("workbench_functions.txt")
+source("easy_delete_copy_R.txt")
+notebook_setup()
+source("helper_functions.R")
+
+load(params$result_file)   # restores nb_result
+r <- nb_result
+
+covariates_nosex <- r$covariates[r$covariates != "sex_Male"]
+formula_nosex    <- as.formula(
+  paste0(r$col_outcome, " ~ treatment + ", paste(covariates_nosex, collapse = " + "))
+)
+```
+
+**Cohort:** `r r$study_cohort_label`
+**Outcome:** `r r$col_outcome`
+**Period:** `r r$period_label`
+**Covariates:** `r paste(r$covariates, collapse = ", ")`
+
+---
+
+## Primary Analysis
+
+### Poisson — Overdispersion Check
+
+```{r poisson-check}
+check_poisson(r$m_pois)
+```
+
+### Negative Binomial Model
+
+```{r nb-model}
+check_od(r$m1)
+check_mc(r$m1)
+interpret_nb(r$m1, term = "treatment",
+             outcome    = r$dep_var,
+             comparison = r$comparator_group)
+```
+
+```{r nb-table, results='asis'}
+tab <- tab_model(r$m1)
+cat(tab$knitr)
+```
+
+```{r nb-plot, fig.width=12, fig.height=6}
+plot_model(r$m1) + theme_minimal(base_size = 20)
+```
+
+---
+
+## Outcome Distribution
+
+```{r dist-setup}
+ds <- r$dataset %>%
+  mutate(treatment_name = factor(treatment_name,
+                                 levels = c(r$target_drug, r$comparator_group)))
+
+n0 <- ds %>% filter(!!sym(r$col_outcome) == 0) %>% nrow()
+nt <- ds %>% nrow()
+subtitle_base <- paste0(r$study_cohort_label, " | ", r$period_label,
+                        " | n0 = ", comma(n0), "/", comma(nt),
+                        " (", percent(n0 / nt), ")")
+
+my_range <- if (startsWith(r$dep_var, "n_med")) 1 else 10
+my_min   <- 1
+
+ds_cut <- ds %>%
+  rowwise() %>%
+  mutate(value_cut = my_cut(!!sym(r$col_outcome), my_range, my_min)) %>%
+  ungroup()
+
+cut_levels <- ds_cut %>%
+  arrange(!!sym(r$col_outcome)) %>%
+  pull(value_cut) %>%
+  unique()
+
+ds_cut <- ds_cut %>%
+  mutate(value_cut = factor(value_cut, levels = cut_levels))
+```
+
+### Count Distribution
+
+```{r dist-count, fig.width=20, fig.height=8}
+ds_count <- ds_cut %>%
+  count(value_cut, treatment_name)
+
+y_max <- max(ds_count$n, na.rm = TRUE) * 1.1
+
+ggplot(ds_count, aes(x = value_cut, y = n,
+                     fill = treatment_name, color = treatment_name)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  geom_text(aes(label = comma(n)),
+            position = position_dodge(width = 0.9),
+            vjust = -0.5, colour = "black", size = 5) +
+  labs(title    = r$study_cohort_label,
+       subtitle = subtitle_base,
+       x        = r$col_outcome,
+       y        = "Count") +
+  ylim(0, y_max) +
+  theme_minimal(base_size = 20)
+```
+
+### Percentage Distribution
+
+```{r dist-percent, fig.width=20, fig.height=8}
+ds_pct <- ds_cut %>%
+  count(value_cut, treatment_name) %>%
+  group_by(treatment_name) %>%
+  mutate(pct = n / sum(n)) %>%
+  ungroup()
+
+y_max_pct <- max(ds_pct$pct, na.rm = TRUE) * 1.1
+
+ggplot(ds_pct, aes(x = value_cut, y = pct,
+                   fill = treatment_name, color = treatment_name)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  geom_text(aes(label = percent(pct)),
+            position = position_dodge(width = 0.9),
+            vjust = -0.5, colour = "black", size = 5) +
+  labs(title    = r$study_cohort_label,
+       subtitle = subtitle_base,
+       x        = r$col_outcome,
+       y        = "Proportion") +
+  ylim(0, y_max_pct) +
+  theme_minimal(base_size = 20)
+```
+
+### Density Plot
+
+```{r dist-density, fig.width=20, fig.height=8}
+ggplot(ds, aes(x = !!sym(r$col_outcome),
+               fill = treatment_name, color = treatment_name)) +
+  geom_density(alpha = 0.5) +
+  labs(title    = r$study_cohort_label,
+       subtitle = subtitle_base,
+       x        = r$col_outcome,
+       y        = "Density") +
+  theme_minimal(base_size = 20)
+```
+
+### Distribution by Sex
+
+```{r dist-sex, fig.width=12, fig.height=6}
+ds %>%
+  mutate(sex = ifelse(sex_Male == 1, "Male", "Female")) %>%
+  ggplot(aes(x = !!sym(r$col_outcome), fill = sex, color = sex)) +
+  geom_histogram() +
+  scale_y_log10() +
+  labs(title = r$study_cohort_label, x = r$col_outcome) +
+  theme_minimal(base_size = 20)
+```
+
+---
+
+## Sensitivity Analyses
+
+### Females Only
+
+```{r sens-female}
+ds_f  <- r$dataset %>% filter(sex_Male == 0)
+m_f   <- glm.nb(formula_nosex, data = ds_f)
+check_od(m_f)
+check_mc(m_f)
+interpret_nb(m_f, term = "treatment",
+             outcome    = r$dep_var,
+             comparison = r$comparator_group)
+```
+
+```{r sens-female-table, results='asis'}
+tab_f <- tab_model(m_f)
+cat(tab_f$knitr)
+```
+
+### Males Only
+
+```{r sens-male}
+ds_m  <- r$dataset %>% filter(sex_Male == 1)
+m_m   <- glm.nb(formula_nosex, data = ds_m)
+check_od(m_m)
+check_mc(m_m)
+interpret_nb(m_m, term = "treatment",
+             outcome    = r$dep_var,
+             comparison = r$comparator_group)
+```
+
+```{r sens-male-table, results='asis'}
+tab_m <- tab_model(m_m)
+cat(tab_m$knitr)
+```
