@@ -1120,6 +1120,8 @@ nb_period_name <- "15 days-12 months after index"
 
 dir.create("Reports", showWarnings = FALSE)
 
+nb_result_files <- character(0)
+
 for (group in comparator_groups) {
   for (analysis in nb_analyses) {
     result_file <- paste0(
@@ -1141,6 +1143,8 @@ for (group in comparator_groups) {
       output_file       = result_file
     )
 
+    nb_result_files <- c(nb_result_files, result_file)
+
     render(
       input       = "report_Negative_Binomial_Regression.Rmd",
       output_file = paste0("Reports/report_NB-", target_drug, "Vs", group,
@@ -1155,4 +1159,14 @@ for (group in comparator_groups) {
     )
   }
 }
+
+render(
+  input       = "report_NB_Summary.Rmd",
+  output_file = paste0("Reports/report_NB_Summary-", target_drug, ".html"),
+  params = list(
+    result_files = nb_result_files,
+    target_drug  = target_drug
+  ),
+  envir = new.env()
+)
 
