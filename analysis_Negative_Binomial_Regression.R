@@ -30,7 +30,6 @@
 
 analysis_Negative_Binomial_Regression <- function(matched_data_file,
                                                    all_outcomes,
-                                                   period_info,
                                                    comparator_group,
                                                    target_drug,
                                                    period_name,
@@ -55,22 +54,17 @@ analysis_Negative_Binomial_Regression <- function(matched_data_file,
   # Pivot all_outcomes to wide for this comparator, appending period_name suffix
   outcomes_wide <- all_outcomes %>%
     filter(study_cohort == study_cohort_label) %>%
-    left_join(period_info %>% dplyr::select(period, period_name),
-              by = "period") %>%
-    mutate(var_name = paste0(var_name, "_", period_name)) %>%
-    dplyr::select(-period, -period_name) %>%
+    filter(period == period_name) %>%
+    dplyr::select(-period) %>%
     pivot_wider(names_from = "var_name", values_from = "value")
 
   analysis_data <- matched.data %>%
     left_join(outcomes_wide, by = c("PatientDurableKey", "study_cohort"))
 
   # Build formula: {dep_var}_{period_name} ~ treatment + covariate1 + ...
-  col_outcome <- paste0(dep_var, "_", period_name)
   formula_obj <- as.formula(
-    paste0(col_outcome, " ~ treatment + ", paste(covariates, collapse = " + "))
+    paste0(dep_var, " ~ treatment + ", paste(covariates, collapse = " + "))
   )
-
-  period_label <- period_info$period[period_info$period_name == period_name]
 
   # Fit Poisson (overdispersion check) then negative binomial
   m_pois <- glm(formula_obj, data = analysis_data, family = poisson())
@@ -81,11 +75,9 @@ analysis_Negative_Binomial_Regression <- function(matched_data_file,
     m1                 = m1,
     dataset            = analysis_data,
     dep_var            = dep_var,
-    col_outcome        = col_outcome,
     comparator_group   = comparator_group,
     target_drug        = target_drug,
     period_name        = period_name,
-    period_label       = period_label,
     study_cohort_label = study_cohort_label,
     covariates         = covariates
   )

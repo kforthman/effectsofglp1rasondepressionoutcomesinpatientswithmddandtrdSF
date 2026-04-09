@@ -14,6 +14,10 @@ library(ggplot2)
 library(ggcorrplot)
 library(survey)
 library(scales)
+library(MASS)
+library(performance)
+library(DHARMa)
+library(sjPlot)
 
 data_pull_date <- as.Date("2026-04-06")
 target_drug      <- "Semaglutide"
@@ -1105,12 +1109,12 @@ source("analysis_Negative_Binomial_Regression.R")
 
 nb_analyses <- list(
   list(dep_var    = "n_psych_days",
-       covariates = c("race.ethnicity_White", "sex_Male", "age_at_index_years")),
+       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")),
   list(dep_var    = "n_med_changes",
-       covariates = c("race.ethnicity_White", "sex_Male", "age_at_index_years"))
+       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years"))
 )
 
-nb_period_name <- "d"
+nb_period_name <- "15 days-12 months after index"
 
 dir.create("Reports", showWarnings = FALSE)
 
@@ -1127,7 +1131,6 @@ for (group in comparator_groups) {
     analysis_Negative_Binomial_Regression(
       matched_data_file = matched_data_files[[group]],
       all_outcomes      = all_outcomes,
-      period_info       = period_info,
       comparator_group  = group,
       target_drug       = target_drug,
       period_name       = nb_period_name,
