@@ -1084,11 +1084,11 @@ load(outcomes_files$hc_med)
 outcomes_hc_med_changes <- outcomes
 
 all_outcomes_wide <- outcomes_psych %>%
-  # left_join(outcomes_visits         %>% dplyr::select(-PatientDurableKey, -study_cohort, -period),
+  # left_join(outcomes_visits,
   #           by = c("PatientDurableKey", "study_cohort", "period")) %>%
-  left_join(outcomes_med_changes    %>% dplyr::select(-PatientDurableKey, -study_cohort, -period),
+  left_join(outcomes_med_changes,
             by = c("PatientDurableKey", "study_cohort", "period")) %>%
-  left_join(outcomes_hc_med_changes %>% dplyr::select(-PatientDurableKey, -study_cohort, -period),
+  left_join(outcomes_hc_med_changes,
             by = c("PatientDurableKey", "study_cohort", "period"))
 
 all_outcomes <- all_outcomes_wide %>%
