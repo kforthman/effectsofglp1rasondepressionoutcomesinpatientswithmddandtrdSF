@@ -258,3 +258,36 @@ my_table1 <- function(this.data, my_strata, filename, varsToFactor, new_names = 
 
     invisible(html_text)
 }
+
+# ── Sensitivity analysis helpers ──────────────────────────────────────────────
+
+# Print IRR + 95% CI + p-value for the treatment × modifier interaction term
+summarize_interaction <- function(model, mod_label,
+                                  trt_term = "treatment_nameSemaglutide",
+                                  alpha = 0.05, digits = 2) {
+    coefs    <- summary(model)$coefficients
+    int_rows <- rownames(coefs)[grepl(paste0("^", trt_term, ":"), rownames(coefs))]
+    if (length(int_rows) == 0) {
+        cat("  Interaction term not found.\n")
+        return(invisible(NULL))
+    }
+    term <- int_rows[1]
+    est  <- coefs[term, "Estimate"]
+    se   <- coefs[term, "Std. Error"]
+    z    <- qnorm(1 - alpha / 2)
+    rr   <- exp(est); lo <- exp(est - z * se); hi <- exp(est + z * se)
+    pval <- coefs[term, "Pr(>|z|)"]
+    sig  <- if (pval < alpha) " *" else ""
+    cat(sprintf("  Interaction (%s): IRR = %.2f (95%% CI %.2f-%.2f), p = %.4f%s\n",
+                mod_label, rr, lo, hi, pval, sig))
+}
+
+# Print stratum-specific treatment IRRs from an emmeans contrast object
+summarize_strata <- function(emm_contrast, mod_var, digits = 2) {
+    cs <- summary(emm_contrast, infer = c(TRUE, TRUE))
+    for (j in seq_len(nrow(cs))) {
+        cat(sprintf("    %s = %-5s  IRR = %.2f (95%% CI %.2f-%.2f), p = %.4f\n",
+                    mod_var, as.character(cs[[mod_var]][j]),
+                    cs$ratio[j], cs$asymp.LCL[j], cs$asymp.UCL[j], cs$p.value[j]))
+    }
+}
