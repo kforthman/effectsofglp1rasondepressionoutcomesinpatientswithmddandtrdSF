@@ -73,35 +73,33 @@ analysis_PWP_Gap_Time_Cox_Model <- function(matched_data_file,
       ),
       treatment_name = factor(treatment_name, levels = c(target_drug, comparator_group)),
       study_cohort   = study_cohort_label
-    )
-
-  # Build counting-process dataset
-  these_ids <- matched.data$PatientDurableKey
-
-  out1 <- event_data %>%
+    ) %>%
     filter(time_from_index_days >= bgn_win & time_from_index_days < end_win)
-
+  
   if (dedup_by_day) {
-    out1 <- out1 %>%
+    event_data <- event_data %>%
       arrange(PatientDurableKey, time_from_index_days) %>%
       group_by(PatientDurableKey, time_from_index_days) %>%
       slice_head(n = 1) %>%
       ungroup()
   }
-
-  out1 <- out1 %>%
+  
+  event_data <- event_data %>%
     dplyr::select(PatientDurableKey, time_from_index_days) %>%
     mutate(event = dep_var) %>%
     rename(event_time = time_from_index_days)
 
-  out2 <- data.frame(
+  # Build counting-process dataset
+  these_ids <- matched.data$PatientDurableKey
+  
+  event_end <- data.frame(
     PatientDurableKey = these_ids,
     event             = "end_followup",
     event_time        = end_win,
     stringsAsFactors  = FALSE
   )
 
-  out <- bind_rows(out1, out2) %>%
+  out <- bind_rows(event_data, event_end) %>%
     arrange(PatientDurableKey, event_time) %>%
     mutate(status = if_else(event == "end_followup", 0L, 1L)) %>%
     group_by(PatientDurableKey) %>%

@@ -793,7 +793,7 @@ for(i in 1:length(all_drugs)){
 }
 
 dte_cohort_data <- dte_cohort_data %>% 
-  select(PatientDurableKey, 
+  dplyr::select(PatientDurableKey, 
          meets_diagnosis_eligibility_criteria, 
          MDD_Index, 
          BirthDate, 
@@ -1105,7 +1105,7 @@ all_outcomes <- all_outcomes_wide %>%
 
 save(all_outcomes, file = paste0("OutputData/all_outcomes-", target_drug, ".rds"))
 
-# ── Negative Binomial Regression analyses ─────────────────────────────────────
+# ── Negative Binomial Regression analyses ─────────────────────────────────────----
 
 source("analysis_Negative_Binomial_Regression.R")
 
@@ -1170,9 +1170,18 @@ render(
   envir = new.env()
 )
 
-# ── PWP Gap Time Cox Model analyses ───────────────────────────────────────────
+# ── PWP Gap Time Cox Model analyses ───────────────────────────────────────────----
 
 source("analysis_PWP_Gap_Time_Cox_Model.R")
+
+matched_data_files <- setNames(
+  paste0("OutputData/PS_Matched_Dataset-", comparator_groups, ".rds"),
+  comparator_groups
+)
+
+med_changes_file <- "OutputData/antidepressant_antipsychotic_consecutive_period.rds"
+hc_med_file      <- "OutputData/hydrochlorothiazide_consecutive_instance.rds"
+psych_proc_file  <- "OutputData/psych_proc.rds"
 
 pwp_period_name <- "15 days-12 months after index"
 pwp_period_row  <- period_info[period_info$period == pwp_period_name, ]
@@ -1188,7 +1197,7 @@ pwp_analyses <- list(
   list(dep_var        = "med_changes",
        event_data_file= med_changes_file,
        event_date_col = "first_record",
-       dedup_by_day   = FALSE,
+       dedup_by_day   = TRUE,
        covariates     = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years"))
 )
 
