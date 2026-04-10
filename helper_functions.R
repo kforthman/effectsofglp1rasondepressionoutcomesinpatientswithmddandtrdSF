@@ -62,9 +62,9 @@ check_mc <- function(model, vif_threshold = 5) {
 
 sig_code <- function(p) {
     dplyr::case_when(
-        p <  0.001 ~ "***",
-        p <  0.01  ~ "**",
-        p <  0.05  ~ "*",
+        p <  0.001 ~ "&#42;&#42;&#42;",
+        p <  0.01  ~ "&#42;&#42;",
+        p <  0.05  ~ "&#42;",
         p <  0.1   ~ ".",
         TRUE       ~ ""
     )
