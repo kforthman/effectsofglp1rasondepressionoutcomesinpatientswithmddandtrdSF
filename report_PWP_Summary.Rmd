@@ -71,10 +71,11 @@ summary_tab %>%
     `P-Value`            = P_Value,
     ` `                  = Sig
   ) %>%
-  knitr::kable(escape = FALSE, align = c("l","l","r","r","l","l","l","r","r","r","l")) %>%
+  knitr::kable(format = "html", escape = FALSE,
+               align = c("l","l","r","r","l","l","l","r","r","r","l")) %>%
   kableExtra::kable_styling(bootstrap_options = c("striped", "hover"),
                             full_width = TRUE, font_size = 14) %>%
-  kableExtra::footnote(general       = "Signif. codes: 0 '&#42;&#42;&#42;' 0.001 '&#42;&#42;' 0.01 '&#42;' 0.05 '.' 0.1 ' ' 1",
+  kableExtra::footnote(general       = "Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1",
                        general_title = "",
                        escape        = FALSE)
 ```
