@@ -114,8 +114,6 @@ my_cut <- function(my_value, range, my_min = 1) {
 load("dte_cohort_wNontreat_data.rds")
 dte_cohort_data <- this.data
 
-# dte_cohort_data %>% head(10)
-
 # %%
 drug_matchedDS_info <- c("Nontreatment", "PS_Matched_Dataset-Nontreatment.rds",
                          "Insulins", "PS_Matched_Dataset-Insulins.rds",
@@ -129,8 +127,6 @@ drug_matchedDS_info <- c("Nontreatment", "PS_Matched_Dataset-Nontreatment.rds",
 matrix(ncol = 2, byrow = TRUE) %>%
 as.data.frame(stringsAsFactors = FALSE) %>%
 setNames(c("drug", "file_path"))
-
-# drug_matchedDS_info
 
 # %%
 for(i in 1:nrow(drug_matchedDS_info)){
@@ -151,8 +147,6 @@ for(i in 1:nrow(drug_matchedDS_info)){
     paste0("Creating variable ", var_name, "\n") %>% cat
     assign(var_name, matched.data)
 }
-
-# dte_cohort_Insulins %>% head
 
 # %%
 #                period                      bgn_win end_win   period_name
@@ -172,16 +166,12 @@ period_info
 # %%
 load("all_outcomes.rds")
 
-# all_outcomes %>% head(20)
-
 # %%
 all_outcomes_2 <- all_outcomes %>%
 left_join(period_info %>% dplyr::select(period, period_name), by = "period") %>%
 mutate(var_name = paste0(var_name, "_", period_name)) %>%
 dplyr::select(-period, -period_name) %>%
 pivot_wider(names_from = "var_name", values_from = "value") 
-
-# all_outcomes_2 %>% head
 
 # %%
 for(i in 1:nrow(drug_matchedDS_info)){
@@ -198,8 +188,6 @@ for(i in 1:nrow(drug_matchedDS_info)){
     assign(var_name, this_cohort)
 }
 
-# dte_cohort_and_outcomes_Insulins %>% head
-
 # %%
 # Load Nontreatment diagnosis timeline variables and join Obese and A1C columns
 # into the Nontreatment cohort dataset.
@@ -210,14 +198,10 @@ nontreatment_diag_vars <- this.data %>%
 dte_cohort_and_outcomes_Nontreatment <- dte_cohort_and_outcomes_Nontreatment %>%
     left_join(nontreatment_diag_vars, by = "person_id")
 
-# dte_cohort_and_outcomes_Nontreatment %>% head
-
 # %%
 # Load the consecutive treatment period table produced by
 # get_Antidepressant_Treatment_Timeline_v2.R
 load("antidepressant_antipsychotic_consecutive_period.rds")
-
-# consecutive_period_tab %>% head
 
 # %%
 for(i in 1:nrow(drug_matchedDS_info)){
@@ -238,8 +222,6 @@ for(i in 1:nrow(drug_matchedDS_info)){
     paste0("Creating variable ", var_name, "\n") %>% cat
     assign(var_name, matched.data)
 }
-
-# dte_cohort_Insulins %>% head
 
 # %%
 # For each comparison population, filter consecutive_period_tab to
@@ -261,8 +243,6 @@ for(i in 1:nrow(drug_matchedDS_info)){
     paste0("Creating variable ", var_name, "\n") %>% cat
     assign(var_name, this_period_tab)
 }
-
-# consecutive_period_Insulins %>% head
 
 # %% [markdown]
 # # Sensitivity Analyses
@@ -349,7 +329,6 @@ for(i in 1:nrow(drug_matchedDS_info)){
 }
 
 # %%
-#theme_set(theme_sjplot())
 options(repr.plot.width=37, repr.plot.height=12)
 for(i in 1:nrow(drug_matchedDS_info)){
     this_drug <- drug_matchedDS_info$drug[i]
@@ -435,7 +414,6 @@ for(i in 1:nrow(drug_matchedDS_info)){
 
 
 # %%
-#theme_set(theme_sjplot())
 options(repr.plot.width=37, repr.plot.height=12)
 for(i in 1:nrow(drug_matchedDS_info)){
     this_drug <- drug_matchedDS_info$drug[i]
@@ -468,65 +446,6 @@ for(i in 1:nrow(drug_matchedDS_info)){
 }
 
 # %% [markdown]
-# Among people with the same number of visit days, who had more medication changes?
-#
-# 1. Semaglutide vs metformin, DPP4i, and nontreatment largely disappears after accounting for visit days
-#
-# Metformin: 1.20 → 0.98
-#
-# DPP4i: 1.20 → 0.98
-#
-# Nontreatment: 1.29 → 1.01
-#
-# Interpretation:
-#
-# The higher raw total number of med changes in semaglutide users versus these groups appears to be explained largely by more visit exposure / more opportunities for a medication change to be recorded.
-#
-# After standardizing for visit days, semaglutide users do not appear to have a higher medication-change rate than these groups.
-#
-# This is a strong sign that healthcare utilization is an important driver of the original association for these comparators.
-#
-# 2. Semaglutide remains elevated versus SGLT2i, SU, and non-semaglutide GLP-1RA even after the offset
-#
-# SGLT2i: 1.26 → 1.25
-#
-# SU: 1.42 → 1.25
-#
-# Non-semaglutide GLP1RA: 1.30 → 1.31
-#
-# Interpretation:
-#
-# These differences are not explained just by more visit days.
-#
-# Even conditional on visit-day exposure, semaglutide users still had about:
-#
-# 25% higher med-change rate than SGLT2i users
-#
-# 25% higher than SU users
-#
-# 31% higher than non-semaglutide GLP-1RA users
-#
-# 3. Semaglutide vs insulins gets much stronger after the offset
-#
-# 1.13 (0.98–1.29) → 1.52 (1.29–1.79)
-#
-# This is the most informative shift.
-#
-# Interpretation:
-#
-# Before accounting for visit days, semaglutide and insulin users had fairly similar total counts, with only weak evidence of a difference.
-#
-# After accounting for visit-day exposure, semaglutide users had a 52% higher medication-change rate per visit day.
-#
-# That usually implies that the insulin group likely had more visit days, which created more opportunities for medication changes in absolute terms. Once you standardize for that, semaglutide users appear to have more changes relative to their amount of visit contact.
-#
-# So compared with insulin users:
-#
-# insulin users may have had higher utilization, but
-#
-# semaglutide users had more med changes per unit of utilization.
-
-# %% [markdown]
 # ## Hurdle model
 #
 # Goal: Determine whether treatment is associated with (1) binary outcome of either 0 or >0 medications and (2) among those with at least one change, is treatment associated with more frequent changes.
@@ -537,11 +456,8 @@ for(i in 1:nrow(drug_matchedDS_info)){
 # - NB model that is the same as the original, but only includes participants with >0 medication changes.
 #
 # Interpretation: If treatment is significant for the logistic regression, that implies that treatment is associated with any med change. If treatment is significant for the restricted NB, that means that treatment is associated with a difference in med change frequency.
-#
-# Difficulty: Easy. Est 1-2 days.
 
 # %%
-#theme_set(theme_sjplot())
 options(repr.plot.width=37, repr.plot.height=12)
 for(i in 1:nrow(drug_matchedDS_info)){
     this_drug <- drug_matchedDS_info$drug[i]
@@ -568,7 +484,6 @@ for(i in 1:nrow(drug_matchedDS_info)){
 }
 
 # %%
-#theme_set(theme_sjplot())
 options(repr.plot.width=37, repr.plot.height=12)
 for(i in 1:nrow(drug_matchedDS_info)){
     this_drug <- drug_matchedDS_info$drug[i]
@@ -615,8 +530,6 @@ for(i in 1:nrow(drug_matchedDS_info)){
 # Interpretation:
 #
 # Concerns: Site is hidden in AoU, therefore adding a “site x quarter” interaction term is impossible. Using quarter instead of year at index will create sparse categories due to limited sample size. Will need practitioner expertise to determine a “common era”.
-#
-# Difficulty: Easy. Est 1-2 days.
 
 # %%
 for(i in 1:nrow(drug_matchedDS_info)){
@@ -696,8 +609,6 @@ for(i in 1:nrow(drug_matchedDS_info)){
 # Method: After fitting the model, compute cluster-robust standard error by the matched set.
 #
 # Interpretation: If the SEs/CIs/p-values change, that means the significance of the estimate is dependent on the matching.
-#
-# Difficulty: Easy. Est 2-3 days.
 
 # %%
 for(i in 1:nrow(drug_matchedDS_info)){
@@ -741,9 +652,6 @@ for(i in 1:nrow(drug_matchedDS_info)){
 # Interpretation: The weighted as-treated IRR is the estimated rate ratio while on treatment.
 #
 # Concern: Very difficult to determine time of discontinuation from the EHR. Would probably be more manageable to define continued use as a binary (either <2 or >=2 records of the antidiabetic) and run a sensitivity analysis on both groups.
-#
-# Difficulty: Easy. Est 1-2 days.
-#
 
 # %%
 drug_timeline_info <- c("Semaglutide", "Data_Prepped/Prepped_Data-All_Participants-Semaglutide-Drug_Exposure.rds",
@@ -860,8 +768,6 @@ for(i in 2:nrow(drug_matchedDS_info)){
 #
 # Interpretation: If effect is strictly within antidepressants post-index, this supports the idea that there is a mood effect of the treatment.
 #
-# Difficulty: Medium. It will take a little extra time to define the additional drug groups. Est 3-4 days.
-#
 # GRF to est heterogeneity
 
 # %%
@@ -951,8 +857,6 @@ for(i in 1:nrow(drug_matchedDS_info)){
 # - Baseline antidepressant burden
 #
 # Interpretation: If the interaction is significant, that indicates the treatment effect is modified by other factors.
-#
-# Difficulty: Easy. Est 1-2 days.
 
 # %%
 # Print IRR + 95% CI + p-value for the treatment × modifier interaction term
