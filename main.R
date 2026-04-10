@@ -1201,6 +1201,8 @@ pwp_analyses <- list(
        covariates     = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years"))
 )
 
+pwp_result_files <- character(0)
+
 for (group in comparator_groups) {
   for (analysis in pwp_analyses) {
     result_file <- paste0(
@@ -1226,6 +1228,8 @@ for (group in comparator_groups) {
       output_file       = result_file
     )
 
+    pwp_result_files <- c(pwp_result_files, result_file)
+
     render(
       input       = "report_PWP_Gap_Time_Cox_Model.Rmd",
       output_file = paste0("Reports/report_PWP-", target_drug, "Vs", group,
@@ -1240,4 +1244,14 @@ for (group in comparator_groups) {
     )
   }
 }
+
+render(
+  input       = "report_PWP_Summary.Rmd",
+  output_file = paste0("Reports/report_PWP_Summary-", target_drug, ".html"),
+  params = list(
+    result_files = pwp_result_files,
+    target_drug  = target_drug
+  ),
+  envir = new.env()
+)
 
