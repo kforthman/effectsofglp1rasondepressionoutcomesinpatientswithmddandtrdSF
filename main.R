@@ -1108,6 +1108,16 @@ save(all_outcomes, file = paste0("OutputData/all_outcomes-", target_drug, ".rds"
 # ── Negative Binomial Regression analyses ─────────────────────────────────────----
 
 source("analysis_Negative_Binomial_Regression.R")
+load(paste0("OutputData/all_outcomes-", target_drug, ".rds"))
+
+matched_data_files <- setNames(
+  paste0("OutputData/PS_Matched_Dataset-", comparator_groups, ".rds"),
+  comparator_groups
+)
+
+med_changes_file <- "OutputData/antidepressant_antipsychotic_consecutive_period.rds"
+hc_med_file      <- "OutputData/hydrochlorothiazide_consecutive_instance.rds"
+psych_proc_file  <- "OutputData/psych_proc.rds"
 
 nb_analyses <- list(
   list(dep_var    = "n_psych_days",
