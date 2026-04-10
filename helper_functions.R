@@ -60,6 +60,42 @@ check_mc <- function(model, vif_threshold = 5) {
         cat(sprintf("No multicollinearity: max VIF = %.2f\n", max_vif))
 }
 
+interpret_pwp <- function(model, term, outcome, comparison, alpha = 0.05, digits = 2) {
+    coefs <- summary(model)$coefficients
+
+    if (!term %in% rownames(coefs)) {
+        stop(sprintf("Term '%s' not found in model.", term))
+    }
+
+    hr   <- coefs[term, "exp(coef)"]
+    pval <- coefs[term, "Pr(>|z|)"]
+
+    # Use robust SE when cluster() was specified, otherwise model-based SE
+    se <- if ("robust se" %in% colnames(coefs)) coefs[term, "robust se"] else coefs[term, "se(coef)"]
+
+    ci_level <- 1 - alpha
+    z_crit   <- qnorm(1 - alpha / 2)
+    hr_lo    <- exp(log(hr) - z_crit * se)
+    hr_hi    <- exp(log(hr) + z_crit * se)
+
+    direction <- ifelse(hr < 1, "lower", "higher")
+    pct_diff  <- abs(1 - hr) * 100
+    sig_txt   <- ifelse(pval < alpha,
+        "This difference is statistically significant",
+        "This difference is not statistically significant")
+
+    cat(
+        sprintf("Estimated hazard ratio: %0.*f (%d%% CI %0.*f to %0.*f)\n",
+                digits, hr, round(ci_level * 100), digits, hr_lo, digits, hr_hi),
+        sprintf(
+            "Interpretation: Patients with Semaglutide treatment had about %0.*f%% %s hazard of %s events compared with %s.\n",
+            digits, pct_diff, direction, outcome, comparison
+        ),
+        sprintf("p-value: %0.4f. %s at alpha = %s.\n", pval, sig_txt, alpha),
+        sep = ""
+    )
+}
+
 check_poisson <- function(model, threshold = 1.5) {
     od <- sum(residuals(model, type = "pearson")^2) / model$df.residual
     degree  <- dplyr::case_when(od < 1.5 ~ "minimal", od < 3 ~ "mild", od < 10 ~ "moderate", TRUE ~ "severe")

@@ -1170,3 +1170,65 @@ render(
   envir = new.env()
 )
 
+# ── PWP Gap Time Cox Model analyses ───────────────────────────────────────────
+
+source("analysis_PWP_Gap_Time_Cox_Model.R")
+
+pwp_period_name <- "15 days-12 months after index"
+pwp_period_row  <- period_info[period_info$period == pwp_period_name, ]
+pwp_bgn_win     <- pwp_period_row$bgn_win
+pwp_end_win     <- pwp_period_row$end_win
+
+pwp_analyses <- list(
+  list(dep_var        = "psych_visits",
+       event_data_file= psych_proc_file,
+       event_date_col = "OutcomeDate",
+       dedup_by_day   = TRUE,
+       covariates     = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")),
+  list(dep_var        = "med_changes",
+       event_data_file= med_changes_file,
+       event_date_col = "first_record",
+       dedup_by_day   = FALSE,
+       covariates     = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years"))
+)
+
+for (group in comparator_groups) {
+  for (analysis in pwp_analyses) {
+    result_file <- paste0(
+      "OutputData/pwp_result-", target_drug, "Vs", group,
+      "-", analysis$dep_var, "-period", pwp_period_name, ".rds"
+    )
+
+    message("Fitting PWP model: ", target_drug, " vs ", group,
+            " | ", analysis$dep_var, " | period ", pwp_period_name)
+
+    analysis_PWP_Gap_Time_Cox_Model(
+      matched_data_file = matched_data_files[[group]],
+      event_data_file   = analysis$event_data_file,
+      event_date_col    = analysis$event_date_col,
+      dedup_by_day      = analysis$dedup_by_day,
+      comparator_group  = group,
+      target_drug       = target_drug,
+      period_name       = pwp_period_name,
+      bgn_win           = pwp_bgn_win,
+      end_win           = pwp_end_win,
+      dep_var           = analysis$dep_var,
+      covariates        = analysis$covariates,
+      output_file       = result_file
+    )
+
+    render(
+      input       = "report_PWP_Gap_Time_Cox_Model.Rmd",
+      output_file = paste0("Reports/report_PWP-", target_drug, "Vs", group,
+                           "-", analysis$dep_var, ".html"),
+      params = list(
+        result_file      = result_file,
+        target_drug      = target_drug,
+        comparator_group = group,
+        dep_var          = analysis$dep_var
+      ),
+      envir = new.env()
+    )
+  }
+}
+
