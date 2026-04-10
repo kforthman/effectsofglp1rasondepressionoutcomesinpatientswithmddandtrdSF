@@ -60,6 +60,16 @@ check_mc <- function(model, vif_threshold = 5) {
         cat(sprintf("No multicollinearity: max VIF = %.2f\n", max_vif))
 }
 
+sig_code <- function(p) {
+    dplyr::case_when(
+        p <  0.001 ~ "***",
+        p <  0.01  ~ "**",
+        p <  0.05  ~ "*",
+        p <  0.1   ~ ".",
+        TRUE       ~ ""
+    )
+}
+
 interpret_pwp <- function(model, term, outcome, comparison, alpha = 0.05, digits = 2) {
     coefs <- summary(model)$coefficients
 

@@ -55,6 +55,7 @@ summary_tab %>%
     N_Target     = comma(N_Target),
     N_Comparator = comma(N_Comparator),
     Hazard_Ratio = round(Hazard_Ratio, 3),
+    Sig          = sig_code(P_Value),
     P_Value      = ifelse(P_Value < 0.001, "<0.001", round(P_Value, 3))
   ) %>%
   rename(
@@ -67,9 +68,12 @@ summary_tab %>%
     `Covariates`         = Covariates,
     `Hazard Ratio`       = Hazard_Ratio,
     `95% CI`             = CI_95,
-    `P-Value`            = P_Value
+    `P-Value`            = P_Value,
+    ` `                  = Sig
   ) %>%
-  knitr::kable(align = c("l","l","r","r","l","l","l","r","r","r")) %>%
+  knitr::kable(align = c("l","l","r","r","l","l","l","r","r","r","l")) %>%
   kableExtra::kable_styling(bootstrap_options = c("striped", "hover"),
-                            full_width = TRUE, font_size = 14)
+                            full_width = TRUE, font_size = 14) %>%
+  kableExtra::footnote(general = "Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1",
+                       general_title = "")
 ```
