@@ -58,7 +58,9 @@ antidiabetics_table <- med_table %>%
   filter(PharmaceuticalClass == "Antidiabetic") %>%
   apply_recode(med_recode, "antidiabetics") %>%
   separate_rows(SimpleGenericName, sep = "/") %>%
-  left_join(antidiabetics_subclass_map, by = c("SimpleGenericName" = "canonical_name"))
+  left_join(antidiabetics_subclass_map, by = c("SimpleGenericName" = "canonical_name")) %>%
+  mutate(PharmaceuticalSubclass = dplyr::coalesce(subclass, PharmaceuticalSubclass)) %>%
+  dplyr::select(-subclass)
 
 antidiabetics_Semaglutide_table <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "Semaglutide")
 antidiabetics_Insulins_table    <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "Insulins")
