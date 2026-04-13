@@ -1,7 +1,7 @@
 table,column,type,format
 med_table,PatientDurableKey,character,
-med_table,AntidiabeticIndexLabel,character,
-med_table,AntidiabeticIndexDate,date,%Y-%m-%d
+med_table,MedicationOrderKey,character,
+med_table,ExposureLabel,character,
 med_table,SimpleGenericName,character,
 med_table,TherapeuticClass,character,
 med_table,PharmaceuticalClass,character,

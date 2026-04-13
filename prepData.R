@@ -38,8 +38,7 @@ med_table <- read_csv(config$files$med_table,
                       na        = c("", "NA", "NULL", "null"),
                       col_types = make_col_types(col_schema, "med_table")
 ) %>%
-  mutate(DaysSupply = as.integer(DaysSupply)) %>%
-  dplyr::select(-AntidiabeticIndexLabel, -AntidiabeticIndexDate)
+  mutate(DaysSupply = as.integer(DaysSupply))
 
 # ── Validate medication recode coverage ───────────────────────────────────────
 check_recode(med_table %>% filter(PharmaceuticalClass == "Antidepressants"),                     med_recode, "antidepressant")

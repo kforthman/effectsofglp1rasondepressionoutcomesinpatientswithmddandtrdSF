@@ -1,5 +1,5 @@
 {
-  "data_pull_date": "2026-04-06",
+  "data_pull_date": "2026-04-10",
   "target_drug": "Semaglutide",
   "comparator_drugs": ["DPP4i", "GLP1RA", "Insulins", "Metformin", "SGLT2i", "SU", "TZD"],
   "nontreatment_group": "Nontreatment",
@@ -25,13 +25,13 @@
     "drug_class":                 "Data/DrugClasses.csv",
     "cpt_acuity":                 "Data/psych_proc_tiers-manualEdit-MPP.csv",
     "period_info":                "Data/period_info.csv",
-    "med_table":                  "/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-Medication_Table-26_04_06-v1.csv",
-    "diag_table":                 "/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-FirstDiagnosis_Table-26_04_06-v1.csv",
-    "mdd_data":                   "/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-MDDPatientList_Table-26_04_06-v1.csv",
-    "antidiabetic_overlap_table": "/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-OverlapWide_Table-26_04_06-v1.csv",
-    "dte_cohort_data":            "/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-Treatment_Table-26_04_06-v1.csv",
-    "nonswitch_periods":          "/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-Nontreatment_Table-26_04_06-v1.csv",
-    "psych_proc":                 "/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-Outcomes_Table-26_04_06-v1.csv",
+    "med_table":                  "/Volumes/Studies/ehr_study/uploaded-data/20260410-2000/CCM-Medication_Table-26_04_10-v1.csv",
+    "diag_table":                 "/Volumes/Studies/ehr_study/uploaded-data/20260410-1500/CCM-FirstDiagnosis_Table-26_04_10-v1.csv",
+    "mdd_data":                   "/Volumes/Studies/ehr_study/uploaded-data/20260410-1500/CCM-MDDPatientList_Table-26_04_10-v1.csv",
+    "antidiabetic_overlap_table": "/Volumes/Studies/ehr_study/uploaded-data/20260410-2000/CCM-OverlapWide_Table-26_04_10-v2.csv",
+    "dte_cohort_data":            "/Volumes/Studies/ehr_study/uploaded-data/20260410-2000/CCM-Treatment_Table-26_04_10-v2.csv",
+    "nonswitch_periods":          "/Volumes/Studies/ehr_study/uploaded-data/20260410-2000/CCM-Nontreatment_Table-26_04_10-v2.csv",
+    "psych_proc":                 "/Volumes/Studies/ehr_study/uploaded-data/20260410-1500/CCM-Outcomes_Table-26_04_10-v1.csv",
     "column_schema":              "Data/column_schema.csv",
     "medication_recode":          "Data/medication_recode.csv"
   }
