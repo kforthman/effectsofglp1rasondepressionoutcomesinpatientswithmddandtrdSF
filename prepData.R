@@ -152,7 +152,7 @@ mdd_data <- read_csv(config$files$mdd_data,
   mutate(Race_Ethnicity_white = Race_Ethnicity == "White or Caucasian",
          Sex_male = Sex == "Male") %>%
   left_join(diag_table %>%
-              filter(!Diagnosis %in% c("MDD", "Type_2_Diabetes_Mellitus_with_Complications", "Bariatric_Surgery", "ADHD", "Agoraphobia", "Anxiety_Disorder_NOS", "Generalized_Anxiety", "OCD", "Panic_Disorder", "PTSD", "Social_Anxiety_Disorder", "Alcohol_Abuse", "Alcohol_Dependence", "Cannabis_Abuse", "Cannabis_Dependence", "Cocaine_Abuse", "Cocaine_Dependence", "Opioid_Abuse", "Opioid_Dependence", "Sedative_Abuse", "Sedative_Dependence", "Tobacco_Use_Disorder", "Diseases_of_the_Arteries_Artrioles_and_Capillaries")) %>%
+              filter(Diagnosis %in% eligibility_inclusion_diagnoses) %>%
               pivot_wider(names_from = Diagnosis, values_from = FirstDiagnosisDate,
                           values_fill = NA, names_glue = "{Diagnosis}_FirstDiagnosis"),
             by = "PatientDurableKey") %>%
