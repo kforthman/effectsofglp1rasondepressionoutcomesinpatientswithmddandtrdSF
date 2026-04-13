@@ -240,7 +240,7 @@ psych_proc_file  <- "OutputData/psych_proc.rds"
 
 outcomes_files <- list(
   psych   = paste0("OutputData/outcomes_psych-",         target_drug, ".rds"),
-# visits  = paste0("OutputData/outcomes_visits-",        target_drug, ".rds"),
+  # visits  = paste0("OutputData/outcomes_visits-",        target_drug, ".rds"),
   med     = paste0("OutputData/outcomes_med_changes-",   target_drug, ".rds"),
   hc_med  = paste0("OutputData/outcomes_hc_med_changes-",target_drug, ".rds")
 )
@@ -252,7 +252,7 @@ source("get_Outcomes_HCMedChanges.R")
 
 outcome_tasks <- list(
   list(fn = get_Outcomes_PsychProc,   src_file = psych_proc_file,   out_file = outcomes_files$psych),
-# list(fn = get_Outcomes_Visits,      src_file = visits_file,       out_file = outcomes_files$visits),
+  # list(fn = get_Outcomes_Visits,      src_file = visits_file,       out_file = outcomes_files$visits),
   list(fn = get_Outcomes_MedChanges,  src_file = med_changes_file,  out_file = outcomes_files$med),
   list(fn = get_Outcomes_HCMedChanges,src_file = hc_med_file,       out_file = outcomes_files$hc_med)
 )
@@ -268,7 +268,7 @@ foreach(
   .export   = c("matched_data_files", "period_info", "target_drug",
                 "comparator_groups",
                 "get_Outcomes_PsychProc",
-              # "get_Outcomes_Visits",
+                # "get_Outcomes_Visits",
                 "get_Outcomes_MedChanges",
                 "get_Outcomes_HCMedChanges")
 ) %dopar% {
@@ -345,10 +345,10 @@ for (group in comparator_groups) {
       "OutputData/nb_result-", target_drug, "Vs", group,
       "-", analysis$dep_var, "-period", nb_period_name, ".rds"
     )
-
+    
     message("Fitting NB model: ", target_drug, " vs ", group,
             " | ", analysis$dep_var, " | period ", nb_period_name)
-
+    
     analysis_Negative_Binomial_Regression(
       matched_data_file = matched_data_files[[group]],
       all_outcomes      = all_outcomes,
@@ -359,9 +359,9 @@ for (group in comparator_groups) {
       covariates        = analysis$covariates,
       output_file       = result_file
     )
-
+    
     nb_result_files <- c(nb_result_files, result_file)
-
+    
     render(
       input       = "report_Negative_Binomial_Regression.Rmd",
       output_file = paste0("Reports/report_NB-", target_drug, "Vs", group,
@@ -426,10 +426,10 @@ for (group in comparator_groups) {
       "OutputData/pwp_result-", target_drug, "Vs", group,
       "-", analysis$dep_var, "-period", pwp_period_name, ".rds"
     )
-
+    
     message("Fitting PWP model: ", target_drug, " vs ", group,
             " | ", analysis$dep_var, " | period ", pwp_period_name)
-
+    
     analysis_PWP_Gap_Time_Cox_Model(
       matched_data_file = matched_data_files[[group]],
       event_data_file   = analysis$event_data_file,
@@ -444,9 +444,9 @@ for (group in comparator_groups) {
       covariates        = analysis$covariates,
       output_file       = result_file
     )
-
+    
     pwp_result_files <- c(pwp_result_files, result_file)
-
+    
     render(
       input       = "report_PWP_Gap_Time_Cox_Model.Rmd",
       output_file = paste0("Reports/report_PWP-", target_drug, "Vs", group,
