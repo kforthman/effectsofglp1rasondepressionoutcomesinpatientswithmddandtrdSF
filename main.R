@@ -32,19 +32,16 @@ all_drugs         <- c(target_drug, comparator_drugs)
 comparator_groups <- c(nontreatment_group, comparator_drugs)
 all_groups        <- c(target_drug, comparator_groups)
 
-var_name_to_pretty <- read.csv("Data/var_name_to_pretty.csv")
-ps_covariates      <- read.csv("Data/ps_covariates.csv")
+var_name_to_pretty <- read.csv(config$files$var_name_to_pretty)
+ps_covariates      <- read.csv(config$files$ps_covariates)
 
-
-atc_drugs <- read.csv("Data/Drug_ATC_Categories.csv") %>% 
+atc_drugs <- read.csv(config$files$atc_drugs) %>%
   mutate(length = nchar(Name)) %>%
   arrange(Name)
 
-drug_class <- read.csv("Data/DrugClasses.csv")
-
-cpt_acuity <- read.csv("Data/psych_proc_tiers-manualEdit-MPP.csv")
-
-period_info <- read.csv("Data/period_info.csv")
+drug_class  <- read.csv(config$files$drug_class)
+cpt_acuity  <- read.csv(config$files$cpt_acuity)
+period_info <- read.csv(config$files$period_info)
 
 
 

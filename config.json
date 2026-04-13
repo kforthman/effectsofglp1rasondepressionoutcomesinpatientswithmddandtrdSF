@@ -17,5 +17,13 @@
     "Pancreatitis",
     "Thyroid_Cancer",
     "Gastroparesis"
-  ]
+  ],
+  "files": {
+    "var_name_to_pretty": "Data/var_name_to_pretty.csv",
+    "ps_covariates":      "Data/ps_covariates.csv",
+    "atc_drugs":          "Data/Drug_ATC_Categories.csv",
+    "drug_class":         "Data/DrugClasses.csv",
+    "cpt_acuity":         "Data/psych_proc_tiers-manualEdit-MPP.csv",
+    "period_info":        "Data/period_info.csv"
+  }
 }
