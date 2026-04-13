@@ -13,6 +13,9 @@
 # Track the pipeline map
 !pipeline_map.csv
 
+# Track column schema metadata
+!Data/column_schema.csv
+
 # Track the pipeline map generator
 !generate_pipeline_map.py
 

@@ -1,34 +1,17 @@
 library(tidyverse)
 library(jsonlite)
 
+source("helper_functions.R")
+
 config <- fromJSON("config.json")
+
+col_schema <- read.csv(config$files$column_schema, stringsAsFactors = FALSE)
 
 # ── Read input data ───────────────────────────────────────────────────────────----
 
 med_table <- read_csv(config$files$med_table,
-                      na = c("", "NA", "NULL", "null"),
-                      col_types = cols(
-                        PatientDurableKey        = col_character(),
-                        AntidiabeticIndexLabel   = col_character(),
-                        AntidiabeticIndexDate    = col_date(format = "%Y-%m-%d"),
-                        SimpleGenericName        = col_character(),
-                        TherapeuticClass         = col_character(),
-                        PharmaceuticalClass      = col_character(),
-                        PharmaceuticalSubclass   = col_character(),
-                        Strength                 = col_character(),
-                        Form                     = col_character(),
-                        DoseUnit                 = col_character(),
-                        MedicationStartDate      = col_date(format = "%Y-%m-%d"),
-                        MedicationEndDate        = col_date(format = "%Y-%m-%d"),
-                        RefillsWritten           = col_integer(),
-                        DaysSupply               = col_double(),
-                        Frequency                = col_character(),
-                        Route                    = col_character(),
-                        Class                    = col_character(),
-                        Mode                     = col_character(),
-                        Type                     = col_character(),
-                        DiscontinueReason        = col_character()
-                      )
+                      na        = c("", "NA", "NULL", "null"),
+                      col_types = make_col_types(col_schema, "med_table")
 ) %>%
   mutate(DaysSupply = as.integer(DaysSupply)) %>%
   dplyr::select(-AntidiabeticIndexLabel, -AntidiabeticIndexDate)
@@ -250,12 +233,8 @@ rm(med_table)
 rm(antidiabetics_table)
 
 diag_table <- read_csv(config$files$diag_table,
-                       na = c("", "NA", "NULL", "null"),
-                       col_types = cols(
-                         PatientDurableKey  = col_character(),
-                         EligibilityLabel   = col_character(),
-                         FirstDiagnosisDate = col_date(format = "%Y-%m-%d")
-                       )
+                       na        = c("", "NA", "NULL", "null"),
+                       col_types = make_col_types(col_schema, "diag_table")
 ) %>%
   rename(Diagnosis = "EligibilityLabel") %>%
   mutate(Diagnosis = recode(Diagnosis,
@@ -272,64 +251,9 @@ diag_table <- read_csv(config$files$diag_table,
 
 # Patients with MDD, no Bipolar Disorder, no Schizophrenia
 mdd_data <- read_csv(config$files$mdd_data,
-                     na = c("", "NA", "NULL", "null"),
-                     col_types = cols(
-                       PatientDurableKey    = col_character(),
-                       MDD_Index            = col_date(format = "%Y-%m-%d"),
-                       Mo6_Before_MDD_Index = col_date(format = "%Y-%m-%d"),
-                       Eligibility_Group_A  = col_logical(),
-                       Eligibility_Group_B  = col_logical(),
-                       Eligibility_Group_C  = col_logical(),
-                       Eligibility_Group_D  = col_logical(),
-                       Eligibility_Group_E  = col_logical(),
-                       First_Patient_Record = col_date(format = "%Y-%m-%d %H:%M:%S"),
-                       Last_Patient_Record  = col_date(format = "%Y-%m-%d %H:%M:%S"),
-                       EHRLengthYrs         = col_double(),
-                       TotalEncounters      = col_integer(),
-                       AvgYearlyEncounters  = col_double(),
-                       TotalOutpatientEncounters         = col_integer(),
-                       AvgYearlyOutpatientEncounters     = col_double(),
-                       TotalPatientPsychVisits           = col_integer(),
-                       AvgYearlyPatientPsychVisits       = col_double(),
-                       HasInclA             = col_logical(),
-                       HasOrInclA           = col_logical(),
-                       HasInclB             = col_logical(),
-                       HasOrInclB           = col_logical(),
-                       HasExclA             = col_logical(),
-                       HasExclB             = col_logical(),
-                       HasExclC             = col_logical(),
-                       Type_2_Diabetes_Mellitus_with_Complications_FirstDiagnosis = col_date(format = "%Y-%m-%d"),
-                       Bariatric_Surgery_FirstDiagnosis       = col_date(format = "%Y-%m-%d"),
-                       ADHD_FirstDiagnosis                    = col_date(format = "%Y-%m-%d"),
-                       Agoraphobia_FirstDiagnosis             = col_date(format = "%Y-%m-%d"),
-                       Anxiety_Disorder_NOS_FirstDiagnosis    = col_date(format = "%Y-%m-%d"),
-                       Generalized_Anxiety_FirstDiagnosis     = col_date(format = "%Y-%m-%d"),
-                       OCD_FirstDiagnosis                     = col_date(format = "%Y-%m-%d"),
-                       Panic_Disorder_FirstDiagnosis          = col_date(format = "%Y-%m-%d"),
-                       PTSD_FirstDiagnosis                    = col_date(format = "%Y-%m-%d"),
-                       Social_Anxiety_Disorder_FirstDiagnosis = col_date(format = "%Y-%m-%d"),
-                       Alcohol_Abuse_FirstDiagnosis           = col_date(format = "%Y-%m-%d"),
-                       Alcohol_Dependence_FirstDiagnosis      = col_date(format = "%Y-%m-%d"),
-                       Cannabis_Abuse_FirstDiagnosis          = col_date(format = "%Y-%m-%d"),
-                       Cannabis_Dependence_FirstDiagnosis     = col_date(format = "%Y-%m-%d"),
-                       Cocaine_Abuse_FirstDiagnosis           = col_date(format = "%Y-%m-%d"),
-                       Cocaine_Dependence_FirstDiagnosis      = col_date(format = "%Y-%m-%d"),
-                       Opioid_Abuse_FirstDiagnosis            = col_date(format = "%Y-%m-%d"),
-                       Opioid_Dependence_FirstDiagnosis       = col_date(format = "%Y-%m-%d"),
-                       Sedative_Abuse_FirstDiagnosis          = col_date(format = "%Y-%m-%d"),
-                       Sedative_Dependence_FirstDiagnosis     = col_date(format = "%Y-%m-%d"),
-                       Tobacco_Use_Disorder_FirstDiagnosis    = col_date(format = "%Y-%m-%d"),
-                       Diseases_of_the_Arteries_Artrioles_and_Capillaries_FirstDiagnosis = col_date(format = "%Y-%m-%d"),
-                       BirthDate            = col_date(format = "%Y-%m-%d"),
-                       PatientSex           = col_character(),
-                       FirstRace            = col_character(),
-                       SecondRace           = col_character(),
-                       ThirdRace            = col_character(),
-                       FourthRace           = col_character(),
-                       FifthRace            = col_character(),
-                       MultiRacial          = col_logical(),
-                       Ethnicity            = col_character()
-                     )) %>%
+                     na        = c("", "NA", "NULL", "null"),
+                     col_types = make_col_types(col_schema, "mdd_data")
+) %>%
   mutate(Race = case_when(
     !is.na(SecondRace) | !is.na(ThirdRace) | !is.na(FourthRace) | !is.na(FifthRace) | MultiRacial ~ "Multi-Race",
     FirstRace == "American Indian or Alaska Native" ~ "American Indian or Alaska Native",
@@ -430,64 +354,8 @@ mdd_data <- read_csv(config$files$mdd_data,
 
 
 antidiabetic_overlap_table <- read_csv(config$files$antidiabetic_overlap_table,
-                                       na = c("", "NA", "NULL", "null"),
-                                       col_types = cols(PatientDurableKey = col_character(),
-                                                        `DPP-4i_Overlaps_Semaglutide_-6m_12m` = col_logical(),
-                                                        `GLP-1RA_Overlaps_Semaglutide_-6m_12m` = col_logical(),
-                                                        `Insulins_Overlaps_Semaglutide_-6m_12m` = col_logical(),
-                                                        `Metformin_Overlaps_Semaglutide_-6m_12m` = col_logical(),
-                                                        `SGLT2i_Overlaps_Semaglutide_-6m_12m` = col_logical(),
-                                                        `SU_Overlaps_Semaglutide_-6m_12m` = col_logical(),
-                                                        `TZD_Overlaps_Semaglutide_-6m_12m` = col_logical(),
-                                                        `DPP-4i_Overlaps_Insulins_-6m_12m` = col_logical(),
-                                                        `GLP-1RA_Overlaps_Insulins_-6m_12m` = col_logical(),
-                                                        `Metformin_Overlaps_Insulins_-6m_12m` = col_logical(),
-                                                        `Semaglutide_Overlaps_Insulins_-6m_12m` = col_logical(),
-                                                        `SGLT2i_Overlaps_Insulins_-6m_12m` = col_logical(),
-                                                        `SU_Overlaps_Insulins_-6m_12m` = col_logical(),
-                                                        `TZD_Overlaps_Insulins_-6m_12m` = col_logical(),
-                                                        `DPP-4i_Overlaps_Metformin_-6m_12m` = col_logical(),
-                                                        `GLP-1RA_Overlaps_Metformin_-6m_12m` = col_logical(),
-                                                        `Insulins_Overlaps_Metformin_-6m_12m` = col_logical(),
-                                                        `Semaglutide_Overlaps_Metformin_-6m_12m` = col_logical(),
-                                                        `SGLT2i_Overlaps_Metformin_-6m_12m` = col_logical(),
-                                                        `SU_Overlaps_Metformin_-6m_12m` = col_logical(),
-                                                        `TZD_Overlaps_Metformin_-6m_12m` = col_logical(),
-                                                        `GLP-1RA_Overlaps_DPP-4i_-6m_12m` = col_logical(),
-                                                        `Insulins_Overlaps_DPP-4i_-6m_12m` = col_logical(),
-                                                        `Metformin_Overlaps_DPP-4i_-6m_12m` = col_logical(),
-                                                        `Semaglutide_Overlaps_DPP-4i_-6m_12m` = col_logical(),
-                                                        `SGLT2i_Overlaps_DPP-4i_-6m_12m` = col_logical(),
-                                                        `SU_Overlaps_DPP-4i_-6m_12m` = col_logical(),
-                                                        `TZD_Overlaps_DPP-4i_-6m_12m` = col_logical(),
-                                                        `DPP-4i_Overlaps_SGLT2i_-6m_12m` = col_logical(),
-                                                        `GLP-1RA_Overlaps_SGLT2i_-6m_12m` = col_logical(),
-                                                        `Insulins_Overlaps_SGLT2i_-6m_12m` = col_logical(),
-                                                        `Metformin_Overlaps_SGLT2i_-6m_12m` = col_logical(),
-                                                        `Semaglutide_Overlaps_SGLT2i_-6m_12m` = col_logical(),
-                                                        `SU_Overlaps_SGLT2i_-6m_12m` = col_logical(),
-                                                        `TZD_Overlaps_SGLT2i_-6m_12m` = col_logical(),
-                                                        `DPP-4i_Overlaps_SU_-6m_12m` = col_logical(),
-                                                        `GLP-1RA_Overlaps_SU_-6m_12m` = col_logical(),
-                                                        `Insulins_Overlaps_SU_-6m_12m` = col_logical(),
-                                                        `Metformin_Overlaps_SU_-6m_12m` = col_logical(),
-                                                        `Semaglutide_Overlaps_SU_-6m_12m` = col_logical(),
-                                                        `SGLT2i_Overlaps_SU_-6m_12m` = col_logical(),
-                                                        `TZD_Overlaps_SU_-6m_12m` = col_logical(),
-                                                        `DPP-4i_Overlaps_TZD_-6m_12m` = col_logical(),
-                                                        `GLP-1RA_Overlaps_TZD_-6m_12m` = col_logical(),
-                                                        `Insulins_Overlaps_TZD_-6m_12m` = col_logical(),
-                                                        `Metformin_Overlaps_TZD_-6m_12m` = col_logical(),
-                                                        `Semaglutide_Overlaps_TZD_-6m_12m` = col_logical(),
-                                                        `SGLT2i_Overlaps_TZD_-6m_12m` = col_logical(),
-                                                        `SU_Overlaps_TZD_-6m_12m` = col_logical(),
-                                                        `DPP-4i_Overlaps_GLP-1RA_-6m_12m` = col_logical(),
-                                                        `Insulins_Overlaps_GLP-1RA_-6m_12m` = col_logical(),
-                                                        `Metformin_Overlaps_GLP-1RA_-6m_12m` = col_logical(),
-                                                        `Semaglutide_Overlaps_GLP-1RA_-6m_12m` = col_logical(),
-                                                        `SGLT2i_Overlaps_GLP-1RA_-6m_12m` = col_logical(),
-                                                        `SU_Overlaps_GLP-1RA_-6m_12m` = col_logical(),
-                                                        `TZD_Overlaps_GLP-1RA_-6m_12m` = col_logical())
+                                       na        = c("", "NA", "NULL", "null"),
+                                       col_types = make_col_types(col_schema, "antidiabetic_overlap_table")
 ) %>%
   rename(DPP4i_Overlaps_Semaglutide_Index = "DPP-4i_Overlaps_Semaglutide_-6m_12m",
          GLP1RA_Overlaps_Semaglutide_Index = "GLP-1RA_Overlaps_Semaglutide_-6m_12m",
@@ -547,88 +415,9 @@ antidiabetic_overlap_table <- read_csv(config$files$antidiabetic_overlap_table,
          TZD_Overlaps_GLP1RA_Index = "TZD_Overlaps_GLP-1RA_-6m_12m")
 
 dte_cohort_data <- read_csv(config$files$dte_cohort_data,
-                            na = c("", "NA", "NULL", "null"),
-                            col_types = cols(
-                              PatientDurableKey                          = col_character(),
-                              Semaglutide_Exposure                       = col_logical(),
-                              Semaglutide_Index                          = col_date(format = "%Y-%m-%d"),
-                              Semaglutide_Iplus15                        = col_date(format = "%Y-%m-%d"),
-                              Semaglutide_Iplus365                       = col_date(format = "%Y-%m-%d"),
-                              MDD_before_Semaglutide                     = col_logical(),
-                              Semaglutide_PreIndexEncounterCount         = col_integer(),
-                              Semaglutide_PostIndexEncounterCount        = col_integer(),
-                              Semaglutide_PrePostInclusionCriteriaMet    = col_logical(),
-                              Insulins_Exposure                          = col_logical(),
-                              Insulins_Index                             = col_date(format = "%Y-%m-%d"),
-                              Insulins_Iplus15                           = col_date(format = "%Y-%m-%d"),
-                              Insulins_Iplus365                          = col_date(format = "%Y-%m-%d"),
-                              MDD_before_Insulins                        = col_logical(),
-                              Insulins_PreIndexEncounterCount            = col_integer(),
-                              Insulins_PostIndexEncounterCount           = col_integer(),
-                              Insulins_PrePostInclusionCriteriaMet       = col_logical(),
-                              `DPP-4i_Exposure`                          = col_logical(),
-                              `DPP-4i_Index`                             = col_date(format = "%Y-%m-%d"),
-                              `DPP-4i_Iplus15`                           = col_date(format = "%Y-%m-%d"),
-                              `DPP-4i_Iplus365`                          = col_date(format = "%Y-%m-%d"),
-                              `MDD_before_DPP-4i`                        = col_logical(),
-                              `DPP-4i_PreIndexEncounterCount`            = col_integer(),
-                              `DPP-4i_PostIndexEncounterCount`           = col_integer(),
-                              `DPP-4i_PrePostInclusionCriteriaMet`       = col_logical(),
-                              `GLP-1RA_Exposure`                         = col_logical(),
-                              `GLP-1RA_Index`                            = col_date(format = "%Y-%m-%d"),
-                              `GLP-1RA_Iplus15`                          = col_date(format = "%Y-%m-%d"),
-                              `GLP-1RA_Iplus365`                         = col_date(format = "%Y-%m-%d"),
-                              `MDD_before_GLP-1RA`                       = col_logical(),
-                              `GLP-1RA_PreIndexEncounterCount`           = col_integer(),
-                              `GLP-1RA_PostIndexEncounterCount`          = col_integer(),
-                              `GLP-1RA_PrePostInclusionCriteriaMet`      = col_logical(),
-                              Metformin_Exposure                         = col_logical(),
-                              Metformin_Index                            = col_date(format = "%Y-%m-%d"),
-                              Metformin_Iplus15                          = col_date(format = "%Y-%m-%d"),
-                              Metformin_Iplus365                         = col_date(format = "%Y-%m-%d"),
-                              MDD_before_Metformin                       = col_logical(),
-                              Metformin_PreIndexEncounterCount           = col_integer(),
-                              Metformin_PostIndexEncounterCount          = col_integer(),
-                              Metformin_PrePostInclusionCriteriaMet      = col_logical(),
-                              TZD_Exposure                               = col_logical(),
-                              TZD_Index                                  = col_date(format = "%Y-%m-%d"),
-                              TZD_Iplus15                                = col_date(format = "%Y-%m-%d"),
-                              TZD_Iplus365                               = col_date(format = "%Y-%m-%d"),
-                              MDD_before_TZD                             = col_logical(),
-                              TZD_PreIndexEncounterCount                 = col_integer(),
-                              TZD_PostIndexEncounterCount                = col_integer(),
-                              TZD_PrePostInclusionCriteriaMet            = col_logical(),
-                              SU_Exposure                                = col_logical(),
-                              SU_Index                                   = col_date(format = "%Y-%m-%d"),
-                              SU_Iplus15                                 = col_date(format = "%Y-%m-%d"),
-                              SU_Iplus365                                = col_date(format = "%Y-%m-%d"),
-                              MDD_before_SU                              = col_logical(),
-                              SU_PreIndexEncounterCount                  = col_integer(),
-                              SU_PostIndexEncounterCount                 = col_integer(),
-                              SU_PrePostInclusionCriteriaMet             = col_logical(),
-                              SGLT2i_Exposure                            = col_logical(),
-                              SGLT2i_Index                               = col_date(format = "%Y-%m-%d"),
-                              SGLT2i_Iplus15                             = col_date(format = "%Y-%m-%d"),
-                              SGLT2i_Iplus365                            = col_date(format = "%Y-%m-%d"),
-                              MDD_before_SGLT2i                          = col_logical(),
-                              SGLT2i_PreIndexEncounterCount              = col_integer(),
-                              SGLT2i_PostIndexEncounterCount             = col_integer(),
-                              SGLT2i_PrePostInclusionCriteriaMet         = col_logical(),
-                              Semaglutide_vs_Insulins_AllCriteriaMet     = col_logical(),
-                              `Semaglutide_vs_DPP-4i_AllCriteriaMet`     = col_logical(),
-                              `Semaglutide_vs_GLP-1RA_AllCriteriaMet`    = col_logical(),
-                              Semaglutide_vs_Metformin_AllCriteriaMet    = col_logical(),
-                              Semaglutide_vs_SGLT2i_AllCriteriaMet       = col_logical(),
-                              Semaglutide_vs_SU_AllCriteriaMet           = col_logical(),
-                              Semaglutide_vs_TZD_AllCriteriaMet          = col_logical(),
-                              Insulins_vs_Semaglutide_AllCriteriaMet     = col_logical(),
-                              `DPP-4i_vs_Semaglutide_AllCriteriaMet`     = col_logical(),
-                              `GLP-1RA_vs_Semaglutide_AllCriteriaMet`    = col_logical(),
-                              Metformin_vs_Semaglutide_AllCriteriaMet    = col_logical(),
-                              SGLT2i_vs_Semaglutide_AllCriteriaMet       = col_logical(),
-                              SU_vs_Semaglutide_AllCriteriaMet           = col_logical(),
-                              TZD_vs_Semaglutide_AllCriteriaMet          = col_logical()
-                            )) %>%
+                            na        = c("", "NA", "NULL", "null"),
+                            col_types = make_col_types(col_schema, "dte_cohort_data")
+) %>%
   rename(DPP4i_Exposure                       = "DPP-4i_Exposure",
          DPP4i_Index                          = "DPP-4i_Index",
          DPP4i_Iplus15                        = "DPP-4i_Iplus15",
@@ -751,13 +540,8 @@ dte_cohort_data <- dte_cohort_data %>%
 rm(antidiabetic_overlap_table)
 
 nonswitch_periods <- read_csv(config$files$nonswitch_periods,
-                              col_types = cols(
-                                PatientDurableKey = col_character(),
-                                StartConcept      = col_character(),
-                                StartDate         = col_date(format = "%Y-%m-%d %H:%M:%S"),
-                                EndConcept        = col_character(),
-                                EndDate           = col_date(format = "%Y-%m-%d %H:%M:%S")
-                              )) %>%
+                              col_types = make_col_types(col_schema, "nonswitch_periods")
+) %>%
   mutate(StartDate = as.Date(StartDate),
          EndDate   = as.Date(EndDate)) %>%
   left_join(mdd_data %>% dplyr::select(PatientDurableKey, MDD_Index, meets_diagnosis_eligibility_criteria),
@@ -771,13 +555,9 @@ nonswitch_periods <- read_csv(config$files$nonswitch_periods,
   )
 
 psych_proc <- read_csv(config$files$psych_proc,
-                       na       = c("", "NA", "NULL", "null"),
-                       col_types = cols(
-                         PatientDurableKey = col_character(),
-                         OutcomeDate       = col_date(format = "%Y-%m-%d"),
-                         OutcomeName       = col_character(),
-                         CPTCode           = col_integer()
-                       )) %>%
+                       na        = c("", "NA", "NULL", "null"),
+                       col_types = make_col_types(col_schema, "psych_proc")
+) %>%
   left_join(cpt_acuity %>% 
               dplyr::select(source_concept_code, level), 
             by = join_by("CPTCode" == "source_concept_code"))

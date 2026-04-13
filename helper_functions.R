@@ -1,6 +1,25 @@
 # helper_functions.R
 # Shared utility functions used across multiple analysis and exploration scripts.
 
+# ── Data loading helpers ──────────────────────────────────────────────────────
+
+# Build a readr cols() spec from a row-per-column schema data frame.
+# schema must have columns: table, column, type, format
+make_col_types <- function(schema, table_name) {
+  specs <- schema[schema$table == table_name, ]
+  col_list <- lapply(seq_len(nrow(specs)), function(i) {
+    switch(specs$type[i],
+      character = col_character(),
+      date      = col_date(format = specs$format[i]),
+      logical   = col_logical(),
+      integer   = col_integer(),
+      double    = col_double()
+    )
+  })
+  names(col_list) <- specs$column
+  do.call(cols, col_list)
+}
+
 # ── Negative binomial regression helpers ─────────────────────────────────────
 
 interpret_nb <- function(model, term, outcome, comparison, alpha = 0.05, digits = 2) {
