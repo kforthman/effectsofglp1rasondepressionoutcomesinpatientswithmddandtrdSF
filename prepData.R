@@ -8,15 +8,6 @@ config <- fromJSON("config.json")
 col_schema  <- read.csv(config$files$column_schema,   stringsAsFactors = FALSE)
 med_recode  <- read.csv(config$files$medication_recode, stringsAsFactors = FALSE)
 
-# ── Validate column schema against data files ─────────────────────────────────
-check_schema(col_schema, "med_table",                  config$files$med_table)
-check_schema(col_schema, "diag_table",                 config$files$diag_table)
-check_schema(col_schema, "mdd_data",                   config$files$mdd_data)
-check_schema(col_schema, "antidiabetic_overlap_table", config$files$antidiabetic_overlap_table)
-check_schema(col_schema, "dte_cohort_data",            config$files$dte_cohort_data)
-check_schema(col_schema, "nonswitch_periods",          config$files$nonswitch_periods)
-check_schema(col_schema, "psych_proc",                 config$files$psych_proc)
-
 data_pull_date                  <- as.Date(config$data_pull_date)
 target_drug                     <- config$target_drug
 comparator_drugs                <- config$comparator_drugs
@@ -31,6 +22,15 @@ atc_drugs <- read.csv(config$files$atc_drugs) %>%
   mutate(length = nchar(Name)) %>%
   arrange(Name)
 cpt_acuity  <- read.csv(config$files$cpt_acuity)
+
+# ── Validate column schema against data files ─────────────────────────────────
+check_schema(col_schema, "med_table",                  config$files$med_table)
+check_schema(col_schema, "diag_table",                 config$files$diag_table)
+check_schema(col_schema, "mdd_data",                   config$files$mdd_data)
+check_schema(col_schema, "antidiabetic_overlap_table", config$files$antidiabetic_overlap_table)
+check_schema(col_schema, "dte_cohort_data",            config$files$dte_cohort_data)
+check_schema(col_schema, "nonswitch_periods",          config$files$nonswitch_periods)
+check_schema(col_schema, "psych_proc",                 config$files$psych_proc)
 
 # ── Read input data ───────────────────────────────────────────────────────────----
 
