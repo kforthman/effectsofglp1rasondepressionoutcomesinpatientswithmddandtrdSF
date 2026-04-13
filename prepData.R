@@ -7,6 +7,21 @@ config <- fromJSON("config.json")
 
 col_schema <- read.csv(config$files$column_schema, stringsAsFactors = FALSE)
 
+data_pull_date                  <- as.Date(config$data_pull_date)
+target_drug                     <- config$target_drug
+comparator_drugs                <- config$comparator_drugs
+nontreatment_group              <- config$nontreatment_group
+eligibility_inclusion_diagnoses <- config$eligibility_inclusion_diagnoses
+
+all_drugs         <- c(target_drug, comparator_drugs)
+comparator_groups <- c(nontreatment_group, comparator_drugs)
+all_groups        <- c(target_drug, comparator_groups)
+
+atc_drugs <- read.csv(config$files$atc_drugs) %>%
+  mutate(length = nchar(Name)) %>%
+  arrange(Name)
+cpt_acuity  <- read.csv(config$files$cpt_acuity)
+
 # ── Read input data ───────────────────────────────────────────────────────────----
 
 med_table <- read_csv(config$files$med_table,
