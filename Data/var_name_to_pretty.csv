@@ -1,0 +1,54 @@
+﻿var_name,pretty_name,pretty_var_category
+DPP4i,DPP-4i,Antidiabetics
+Insulins,Insulins,Antidiabetics
+Metformin,Metformin,Antidiabetics
+Semaglutide,Semaglutide,Antidiabetics
+SGLT2i,SGLT-2i,Antidiabetics
+SU,SU,Antidiabetics
+TZD,TZD,Antidiabetics
+GLP1RA,GLP1-RA (excluding Semaglutide),Antidiabetics
+Race_Ethnicity_white,White,Demographics
+Sex_male,Male,Demographics
+A1C_over_8p5,A1C over 8.5,Diagnostic Eligibility Criteria
+Chronic_Kidney_Disease,Chronic Kidney Disease,Diagnostic Eligibility Criteria
+Gastroparesis,Gastroparesis,Diagnostic Eligibility Criteria
+Heart_Disease,Heart Disease,Diagnostic Eligibility Criteria
+Hypercholesterolemia,Hypercholesterolemia,Diagnostic Eligibility Criteria
+Hyperlipidemia,Hyperlipidemia,Diagnostic Eligibility Criteria
+Hypertension,Hypertension,Diagnostic Eligibility Criteria
+Obesity,Obesity,Diagnostic Eligibility Criteria
+Pancreatitis,Pancreatitis,Diagnostic Eligibility Criteria
+Stroke,Stroke,Diagnostic Eligibility Criteria
+T1DM,Type 1 Diabetes,Diagnostic Eligibility Criteria
+T2DM,Type 2 Diabetes,Diagnostic Eligibility Criteria
+Thyroid_Cancer,Thyroid Cancer,Diagnostic Eligibility Criteria
+Antidepressant_Use,Antidepressant Use,Health System Utilization
+AvgYearlyEncounters,Average Yearly Visits,Health System Utilization
+AvgYearlyOutpatientEncounters,Average Yearly Outpatient Visits,Health System Utilization
+AvgYearlyPatientPsychVisits,Average Yearly Psychiatric Visits,Health System Utilization
+age_at_index_years,Age at Index,Index Variables
+index_year,Index Year,Index Variables
+mdd_to_index_days,MDD to Index (days),Index Variables
+Bariatric_Surgery,Bariatric Surgery,Cardiometabolic Conditions
+Diseases_of_the_Arteries_Artrioles_and_Capillaries,"Diseases of the Arteries, Atrioles, and Capillaries",Cardiometabolic Conditions
+Type_2_Diabetes_Mellitus_with_Complications,Type 2 Diabetes with Complications,Cardiometabolic Conditions
+ADHD,ADHD,Psychiatric Comorbidities
+Agoraphobia,Agoraphobia,Psychiatric Comorbidities
+Anxiety_Disorder_NOS,Anxiety Disorder NOS,Psychiatric Comorbidities
+Generalized_Anxiety,Generalized Anxiety,Psychiatric Comorbidities
+OCD,OCD,Psychiatric Comorbidities
+Panic_Disorder,Panic Disorder,Psychiatric Comorbidities
+PTSD,PTSD,Psychiatric Comorbidities
+Social_Anxiety_Disorder,Social Anxiety Disorder,Psychiatric Comorbidities
+Alcohol_Abuse,Alcohol Abuse,Substance Abuse and Dependence
+Alcohol_Dependence,Alcohol Dependence,Substance Abuse and Dependence
+Cannabis_Abuse,Cannabis Abuse,Substance Abuse and Dependence
+Cannabis_Dependence,Cannabis Dependence,Substance Abuse and Dependence
+Cocaine_Abuse,Cocaine Abuse,Substance Abuse and Dependence
+Cocaine_Dependence,Cocaine Dependence,Substance Abuse and Dependence
+Opioid_Abuse,Opioid Abuse,Substance Abuse and Dependence
+Opioid_Dependence,Opioid Dependence,Substance Abuse and Dependence
+Sedative_Abuse,Sedative Abuse,Substance Abuse and Dependence
+Sedative_Dependence,Sedative Dependence,Substance Abuse and Dependence
+Tobacco_Use_Disorder,Tobacco Use Disorder,Substance Abuse and Dependence
+Nontreatment,Nontreatment,Nontreatment Group

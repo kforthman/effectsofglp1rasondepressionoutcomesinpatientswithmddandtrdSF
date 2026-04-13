@@ -13,11 +13,15 @@
 # Track the pipeline map
 !pipeline_map.csv
 
-# Track column schema metadata
-!Data/column_schema.csv
-
-# Track medication recode lookup
+# Track metadata
+!Data/Drug_ATC_Categories.csv
 !Data/medication_recode.csv
+!Data/ps_covariates.csv
+!Data/var_name_to_pretty.csv
+!Data/column_schema.csv
+!Data/DrugClasses.csv
+!Data/period_info.csv
+!Data/psych_proc_tiers-manualEdit-MPP.csv
 
 # Track the pipeline map generator
 !generate_pipeline_map.py

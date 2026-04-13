@@ -1,0 +1,6 @@
+period,bgn_win,end_win
+"6-0 months before index",-180,0
+"15 days-3 months after index",15,90
+"15 days-6 months after index",15,180
+"15 days-12 months after index",15,360
+"6-12 months after index",180,360
