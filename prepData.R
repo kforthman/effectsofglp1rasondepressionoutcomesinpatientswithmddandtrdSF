@@ -51,18 +51,21 @@ antidepressant_table <- med_table %>%
   apply_recode(med_recode, "antidepressant") %>%
   left_join(atc_drugs, by = join_by("SimpleGenericName" == "Name")) %>%
   filter(substr(ATC_code, 1, 4) == "N06A")
+save(antidepressant_table, file = "OutputData/antidepressant_table.rds")
 
 antipsychotics_table <- med_table %>%
   filter(PharmaceuticalClass == "Antipsychotics") %>%
   apply_recode(med_recode, "antipsychotics") %>%
   left_join(atc_drugs, by = join_by("SimpleGenericName" == "Name")) %>%
   filter(substr(ATC_code, 1, 5) %in% c("N05AE", "N05AH", "N05AL", "N05AN", "N05AX") & ATC_code != "N05AH02")
+save(antipsychotics_table, file = "OutputData/antipsychotics_table.rds")
 
 hydrochlorothiazide_table <- med_table %>%
   filter(PharmaceuticalClass == "Antihypertensive" | PharmaceuticalClass == "Diuretics") %>%
   apply_recode(med_recode, "hydrochlorothiazide") %>%
   left_join(atc_drugs, by = join_by("SimpleGenericName" == "Name")) %>%
   filter(ATC_code == "C03AA03")
+save(hydrochlorothiazide_table, file = "OutputData/hydrochlorothiazide_table.rds")
 
 antidiabetics_subclass_map <- med_recode %>%
   filter(table == "antidiabetics", !is.na(subclass) & subclass != "") %>%
@@ -77,13 +80,21 @@ antidiabetics_table <- med_table %>%
   dplyr::select(-subclass)
 
 antidiabetics_Semaglutide_table <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "Semaglutide")
+save(antidiabetics_Semaglutide_table, file = "OutputData/antidiabetics_Semaglutide_table.rds")
 antidiabetics_Insulins_table    <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "Insulins")
+save(antidiabetics_Insulins_table, file = "OutputData/antidiabetics_Insulins_table.rds")
 antidiabetics_Metformin_table   <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "Metformin")
+save(antidiabetics_Metformin_table, file = "OutputData/antidiabetics_Metformin_table.rds")
 antidiabetics_DPP4i_table       <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "DPP4i")
+save(antidiabetics_DPP4i_table, file = "OutputData/antidiabetics_DPP4i_table.rds")
 antidiabetics_SGLT2i_table      <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "SGLT2i")
+save(antidiabetics_SGLT2i_table, file = "OutputData/antidiabetics_SGLT2i_table.rds")
 antidiabetics_SU_table          <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "SU")
+save(antidiabetics_SU_table, file = "OutputData/antidiabetics_SU_table.rds")
 antidiabetics_TZD_table         <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "TZD")
+save(antidiabetics_TZD_table, file = "OutputData/antidiabetics_TZD_table.rds")
 antidiabetics_GLP1RA_table      <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "GLP1RA")
+save(antidiabetics_GLP1RA_table, file = "OutputData/antidiabetics_GLP1RA_table.rds")
 
 rm(med_table)
 rm(antidiabetics_table)
@@ -104,6 +115,7 @@ diag_table <- read_csv(config$files$diag_table,
                             
   )) %>% 
   arrange(PatientDurableKey, Diagnosis)
+save(diag_table, file = "OutputData/diag_table.rds")
 
 # Patients with MDD, no Bipolar Disorder, no Schizophrenia
 mdd_data <- read_csv(config$files$mdd_data,
@@ -207,6 +219,7 @@ mdd_data <- read_csv(config$files$mdd_data,
                 ~ if_else(is.na(.), FALSE, TRUE),
                 .names = "{sub('_Index$', '_Use', .col)}")) %>%
   mutate(Antidepressant_Use = PatientDurableKey %in% antidepressant_table$PatientDurableKey)
+save(mdd_data, file = "OutputData/mdd_data.rds")
 
 
 antidiabetic_overlap_table <- read_csv(config$files$antidiabetic_overlap_table,
@@ -269,6 +282,7 @@ antidiabetic_overlap_table <- read_csv(config$files$antidiabetic_overlap_table,
          SGLT2i_Overlaps_GLP1RA_Index = "SGLT2i_Overlaps_GLP-1RA_-6m_12m",
          SU_Overlaps_GLP1RA_Index = "SU_Overlaps_GLP-1RA_-6m_12m",
          TZD_Overlaps_GLP1RA_Index = "TZD_Overlaps_GLP-1RA_-6m_12m")
+save(antidiabetic_overlap_table, file = "OutputData/antidiabetic_overlap_table.rds")
 
 dte_cohort_data <- read_csv(config$files$dte_cohort_data,
                             na        = c("", "NA", "NULL", "null"),
@@ -393,6 +407,8 @@ dte_cohort_data <- dte_cohort_data %>%
                 sort(setdiff(names(.), c("PatientDurableKey", "meets_diagnosis_eligibility_criteria", "MDD_Index", "BirthDate")))
   )
 
+save(dte_cohort_data, file = "OutputData/dte_cohort_data.rds")
+
 rm(antidiabetic_overlap_table)
 
 nonswitch_periods <- read_csv(config$files$nonswitch_periods,
@@ -409,6 +425,7 @@ nonswitch_periods <- read_csv(config$files$nonswitch_periods,
     tfe_at_index_bgn = floor(time_length(interval(MDD_Index, at_6_months_after_start_date), "days")),
     tfe_at_index_end = floor(time_length(interval(MDD_Index, at_12_months_before_end_date), "days")),
   )
+save(nonswitch_periods, file = "OutputData/nonswitch_periods.rds")
 
 psych_proc <- read_csv(config$files$psych_proc,
                        na        = c("", "NA", "NULL", "null"),
