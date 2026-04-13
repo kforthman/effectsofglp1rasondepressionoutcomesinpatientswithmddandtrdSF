@@ -58,11 +58,15 @@ check_recode <- function(data, mapping, table_name) {
   data_names <- unique(data$SimpleGenericName)
   map_names  <- mapping[mapping$table == table_name, "raw_name"]
   missing    <- sort(setdiff(data_names, map_names))
-  if (length(missing) > 0)
-    warning(sprintf("check_recode [%s]: %d name(s) have no recode entry:\n  %s",
+  if(length(missing) > 0){
+    out_filename <- str_glue("OutputData/missing_recodes-{table_name}.csv")
+    warning(sprintf("check_recode [%s]: %d name(s) have no recode entry, missing name(s) will be written to \"%s\":\n  %s",
                     table_name, length(missing),
+                    out_filename,
                     paste(missing, collapse = "\n  ")))
-  data.frame(table = table_name, name = missing, stringsAsFactors = FALSE)
+    missing_recodes <- data.frame(table = table_name, raw_name = missing, stringsAsFactors = FALSE)
+    write.csv(missing_recodes, out_filename, row.names = FALSE)
+  }
 }
 
 # ── Negative binomial regression helpers ─────────────────────────────────────
