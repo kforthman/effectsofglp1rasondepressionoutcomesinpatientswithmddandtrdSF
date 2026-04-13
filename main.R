@@ -43,9 +43,6 @@ drug_class  <- read.csv(config$files$drug_class)
 cpt_acuity  <- read.csv(config$files$cpt_acuity)
 period_info <- read.csv(config$files$period_info)
 
-
-
-
 # ── Identify TRD patients ─────────────────────────────────────────────────────----
 
 source("get_TRD.R")
