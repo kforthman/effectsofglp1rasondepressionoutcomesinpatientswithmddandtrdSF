@@ -18,32 +18,23 @@ library(MASS)
 library(performance)
 library(DHARMa)
 library(sjPlot)
+library(jsonlite)
 
-data_pull_date <- as.Date("2026-04-06")
-target_drug      <- "Semaglutide"
-comparator_drugs <- c("DPP4i", "GLP1RA", "Insulins", "Metformin",
-                      "SGLT2i", "SU", "TZD")
-all_drugs <- c(target_drug, comparator_drugs)
-nontreatment_group <- "Nontreatment"
+config <- fromJSON("config.json")
+
+data_pull_date                  <- as.Date(config$data_pull_date)
+target_drug                     <- config$target_drug
+comparator_drugs                <- config$comparator_drugs
+nontreatment_group              <- config$nontreatment_group
+eligibility_inclusion_diagnoses <- config$eligibility_inclusion_diagnoses
+
+all_drugs         <- c(target_drug, comparator_drugs)
 comparator_groups <- c(nontreatment_group, comparator_drugs)
-all_groups <- c(target_drug, comparator_groups)
+all_groups        <- c(target_drug, comparator_groups)
 
 var_name_to_pretty <- read.csv("Data/var_name_to_pretty.csv")
 ps_covariates      <- read.csv("Data/ps_covariates.csv")
 
-eligibility_inclusion_diagnoses <- c("T1DM", 
-                                     "T2DM", 
-                                     "Obesity", 
-                                     "Hypertension", 
-                                     "Hypercholesterolemia", 
-                                     "Hyperlipidemia", 
-                                     "Heart_Disease", 
-                                     "Stroke", 
-                                     "Chronic_Kidney_Disease", 
-                                     "A1C_over_8p5", 
-                                     "Pancreatitis", 
-                                     "Thyroid_Cancer", 
-                                     "Gastroparesis")
 
 atc_drugs <- read.csv("Data/Drug_ATC_Categories.csv") %>% 
   mutate(length = nchar(Name)) %>%
