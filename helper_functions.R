@@ -3,6 +3,28 @@
 
 # ── Data loading helpers ──────────────────────────────────────────────────────
 
+# Verify that a file's columns match the schema exactly.
+# Stops if any mismatch is found; otherwise prints an OK message.
+check_schema <- function(schema, table_name, file_path, na = c("", "NA", "NULL", "null")) {
+  file_cols   <- names(read_csv(file_path, n_max = 0, show_col_types = FALSE, na = na))
+  schema_cols <- schema[schema$table == table_name, "column"]
+
+  extra_in_file   <- setdiff(file_cols,   schema_cols)
+  extra_in_schema <- setdiff(schema_cols, file_cols)
+
+  msgs <- character(0)
+  if (length(extra_in_file) > 0)
+    msgs <- c(msgs, sprintf("  In file but missing from schema: %s", paste(extra_in_file,   collapse = ", ")))
+  if (length(extra_in_schema) > 0)
+    msgs <- c(msgs, sprintf("  In schema but missing from file: %s", paste(extra_in_schema, collapse = ", ")))
+
+  if (length(msgs) > 0)
+    stop(sprintf("Schema mismatch for '%s':\n%s", table_name, paste(msgs, collapse = "\n")))
+
+  message(sprintf("Schema OK: %s (%d columns)", table_name, length(schema_cols)))
+  invisible(TRUE)
+}
+
 # Build a readr cols() spec from a row-per-column schema data frame.
 # schema must have columns: table, column, type, format
 make_col_types <- function(schema, table_name) {
