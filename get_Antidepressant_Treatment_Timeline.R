@@ -14,13 +14,16 @@
 #   {period_filename}   — consecutive_period_tab
 
 get_Antidepressant_Treatment_Timeline <- function(
-    drug_class,
-    antidepressant_table,
-    antipsychotics_table,
+    drug_class_file,
+    antidepressant_table_file,
+    antipsychotics_table_file,
     instance_filename,
     period_filename,
     overwrite = TRUE
 ) {
+    drug_class <- read.csv(drug_class_file)
+    load(antidepressant_table_file)
+    load(antipsychotics_table_file)
 
     drug_class <- drug_class %>%
     mutate(Type = recode(Type, "Other" = "Other Antidepressants")) %>%

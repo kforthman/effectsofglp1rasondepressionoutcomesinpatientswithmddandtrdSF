@@ -43,17 +43,14 @@ drug_class  <- read.csv(config$files$drug_class)
 cpt_acuity  <- read.csv(config$files$cpt_acuity)
 period_info <- read.csv(config$files$period_info)
 
-# ── Prep Data ─────────────────────────────────────────────────────----
-source("prepData.R")
-
 # ── Identify TRD patients ─────────────────────────────────────────────────────----
 
 source("get_TRD.R")
 
 message("Identifying TRD patients")
 get_TRD(
-  mdd_data                  = mdd_data,
-  antidepressant_table      = antidepressant_table,
+  mdd_data_file             = "OutputData/mdd_data.rds",
+  antidepressant_table_file = "OutputData/antidepressant_table.rds",
   instance_filename         = "OutputData/antidepressant_consecutive_instance.csv",
   period_filename           = "OutputData/antidepressant_consecutive_period.csv",
   period_summ_filename      = "OutputData/antidepressant_consecutive_period_tab_summ.csv",
@@ -68,9 +65,9 @@ source("get_Antidepressant_Treatment_Timeline.R")
 
 message("Building antidepressant/antipsychotic treatment timelines")
 get_Antidepressant_Treatment_Timeline(
-  drug_class           = drug_class,
-  antidepressant_table = antidepressant_table,
-  antipsychotics_table = antipsychotics_table,
+  drug_class_file           = config$files$drug_class,
+  antidepressant_table_file = "OutputData/antidepressant_table.rds",
+  antipsychotics_table_file = "OutputData/antipsychotics_table.rds",
   instance_filename    = "OutputData/antidepressant_antipsychotic_consecutive_instance.rds",
   period_filename      = "OutputData/antidepressant_antipsychotic_consecutive_period.rds",
   overwrite            = TRUE
@@ -82,7 +79,7 @@ source("get_Hydrochlorothiazide_Treatment_Timeline.R")
 
 message("Building hydrochlorothiazide treatment timelines")
 get_Hydrochlorothiazide_Treatment_Timeline(
-  hydrochlorothiazide_table = hydrochlorothiazide_table,
+  hydrochlorothiazide_table_file = "OutputData/hydrochlorothiazide_table.rds",
   instance_filename         = "OutputData/hydrochlorothiazide_consecutive_instance.rds",
   overwrite                 = TRUE
 )
@@ -92,7 +89,13 @@ get_Hydrochlorothiazide_Treatment_Timeline(
 source("get_Antidiabetic_Nontreatment_Timelines.R")
 
 message("Building nontreatment cohort for: ", target_drug)
-nontreat_result <- get_Antidiabetic_Nontreatment_Timelines(dte_cohort_data, nonswitch_periods, target_drug, nontreatment_group, mdd_data)
+nontreat_result <- get_Antidiabetic_Nontreatment_Timelines(
+  dte_cohort_data_file   = "OutputData/dte_cohort_data.rds",
+  nonswitch_periods_file = "OutputData/nonswitch_periods.rds",
+  target_drug            = target_drug,
+  nontreatment_group     = nontreatment_group,
+  mdd_data_file          = "OutputData/mdd_data.rds"
+)
 
 this.data <- nontreat_result$dte_cohort_data2
 save(this.data, file = "OutputData/dte_cohort_wNontreat_data.rds")
@@ -143,6 +146,8 @@ load("OutputData/data_DTE_DiagnosisTimelineVars.rds", verbose = T)
 diagnosis_timeline_data <- this.data
 
 # ── Render eligibility criteria report ───────────────────────────────────────----
+
+load("OutputData/diag_table.rds")
 
 render(
   input       = "report_Eligibility_Criteria.Rmd",

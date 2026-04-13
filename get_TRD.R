@@ -3,8 +3,8 @@
 # patients who have had more than 2 unique antidepressants in a single period.
 #
 # Arguments:
-#   mdd_data                   — MDD patient demographics (PatientDurableKey, MDD_Index)
-#   antidepressant_table       — Filtered/recoded antidepressant medication records
+#   mdd_data_file              — Path to RDS file containing MDD patient demographics (PatientDurableKey, MDD_Index)
+#   antidepressant_table_file  — Path to RDS file containing filtered/recoded antidepressant medication records
 #   instance_filename          — Output path for consecutive instance table (.csv)
 #   period_filename            — Output path for consecutive period table (.csv)
 #   period_summ_filename       — Output path for period summary table (.csv)
@@ -20,8 +20,8 @@
 #   {trd_ids_filename}          — TRD patient ID list
 
 get_TRD <- function(
-    mdd_data,
-    antidepressant_table,
+    mdd_data_file,
+    antidepressant_table_file,
     instance_filename,
     period_filename,
     period_summ_filename,
@@ -29,6 +29,8 @@ get_TRD <- function(
     trd_ids_filename,
     overwrite = TRUE
 ) {
+    load(mdd_data_file)
+    load(antidepressant_table_file)
 
     mdd_first_record <- mdd_data %>%
     select(PatientDurableKey, MDD_Index)

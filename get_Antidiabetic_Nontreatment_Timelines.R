@@ -21,12 +21,15 @@
 #   List of diagnostic objects for report_Antidiabetic_Nontreatment_Timelines.Rmd,
 #   plus dte_cohort_data2 (saved to disk by main.R as Data/dte_cohort_wNontreat_data.rds)
 
-get_Antidiabetic_Nontreatment_Timelines <- function(dte_cohort_data,
-                                                    nonswitch_periods,
+get_Antidiabetic_Nontreatment_Timelines <- function(dte_cohort_data_file,
+                                                    nonswitch_periods_file,
                                                     target_drug = "Semaglutide",
                                                     nontreatment_group = "Nontreatment",
-                                                    mdd_data) {
-  
+                                                    mdd_data_file) {
+  load(dte_cohort_data_file)
+  load(nonswitch_periods_file)
+  load(mdd_data_file)
+
   col_TimelineCriteria <- paste0(target_drug,        "_meets_timeline_criteria")
   col_mdd_to_index    <- paste0(target_drug,        "_mdd_to_index_days")
   col_Index           <- paste0(target_drug,        "_Index")

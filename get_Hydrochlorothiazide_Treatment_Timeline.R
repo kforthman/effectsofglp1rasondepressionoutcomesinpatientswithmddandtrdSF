@@ -10,10 +10,11 @@
 #   {instance_filename} — consecutive_instance_tab
 
 get_Hydrochlorothiazide_Treatment_Timeline <- function(
-    hydrochlorothiazide_table,
+    hydrochlorothiazide_table_file,
     instance_filename,
     overwrite = TRUE
 ) {
+    load(hydrochlorothiazide_table_file)
 
     simp_drug_record <- hydrochlorothiazide_table %>%
     arrange(PatientDurableKey, SimpleGenericName, MedicationStartDate)
