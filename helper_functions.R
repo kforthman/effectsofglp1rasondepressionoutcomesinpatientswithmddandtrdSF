@@ -20,6 +20,16 @@ make_col_types <- function(schema, table_name) {
   do.call(cols, col_list)
 }
 
+# Build a recoded SimpleGenericName column from a row-per-mapping recode data frame.
+# mapping must have columns: table, raw_name, canonical_name
+apply_recode <- function(data, mapping, table_name) {
+  tbl_map <- mapping[mapping$table == table_name, c("raw_name", "canonical_name")]
+  data %>%
+    left_join(tbl_map, by = c("SimpleGenericName" = "raw_name")) %>%
+    mutate(SimpleGenericName = dplyr::coalesce(canonical_name, SimpleGenericName)) %>%
+    dplyr::select(-canonical_name)
+}
+
 # ── Negative binomial regression helpers ─────────────────────────────────────
 
 interpret_nb <- function(model, term, outcome, comparison, alpha = 0.05, digits = 2) {

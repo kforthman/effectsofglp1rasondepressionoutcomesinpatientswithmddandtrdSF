@@ -32,6 +32,7 @@
     "dte_cohort_data":            "/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-Treatment_Table-26_04_06-v1.csv",
     "nonswitch_periods":          "/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-Nontreatment_Table-26_04_06-v1.csv",
     "psych_proc":                 "/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-Outcomes_Table-26_04_06-v1.csv",
-    "column_schema":              "Data/column_schema.csv"
+    "column_schema":              "Data/column_schema.csv",
+    "medication_recode":          "Data/medication_recode.csv"
   }
 }

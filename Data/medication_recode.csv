@@ -1,0 +1,152 @@
+table,raw_name,canonical_name,subclass
+antidepressant,Sertraline HCl,sertraline,
+antidepressant,DULoxetine HCl,duloxetine,
+antidepressant,PARoxetine HCl,paroxetine,
+antidepressant,Mirtazapine,mirtazapine,
+antidepressant,buPROPion HCl,bupropion,
+antidepressant,Escitalopram Oxalate,escitalopram,
+antidepressant,Venlafaxine HCl,venlafaxine,
+antidepressant,traZODone HCl,trazodone,
+antidepressant,FLUoxetine HCl,fluoxetine,
+antidepressant,Nortriptyline HCl,nortriptyline,
+antidepressant,Amitriptyline HCl,amitriptyline,
+antidepressant,Citalopram Hydrobromide,citalopram,
+antidepressant,Doxepin HCl,doxepin,
+antidepressant,Desvenlafaxine Succinate,desvenlafaxine,
+antidepressant,Vilazodone HCl,vilazodone,
+antidepressant,Vortioxetine HBr,vortioxetine,
+antidepressant,Levomilnacipran HCl,levomilnacipran,
+antidepressant,Imipramine HCl,imipramine,
+antidepressant,fluvoxaMINE Maleate,fluvoxamine,
+antidepressant,clomiPRAMINE HCl,clomipramine,
+antidepressant,Dextromethorphan-Bupropion,bupropion,
+antidepressant,Nefazodone HCl,nefazodone,
+antidepressant,Desipramine HCl,desipramine,
+antidepressant,Esketamine HCl,esketamine,
+antidepressant,Selegiline,selegiline,
+antidepressant,PARoxetine Mesylate,paroxetine,
+antidepressant,Imipramine Pamoate,imipramine,
+antidepressant,Desvenlafaxine,desvenlafaxine,
+antidepressant,Zuranolone,zuranolone,
+antidepressant,buPROPion HBr,bupropion,
+antidepressant,Phenelzine Sulfate,phenelzine,
+antidepressant,Tranylcypromine Sulfate,tranylcypromine,
+antidepressant,Desvenlafaxine Fumarate,desvenlafaxine,
+antidepressant,Amoxapine,amoxapine,
+antidepressant,TraZODone & Diet Manage Prod,trazodone,
+antipsychotics,Prochlorperazine,prochlorperazine,
+antipsychotics,Cariprazine HCl,cariprazine,
+antipsychotics,Prochlorperazine Edisylate,prochlorperazine,
+antipsychotics,QUEtiapine Fumarate,quetiapine,
+antipsychotics,Lurasidone HCl,lurasidone,
+antipsychotics,risperiDONE,risperidone,
+antipsychotics,ARIPiprazole,aripiprazole,
+antipsychotics,Haloperidol Lactate,haloperidol,
+antipsychotics,OLANZapine,olanzapine,
+antipsychotics,Haloperidol,haloperidol,
+antipsychotics,chlorproMAZINE HCl,chlorpromazine,
+antipsychotics,Prochlorperazine Maleate,prochlorperazine,
+antipsychotics,Asenapine Maleate,asenapine,
+antipsychotics,Lithium Carbonate,lithium,
+antipsychotics,Brexpiprazole,brexpiprazole,
+antipsychotics,Paliperidone Palmitate,paliperidone,
+antipsychotics,Ziprasidone HCl,ziprasidone,
+antipsychotics,Iloperidone,iloperidone,
+antipsychotics,Thioridazine HCl,thioridazine,
+antipsychotics,Pimavanserin Tartrate,pimavanserin,
+antipsychotics,Ziprasidone Mesylate,ziprasidone,
+antipsychotics,Perphenazine,perphenazine,
+antipsychotics,Lumateperone Tosylate,lumateperone,
+antipsychotics,cloZAPine,clozapine,
+antipsychotics,carBAMazepine (Antipsychotic),carbamazepine,
+antipsychotics,fluPHENAZine HCl,fluphenazine,
+antipsychotics,Paliperidone,paliperidone,
+antipsychotics,Loxapine Succinate,loxapine,
+antipsychotics,Haloperidol Decanoate,haloperidol,
+antipsychotics,risperiDONE Microspheres,risperidone,
+antipsychotics,Lithium,lithium,
+antipsychotics,ARIPiprazole (sensor),aripiprazole,
+antipsychotics,fluPHENAZine Decanoate,fluphenazine,
+antipsychotics,Trifluoperazine HCl,trifluoperazine,
+hydrochlorothiazide,hydroCHLOROthiazide,hydrochlorothiazide,
+hydrochlorothiazide,Losartan Potassium-HCTZ,hydrochlorothiazide,
+hydrochlorothiazide,Lisinopril-hydroCHLOROthiazide,hydrochlorothiazide,
+hydrochlorothiazide,Olmesartan Medoxomil-HCTZ,hydrochlorothiazide,
+hydrochlorothiazide,Enalapril-hydroCHLOROthiazide,hydrochlorothiazide,
+hydrochlorothiazide,Bisoprolol-hydroCHLOROthiazide,hydrochlorothiazide,
+hydrochlorothiazide,Valsartan-hydroCHLOROthiazide,hydrochlorothiazide,
+hydrochlorothiazide,Triamterene-HCTZ,hydrochlorothiazide,
+hydrochlorothiazide,Benazepril-hydroCHLOROthiazide,hydrochlorothiazide,
+hydrochlorothiazide,Spironolactone-HCTZ,hydrochlorothiazide,
+hydrochlorothiazide,amLODIPine-Valsartan-HCTZ,hydrochlorothiazide,
+hydrochlorothiazide,Aliskiren-hydroCHLOROthiazide,hydrochlorothiazide,
+hydrochlorothiazide,Olmesartan-amLODIPine-HCTZ,hydrochlorothiazide,
+hydrochlorothiazide,Irbesartan-hydroCHLOROthiazide,hydrochlorothiazide,
+hydrochlorothiazide,Telmisartan-HCTZ,hydrochlorothiazide,
+hydrochlorothiazide,aMILoride-hydroCHLOROthiazide,hydrochlorothiazide,
+hydrochlorothiazide,Eprosartan Mesylate-HCTZ,hydrochlorothiazide,
+hydrochlorothiazide,Moexipril-hydroCHLOROthiazide,hydrochlorothiazide,
+hydrochlorothiazide,Metoprolol-hydroCHLOROthiazide,hydrochlorothiazide,
+hydrochlorothiazide,Candesartan Cilexetil-HCTZ,hydrochlorothiazide,
+hydrochlorothiazide,Fosinopril Sodium-HCTZ,hydrochlorothiazide,
+hydrochlorothiazide,Propranolol-HCTZ,hydrochlorothiazide,
+hydrochlorothiazide,Quinapril-hydroCHLOROthiazide,hydrochlorothiazide,
+hydrochlorothiazide,Methyldopa-hydroCHLOROthiazide,hydrochlorothiazide,
+hydrochlorothiazide,Captopril-hydroCHLOROthiazide,hydrochlorothiazide,
+antidiabetics,Acarbose,acarbose,TZD
+antidiabetics,Alogliptin Benzoate,alogliptin,DPP4i
+antidiabetics,Alogliptin-metFORMIN HCl,alogliptin/metformin,
+antidiabetics,Alogliptin-Pioglitazone,alogliptin/pioglitazone,
+antidiabetics,Bexagliflozin,bexagliflozin,SGLT2i
+antidiabetics,Canagliflozin,canagliflozin,SGLT2i
+antidiabetics,Canagliflozin-metFORMIN HCl,canagliflozin/metformin,
+antidiabetics,ChlorproPAMIDE,chlorpropamide,SU
+antidiabetics,Dapagliflozin Prop-metFORMIN,dapagliflozin/metformin,
+antidiabetics,Dapagliflozin Propanediol,dapagliflozin,SGLT2i
+antidiabetics,Dapagliflozin-sAXagliptin,dapagliflozin/saxagliptin,
+antidiabetics,Dulaglutide,dulaglutide,GLP1RA
+antidiabetics,Empagliflozin,empagliflozin,SGLT2i
+antidiabetics,Empagliflozin-Linaglip-Metform,empagliflozin/linagliptin/metformin,
+antidiabetics,Empagliflozin-linaGLIPtin,empagliflozin/linagliptin,
+antidiabetics,Empagliflozin-metFORMIN HCl,empagliflozin/metformin,
+antidiabetics,Ertugliflozin L-PyroglutamicAc,ertugliflozin,SGLT2i
+antidiabetics,Ertugliflozin-metFORMIN HCl,ertugliflozin/metformin,
+antidiabetics,Ertugliflozin-SITagliptin,ertugliflozin/sitagliptin,
+antidiabetics,Exenatide,exenatide,GLP1RA
+antidiabetics,Glimepiride,glimepiride,SU
+antidiabetics,glipiZIDE,glipizide,SU
+antidiabetics,glipiZIDE-metFORMIN HCl,glipizide/metformin,
+antidiabetics,glyBURIDE,glibenclamide,SU
+antidiabetics,glyBURIDE Micronized,glibenclamide,SU
+antidiabetics,glyBURIDE-metFORMIN,glibenclamide/metformin,
+antidiabetics,Insulin Aspart,insulin,Insulins
+antidiabetics,Insulin Aspart (w/Niacinamide),insulin,Insulins
+antidiabetics,Insulin Aspart Prot & Aspart,insulin,Insulins
+antidiabetics,Insulin Degludec,insulin,Insulins
+antidiabetics,Insulin Degludec-Liraglutide,insulin/liraglutide,
+antidiabetics,Insulin Detemir,insulin,Insulins
+antidiabetics,Insulin Glargine,insulin,Insulins
+antidiabetics,Insulin Glargine-aglr,insulin,Insulins
+antidiabetics,Insulin Glargine-Lixisenatide,insulin/lixisenatide,
+antidiabetics,Insulin Glargine-yfgn,insulin,Insulins
+antidiabetics,Insulin Glulisine,insulin,Insulins
+antidiabetics,Insulin Lispro,insulin,Insulins
+antidiabetics,Insulin Lispro Prot & Lispro,insulin,Insulins
+antidiabetics,Insulin Lispro-aabc,insulin,Insulins
+antidiabetics,linaGLIPtin,linagliptin,DPP4i
+antidiabetics,linaGLIPtin-metFORMIN HCl,linagliptin/metformin,
+antidiabetics,Liraglutide,liraglutide,GLP1RA
+antidiabetics,Lixisenatide,lixisenatide,GLP1RA
+antidiabetics,metFORMIN HCl,metformin,Metformin
+antidiabetics,Miglitol,miglitol,TZD
+antidiabetics,Pioglitazone HCl-Glimepiride,pioglitazone/glimepiride,
+antidiabetics,Pioglitazone HCl-metFORMIN HCl,pioglitazone/metformin,
+antidiabetics,sAXagliptin HCl,saxagliptin,DPP4i
+antidiabetics,sAXagliptin-metFORMIN,saxagliptin/metformin,
+antidiabetics,Semaglutide,semaglutide,Semaglutide
+antidiabetics,Sitagliptin,sitagliptin,DPP4i
+antidiabetics,Sitagliptin Base-Metformin HCl,sitagliptin/metformin,
+antidiabetics,SITagliptin Phos-metFORMIN HCl,sitagliptin/metformin,
+antidiabetics,SITagliptin Phosphate,sitagliptin,DPP4i
+antidiabetics,TOLBUTamide,tolbutamide,SU
+antidiabetics,pioglitazone,pioglitazone,Other

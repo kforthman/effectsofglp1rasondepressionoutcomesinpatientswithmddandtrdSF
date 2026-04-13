@@ -5,7 +5,8 @@ source("helper_functions.R")
 
 config <- fromJSON("config.json")
 
-col_schema <- read.csv(config$files$column_schema, stringsAsFactors = FALSE)
+col_schema  <- read.csv(config$files$column_schema,   stringsAsFactors = FALSE)
+med_recode  <- read.csv(config$files$medication_recode, stringsAsFactors = FALSE)
 
 data_pull_date                  <- as.Date(config$data_pull_date)
 target_drug                     <- config$target_drug
@@ -31,209 +32,33 @@ med_table <- read_csv(config$files$med_table,
   mutate(DaysSupply = as.integer(DaysSupply)) %>%
   dplyr::select(-AntidiabeticIndexLabel, -AntidiabeticIndexDate)
 
-antidepressant_table <- med_table %>% 
+antidepressant_table <- med_table %>%
   filter(PharmaceuticalClass == "Antidepressants") %>%
-  mutate(SimpleGenericName = recode(SimpleGenericName,
-                                    "Sertraline HCl"               = "sertraline",
-                                    "DULoxetine HCl"               = "duloxetine",
-                                    "PARoxetine HCl"               = "paroxetine",
-                                    "Mirtazapine"                  = "mirtazapine",
-                                    "buPROPion HCl"                = "bupropion",
-                                    "Escitalopram Oxalate"         = "escitalopram",
-                                    "Venlafaxine HCl"              = "venlafaxine",
-                                    "traZODone HCl"                = "trazodone",
-                                    "FLUoxetine HCl"               = "fluoxetine",
-                                    "Nortriptyline HCl"            = "nortriptyline",
-                                    "Amitriptyline HCl"            = "amitriptyline",
-                                    "Citalopram Hydrobromide"      = "citalopram",
-                                    "Doxepin HCl"                  = "doxepin",
-                                    "Desvenlafaxine Succinate"     = "desvenlafaxine",
-                                    "Vilazodone HCl"               = "vilazodone",
-                                    "Vortioxetine HBr"             = "vortioxetine",
-                                    "Levomilnacipran HCl"          = "levomilnacipran",
-                                    "Imipramine HCl"               = "imipramine",
-                                    "fluvoxaMINE Maleate"          = "fluvoxamine",
-                                    "clomiPRAMINE HCl"             = "clomipramine",
-                                    "Dextromethorphan-Bupropion"   = "bupropion",
-                                    "Nefazodone HCl"               = "nefazodone",
-                                    "Desipramine HCl"              = "desipramine",
-                                    "Esketamine HCl"               = "esketamine",
-                                    "Selegiline"                   = "selegiline",
-                                    "PARoxetine Mesylate"          = "paroxetine",
-                                    "Imipramine Pamoate"           = "imipramine",
-                                    "Desvenlafaxine"               = "desvenlafaxine",
-                                    "Zuranolone"                   = "zuranolone",
-                                    "buPROPion HBr"                = "bupropion",
-                                    "Phenelzine Sulfate"           = "phenelzine",
-                                    "Tranylcypromine Sulfate"      = "tranylcypromine",
-                                    "Desvenlafaxine Fumarate"      = "desvenlafaxine",
-                                    "Amoxapine"                    = "amoxapine",
-                                    "TraZODone & Diet Manage Prod" = "trazodone"
-  )) %>%
+  apply_recode(med_recode, "antidepressant") %>%
   left_join(atc_drugs, by = join_by("SimpleGenericName" == "Name")) %>%
   filter(substr(ATC_code, 1, 4) == "N06A")
 
-antipsychotics_table <- med_table %>% filter(PharmaceuticalClass == "Antipsychotics") %>%
-  mutate(SimpleGenericName = recode(SimpleGenericName,
-                                    "Prochlorperazine"              = "prochlorperazine",
-                                    "Cariprazine HCl"               = "cariprazine",
-                                    "Prochlorperazine Edisylate"    = "prochlorperazine",
-                                    "QUEtiapine Fumarate"           = "quetiapine",
-                                    "Lurasidone HCl"                = "lurasidone",
-                                    "risperiDONE"                   = "risperidone",
-                                    "ARIPiprazole"                  = "aripiprazole",
-                                    "Haloperidol Lactate"           = "haloperidol",
-                                    "OLANZapine"                    = "olanzapine",
-                                    "Haloperidol"                   = "haloperidol",
-                                    "chlorproMAZINE HCl"            = "chlorpromazine",
-                                    "Prochlorperazine Maleate"      = "prochlorperazine",
-                                    "Asenapine Maleate"             = "asenapine",
-                                    "Lithium Carbonate"             = "lithium",
-                                    "Brexpiprazole"                 = "brexpiprazole",
-                                    "Paliperidone Palmitate"        = "paliperidone",
-                                    "Ziprasidone HCl"               = "ziprasidone",
-                                    "Iloperidone"                   = "iloperidone",
-                                    "Thioridazine HCl"              = "thioridazine",
-                                    "Pimavanserin Tartrate"         = "pimavanserin",
-                                    "Ziprasidone Mesylate"          = "ziprasidone",
-                                    "Perphenazine"                  = "perphenazine",
-                                    "Lumateperone Tosylate"         = "lumateperone",
-                                    "cloZAPine"                     = "clozapine",
-                                    "carBAMazepine (Antipsychotic)" = "carbamazepine",
-                                    "fluPHENAZine HCl"              = "fluphenazine",
-                                    "Paliperidone"                  = "paliperidone",
-                                    "Loxapine Succinate"            = "loxapine",
-                                    "Haloperidol Decanoate"         = "haloperidol",
-                                    "risperiDONE Microspheres"      = "risperidone",
-                                    "Lithium"                       = "lithium",
-                                    "ARIPiprazole (sensor)"         = "aripiprazole",
-                                    "fluPHENAZine Decanoate"        = "fluphenazine",
-                                    "Trifluoperazine HCl"           = "trifluoperazine")
-  ) %>%
+antipsychotics_table <- med_table %>%
+  filter(PharmaceuticalClass == "Antipsychotics") %>%
+  apply_recode(med_recode, "antipsychotics") %>%
   left_join(atc_drugs, by = join_by("SimpleGenericName" == "Name")) %>%
   filter(substr(ATC_code, 1, 5) %in% c("N05AE", "N05AH", "N05AL", "N05AN", "N05AX") & ATC_code != "N05AH02")
 
-hydrochlorothiazide_table <- med_table %>% filter(PharmaceuticalClass == "Antihypertensive" | 
-                                                    PharmaceuticalClass == "Diuretics") %>%
-  mutate(SimpleGenericName = recode(SimpleGenericName,
-                                    "hydroCHLOROthiazide"            = "hydrochlorothiazide",
-                                    "Losartan Potassium-HCTZ"        = "hydrochlorothiazide",
-                                    "Lisinopril-hydroCHLOROthiazide" = "hydrochlorothiazide",
-                                    "Olmesartan Medoxomil-HCTZ"      = "hydrochlorothiazide",
-                                    "Enalapril-hydroCHLOROthiazide"  = "hydrochlorothiazide",
-                                    "Bisoprolol-hydroCHLOROthiazide" = "hydrochlorothiazide",
-                                    "Valsartan-hydroCHLOROthiazide"  = "hydrochlorothiazide",
-                                    "Triamterene-HCTZ"               = "hydrochlorothiazide",
-                                    "Benazepril-hydroCHLOROthiazide" = "hydrochlorothiazide",
-                                    "Spironolactone-HCTZ"            = "hydrochlorothiazide",
-                                    "amLODIPine-Valsartan-HCTZ"      = "hydrochlorothiazide",
-                                    "Aliskiren-hydroCHLOROthiazide"  = "hydrochlorothiazide",
-                                    "Olmesartan-amLODIPine-HCTZ"     = "hydrochlorothiazide",
-                                    "Irbesartan-hydroCHLOROthiazide" = "hydrochlorothiazide",
-                                    "Telmisartan-HCTZ"               = "hydrochlorothiazide",
-                                    "aMILoride-hydroCHLOROthiazide"  = "hydrochlorothiazide",
-                                    "Eprosartan Mesylate-HCTZ"       = "hydrochlorothiazide",
-                                    "Moexipril-hydroCHLOROthiazide"  = "hydrochlorothiazide",
-                                    "Metoprolol-hydroCHLOROthiazide" = "hydrochlorothiazide",
-                                    "Candesartan Cilexetil-HCTZ"     = "hydrochlorothiazide",
-                                    "Fosinopril Sodium-HCTZ"         = "hydrochlorothiazide",
-                                    "Propranolol-HCTZ"               = "hydrochlorothiazide",
-                                    "Quinapril-hydroCHLOROthiazide"  = "hydrochlorothiazide",
-                                    "Methyldopa-hydroCHLOROthiazide" = "hydrochlorothiazide",
-                                    "Captopril-hydroCHLOROthiazide"  = "hydrochlorothiazide")) %>%
+hydrochlorothiazide_table <- med_table %>%
+  filter(PharmaceuticalClass == "Antihypertensive" | PharmaceuticalClass == "Diuretics") %>%
+  apply_recode(med_recode, "hydrochlorothiazide") %>%
   left_join(atc_drugs, by = join_by("SimpleGenericName" == "Name")) %>%
   filter(ATC_code == "C03AA03")
 
-antidiabetics_table <-  med_table %>% filter(PharmaceuticalClass == "Antidiabetic") %>%
-  mutate(SimpleGenericName = recode(SimpleGenericName,
-                                    "Acarbose"                       = "acarbose",
-                                    "Alogliptin Benzoate"            = "alogliptin",
-                                    "Alogliptin-metFORMIN HCl"       = "alogliptin/metformin",
-                                    "Alogliptin-Pioglitazone"        = "alogliptin/pioglitazone",
-                                    "Bexagliflozin"                  = "bexagliflozin",
-                                    "Canagliflozin"                  = "canagliflozin",
-                                    "Canagliflozin-metFORMIN HCl"    = "canagliflozin/metformin",
-                                    "ChlorproPAMIDE"                 = "chlorpropamide",
-                                    "Dapagliflozin Prop-metFORMIN"   = "dapagliflozin/metformin",
-                                    "Dapagliflozin Propanediol"      = "dapagliflozin",
-                                    "Dapagliflozin-sAXagliptin"      = "dapagliflozin/saxagliptin",
-                                    "Dulaglutide"                    = "dulaglutide",
-                                    "Empagliflozin"                  = "empagliflozin",
-                                    "Empagliflozin-Linaglip-Metform" = "empagliflozin/linagliptin/metformin",
-                                    "Empagliflozin-linaGLIPtin"      = "empagliflozin/linagliptin",
-                                    "Empagliflozin-metFORMIN HCl"    = "empagliflozin/metformin",
-                                    "Ertugliflozin L-PyroglutamicAc" = "ertugliflozin",
-                                    "Ertugliflozin-metFORMIN HCl"    = "ertugliflozin/metformin",
-                                    "Ertugliflozin-SITagliptin"      = "ertugliflozin/sitagliptin",
-                                    "Exenatide"                      = "exenatide",
-                                    "Glimepiride"                    = "glimepiride",
-                                    "glipiZIDE"                      = "glipizide",
-                                    "glipiZIDE-metFORMIN HCl"        = "glipizide/metformin",
-                                    "glyBURIDE"                      = "glibenclamide",
-                                    "glyBURIDE Micronized"           = "glibenclamide",
-                                    "glyBURIDE-metFORMIN"            = "glibenclamide/metformin",
-                                    "Insulin Aspart"                 = "insulin",
-                                    "Insulin Aspart (w/Niacinamide)" = "insulin",
-                                    "Insulin Aspart Prot & Aspart"   = "insulin",
-                                    "Insulin Degludec"               = "insulin",
-                                    "Insulin Degludec-Liraglutide"   = "insulin/liraglutide",
-                                    "Insulin Detemir"                = "insulin",
-                                    "Insulin Glargine"               = "insulin",
-                                    "Insulin Glargine-aglr"          = "insulin",
-                                    "Insulin Glargine-Lixisenatide"  = "insulin/lixisenatide",
-                                    "Insulin Glargine-yfgn"          = "insulin",
-                                    "Insulin Glulisine"              = "insulin",
-                                    "Insulin Lispro"                 = "insulin",
-                                    "Insulin Lispro Prot & Lispro"   = "insulin",
-                                    "Insulin Lispro-aabc"            = "insulin",
-                                    "linaGLIPtin"                    = "linagliptin",
-                                    "linaGLIPtin-metFORMIN HCl"      = "linagliptin/metformin",
-                                    "Liraglutide"                    = "liraglutide",
-                                    "Lixisenatide"                   = "lixisenatide",
-                                    "metFORMIN HCl"                  = "metformin",
-                                    "Miglitol"                       = "miglitol",
-                                    "Pioglitazone HCl-Glimepiride"   = "pioglitazone/glimepiride",
-                                    "Pioglitazone HCl-metFORMIN HCl" = "pioglitazone/metformin",
-                                    "sAXagliptin HCl"                = "saxagliptin",
-                                    "sAXagliptin-metFORMIN"          = "saxagliptin/metformin",
-                                    "Semaglutide"                    = "semaglutide",
-                                    "Sitagliptin"                    = "sitagliptin",
-                                    "Sitagliptin Base-Metformin HCl" = "sitagliptin/metformin",
-                                    "SITagliptin Phos-metFORMIN HCl" = "sitagliptin/metformin",
-                                    "SITagliptin Phosphate"          = "sitagliptin",
-                                    "TOLBUTamide"                    = "tolbutamide"
-  )
-  ) %>%
-  separate_rows(
-    SimpleGenericName,
-    sep = "/"
-  ) %>%
-  mutate(PharmaceuticalSubclass = case_when(
-    SimpleGenericName == "acarbose"       ~ "TZD",
-    SimpleGenericName == "alogliptin"     ~ "DPP4i",
-    SimpleGenericName == "bexagliflozin"  ~ "SGLT2i",
-    SimpleGenericName == "canagliflozin"  ~ "SGLT2i",
-    SimpleGenericName == "chlorpropamide" ~ "SU",
-    SimpleGenericName == "dapagliflozin"  ~ "SGLT2i",
-    SimpleGenericName == "dulaglutide"    ~ "GLP1RA",
-    SimpleGenericName == "empagliflozin"  ~ "SGLT2i",
-    SimpleGenericName == "ertugliflozin"  ~ "SGLT2i",
-    SimpleGenericName == "exenatide"      ~ "GLP1RA",
-    SimpleGenericName == "glibenclamide"  ~ "SU",
-    SimpleGenericName == "glimepiride"    ~ "SU",
-    SimpleGenericName == "glipizide"      ~ "SU",
-    SimpleGenericName == "insulin"        ~ "Insulins",
-    SimpleGenericName == "linagliptin"    ~ "DPP4i",
-    SimpleGenericName == "liraglutide"    ~ "GLP1RA",
-    SimpleGenericName == "lixisenatide"   ~ "GLP1RA",
-    SimpleGenericName == "metformin"      ~ "Metformin",
-    SimpleGenericName == "miglitol"       ~ "TZD",
-    SimpleGenericName == "pioglitazone"   ~ "Other",
-    SimpleGenericName == "saxagliptin"    ~ "DPP4i",
-    SimpleGenericName == "semaglutide"    ~ "Semaglutide",
-    SimpleGenericName == "sitagliptin"    ~ "DPP4i",
-    SimpleGenericName == "tolbutamide"    ~ "SU"
-  ))
+antidiabetics_subclass_map <- med_recode %>%
+  filter(table == "antidiabetics", !is.na(subclass) & subclass != "") %>%
+  distinct(canonical_name, subclass)
+
+antidiabetics_table <- med_table %>%
+  filter(PharmaceuticalClass == "Antidiabetic") %>%
+  apply_recode(med_recode, "antidiabetics") %>%
+  separate_rows(SimpleGenericName, sep = "/") %>%
+  left_join(antidiabetics_subclass_map, by = c("SimpleGenericName" = "canonical_name"))
 
 antidiabetics_Semaglutide_table <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "Semaglutide")
 antidiabetics_Insulins_table    <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "Insulins")

@@ -16,6 +16,9 @@
 # Track column schema metadata
 !Data/column_schema.csv
 
+# Track medication recode lookup
+!Data/medication_recode.csv
+
 # Track the pipeline map generator
 !generate_pipeline_map.py
 
