@@ -41,6 +41,15 @@ med_table <- read_csv(config$files$med_table,
   mutate(DaysSupply = as.integer(DaysSupply)) %>%
   dplyr::select(-AntidiabeticIndexLabel, -AntidiabeticIndexDate)
 
+# ── Validate medication recode coverage ───────────────────────────────────────
+missing_recodes <- rbind(
+  check_recode(med_table %>% filter(PharmaceuticalClass == "Antidepressants"),                     med_recode, "antidepressant"),
+  check_recode(med_table %>% filter(PharmaceuticalClass == "Antipsychotics"),                      med_recode, "antipsychotics"),
+  check_recode(med_table %>% filter(PharmaceuticalClass %in% c("Antihypertensive", "Diuretics")), med_recode, "hydrochlorothiazide"),
+  check_recode(med_table %>% filter(PharmaceuticalClass == "Antidiabetic"),                        med_recode, "antidiabetics")
+)
+write.csv(missing_recodes, "OutputData/missing_recodes.csv", row.names = FALSE)
+
 antidepressant_table <- med_table %>%
   filter(PharmaceuticalClass == "Antidepressants") %>%
   apply_recode(med_recode, "antidepressant") %>%

@@ -52,6 +52,19 @@ apply_recode <- function(data, mapping, table_name) {
     dplyr::select(-canonical_name)
 }
 
+# Warn if any SimpleGenericName in data has no entry in mapping for table_name.
+# Returns a data frame with columns (table, name) listing every missing name.
+check_recode <- function(data, mapping, table_name) {
+  data_names <- unique(data$SimpleGenericName)
+  map_names  <- mapping[mapping$table == table_name, "raw_name"]
+  missing    <- sort(setdiff(data_names, map_names))
+  if (length(missing) > 0)
+    warning(sprintf("check_recode [%s]: %d name(s) have no recode entry:\n  %s",
+                    table_name, length(missing),
+                    paste(missing, collapse = "\n  ")))
+  data.frame(table = table_name, name = missing, stringsAsFactors = FALSE)
+}
+
 # ── Negative binomial regression helpers ─────────────────────────────────────
 
 interpret_nb <- function(model, term, outcome, comparison, alpha = 0.05, digits = 2) {
