@@ -19,11 +19,18 @@
     "Gastroparesis"
   ],
   "files": {
-    "var_name_to_pretty": "Data/var_name_to_pretty.csv",
-    "ps_covariates":      "Data/ps_covariates.csv",
-    "atc_drugs":          "Data/Drug_ATC_Categories.csv",
-    "drug_class":         "Data/DrugClasses.csv",
-    "cpt_acuity":         "Data/psych_proc_tiers-manualEdit-MPP.csv",
-    "period_info":        "Data/period_info.csv"
+    "var_name_to_pretty":         "Data/var_name_to_pretty.csv",
+    "ps_covariates":              "Data/ps_covariates.csv",
+    "atc_drugs":                  "Data/Drug_ATC_Categories.csv",
+    "drug_class":                 "Data/DrugClasses.csv",
+    "cpt_acuity":                 "Data/psych_proc_tiers-manualEdit-MPP.csv",
+    "period_info":                "Data/period_info.csv",
+    "med_table":                  "/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-Medication_Table-26_04_06-v1.csv",
+    "diag_table":                 "/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-FirstDiagnosis_Table-26_04_06-v1.csv",
+    "mdd_data":                   "/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-MDDPatientList_Table-26_04_06-v1.csv",
+    "antidiabetic_overlap_table": "/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-OverlapWide_Table-26_04_06-v1.csv",
+    "dte_cohort_data":            "/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-Treatment_Table-26_04_06-v1.csv",
+    "nonswitch_periods":          "/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-Nontreatment_Table-26_04_06-v1.csv",
+    "psych_proc":                 "/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-Outcomes_Table-26_04_06-v1.csv"
   }
 }

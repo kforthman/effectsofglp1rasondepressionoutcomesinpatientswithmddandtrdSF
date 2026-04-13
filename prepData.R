@@ -1,8 +1,11 @@
 library(tidyverse)
+library(jsonlite)
+
+config <- fromJSON("config.json")
 
 # ── Read input data ───────────────────────────────────────────────────────────----
 
-med_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-Medication_Table-26_04_06-v1.csv",
+med_table <- read_csv(config$files$med_table,
                       na = c("", "NA", "NULL", "null"),
                       col_types = cols(
                         PatientDurableKey        = col_character(),
@@ -246,7 +249,7 @@ antidiabetics_GLP1RA_table      <- antidiabetics_table %>% filter(Pharmaceutical
 rm(med_table)
 rm(antidiabetics_table)
 
-diag_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-FirstDiagnosis_Table-26_04_06-v1.csv",
+diag_table <- read_csv(config$files$diag_table,
                        na = c("", "NA", "NULL", "null"),
                        col_types = cols(
                          PatientDurableKey  = col_character(),
@@ -268,7 +271,7 @@ diag_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/C
   arrange(PatientDurableKey, Diagnosis)
 
 # Patients with MDD, no Bipolar Disorder, no Schizophrenia
-mdd_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-MDDPatientList_Table-26_04_06-v1.csv",
+mdd_data <- read_csv(config$files$mdd_data,
                      na = c("", "NA", "NULL", "null"),
                      col_types = cols(
                        PatientDurableKey    = col_character(),
@@ -426,7 +429,7 @@ mdd_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM
   mutate(Antidepressant_Use = PatientDurableKey %in% antidepressant_table$PatientDurableKey)
 
 
-antidiabetic_overlap_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260406-1400//CCM-OverlapWide_Table-26_04_06-v1.csv",
+antidiabetic_overlap_table <- read_csv(config$files$antidiabetic_overlap_table,
                                        na = c("", "NA", "NULL", "null"),
                                        col_types = cols(PatientDurableKey = col_character(),
                                                         `DPP-4i_Overlaps_Semaglutide_-6m_12m` = col_logical(),
@@ -543,7 +546,7 @@ antidiabetic_overlap_table <- read_csv("/Volumes/Studies/ehr_study/uploaded-data
          SU_Overlaps_GLP1RA_Index = "SU_Overlaps_GLP-1RA_-6m_12m",
          TZD_Overlaps_GLP1RA_Index = "TZD_Overlaps_GLP-1RA_-6m_12m")
 
-dte_cohort_data <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-Treatment_Table-26_04_06-v1.csv",
+dte_cohort_data <- read_csv(config$files$dte_cohort_data,
                             na = c("", "NA", "NULL", "null"),
                             col_types = cols(
                               PatientDurableKey                          = col_character(),
@@ -747,7 +750,7 @@ dte_cohort_data <- dte_cohort_data %>%
 
 rm(antidiabetic_overlap_table)
 
-nonswitch_periods <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-Nontreatment_Table-26_04_06-v1.csv",
+nonswitch_periods <- read_csv(config$files$nonswitch_periods,
                               col_types = cols(
                                 PatientDurableKey = col_character(),
                                 StartConcept      = col_character(),
@@ -767,7 +770,7 @@ nonswitch_periods <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260406
     tfe_at_index_end = floor(time_length(interval(MDD_Index, at_12_months_before_end_date), "days")),
   )
 
-psych_proc <- read_csv("/Volumes/Studies/ehr_study/uploaded-data/20260406-1400/CCM-Outcomes_Table-26_04_06-v1.csv",
+psych_proc <- read_csv(config$files$psych_proc,
                        na       = c("", "NA", "NULL", "null"),
                        col_types = cols(
                          PatientDurableKey = col_character(),
