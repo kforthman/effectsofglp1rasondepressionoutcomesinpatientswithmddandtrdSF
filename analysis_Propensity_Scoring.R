@@ -17,8 +17,6 @@
 #   PS_Matched_Dataset-{drug}.rds
 #   Data/propensity_scoring_result-{target}Vs{drug}.rds
 
-source("workbench_functions.txt")
-
 # ---------------------------------------------------------------------------
 # Helper functions for balance assessment
 # ---------------------------------------------------------------------------

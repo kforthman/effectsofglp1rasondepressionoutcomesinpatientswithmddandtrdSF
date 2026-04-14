@@ -24,7 +24,7 @@ define_before_diagnosis_ids <- function(index_drug_record, diagnosis_timeline){
 # Arguments:
 #   all_drugs        — Character vector of target and comparator drug names
 #   all_diagnoses    — Character vector of diagnosis names to evaluate
-#   index_dataset    — Cohort data frame with PatientDurableKey and {drug}_Index columns
+#   nontreat_data_filename    — RDS filename containing cohort data frame with PatientDurableKey and {drug}_Index columns
 #   output_filename  — Output path for the diagnosis timeline variables (.rds)
 #
 # Saves (written to disk, no return value):
@@ -33,9 +33,12 @@ define_before_diagnosis_ids <- function(index_drug_record, diagnosis_timeline){
 get_Diagnosis_Timeline <- function(
     all_drugs,
     all_diagnoses,
-    index_dataset,
+    nontreat_data_filename,
     output_filename
 ) {
+  
+  loaded_var <- load(nontreat_data_filename) # restores named variable
+  index_dataset <- get(loaded_var[1])
   
   all.data <- index_dataset %>% dplyr::select(PatientDurableKey) %>% distinct()
   for(i in 1:length(all_diagnoses)){
@@ -55,6 +58,6 @@ get_Diagnosis_Timeline <- function(
     }
   }
   
-  this.data <- all.data
-  save(this.data, file = output_filename)
+  diagnosis_timeline_data <- all.data
+  save(diagnosis_timeline_data, file = output_filename)
 }

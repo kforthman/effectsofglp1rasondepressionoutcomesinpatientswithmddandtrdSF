@@ -3,8 +3,8 @@
 #
 # Arguments:
 #   drug_class           — Raw DrugClasses data frame (from read.csv("Data/DrugClasses.csv"))
-#   antidepressant_table — Filtered/recoded antidepressant medication records
-#   antipsychotics_table — Filtered/recoded antipsychotic medication records
+#   antidepressant_table_file — Path to RDS file containing filtered/recoded antidepressant medication records
+#   antipsychotics_table_file — Path to RDS file containing filtered/recoded antipsychotic medication records
 #   instance_filename    — Output path for consecutive instance table (.rds)
 #   period_filename      — Output path for consecutive period table (.rds)
 #   overwrite            — If TRUE, recompute and overwrite existing files (default: TRUE)
@@ -14,14 +14,13 @@
 #   {period_filename}   — consecutive_period_tab
 
 get_Antidepressant_Treatment_Timeline <- function(
-    drug_class_file,
+    drug_class,
     antidepressant_table_file,
     antipsychotics_table_file,
     instance_filename,
     period_filename,
     overwrite = TRUE
 ) {
-    drug_class <- read.csv(drug_class_file)
     load(antidepressant_table_file)
     load(antipsychotics_table_file)
 

@@ -33,7 +33,7 @@ get_TRD <- function(
     load(antidepressant_table_file)
 
     mdd_first_record <- mdd_data %>%
-    select(PatientDurableKey, MDD_Index)
+    dplyr::select(PatientDurableKey, MDD_Index)
 
     antidepressant_record <- antidepressant_table %>%
     filter(PatientDurableKey %in% mdd_first_record$PatientDurableKey) %>%

@@ -13,9 +13,9 @@ params:
   var_name_to_pretty:              NULL
   comparator_drugs:                NULL
   target_drug:                     "Semaglutide"
-  diagnosis_timeline_data:         NULL
-  dte_cohort_data2:                NULL
-  diag_table:                      NULL
+  diagnosis_timeline_filename:         NULL
+  nontreat_data_filename:                NULL
+  diag_table_filename:                      NULL
   nontreatment_group:              "Nontreatment"
 ---
 
@@ -33,9 +33,12 @@ all_drugs                       <- params$all_drugs
 var_name_to_pretty              <- params$var_name_to_pretty
 comparator_drugs                <- params$comparator_drugs
 target_drug                     <- params$target_drug
-diagnosis_timeline_data         <- params$diagnosis_timeline_data
 nontreatment_group              <- params$nontreatment_group
-diag_table                      <- params$diag_table
+
+load(params$diag_table_filename)
+load(params$diagnosis_timeline_filename)
+loaded_var <- load(params$nontreat_data_filename) # restores named variable
+nontreat_data <- get(loaded_var[1])
 ```
 
 ```{r prepare-labels}
@@ -57,7 +60,7 @@ cohort_names <- do.call(c, lapply(
 ```
 
 ```{r build-dataset}
-all.data <- params$dte_cohort_data2 %>%
+all.data <- nontreat_data %>%
   left_join(diagnosis_timeline_data, by = "PatientDurableKey") %>%
   filter(eval(parse(text = paste(cohort_names, collapse = " | "))))
 ```

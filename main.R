@@ -43,6 +43,9 @@ drug_class  <- read.csv(config$files$drug_class)
 cpt_acuity  <- read.csv(config$files$cpt_acuity)
 period_info <- read.csv(config$files$period_info)
 
+# ── Prep Data ─────────────────────────────────────────────────────----
+source("prepData.R")
+
 # ── Identify TRD patients ─────────────────────────────────────────────────────----
 
 source("get_TRD.R")
@@ -65,7 +68,7 @@ source("get_Antidepressant_Treatment_Timeline.R")
 
 message("Building antidepressant/antipsychotic treatment timelines")
 get_Antidepressant_Treatment_Timeline(
-  drug_class_file           = config$files$drug_class,
+  drug_class           = drug_class,
   antidepressant_table_file = "OutputData/antidepressant_table.rds",
   antipsychotics_table_file = "OutputData/antipsychotics_table.rds",
   instance_filename    = "OutputData/antidepressant_antipsychotic_consecutive_instance.rds",
@@ -94,15 +97,10 @@ nontreat_result <- get_Antidiabetic_Nontreatment_Timelines(
   nonswitch_periods_file = "OutputData/nonswitch_periods.rds",
   target_drug            = target_drug,
   nontreatment_group     = nontreatment_group,
-  mdd_data_file          = "OutputData/mdd_data.rds"
+  mdd_data_file          = "OutputData/mdd_data.rds",
+  nontreat_data_filename = "OutputData/dte_cohort_wNontreat_data.rds",
+  result_file            = paste0("OutputData/nontreatment_timelines_result-", target_drug, ".rds")
 )
-
-this.data <- nontreat_result$dte_cohort_data2
-save(this.data, file = "OutputData/dte_cohort_wNontreat_data.rds")
-
-result_file <- paste0("OutputData/nontreatment_timelines_result-", target_drug, ".rds")
-
-save(nontreat_result, file = result_file)
 
 # ── Render nontreatment timelines report ──────────────────────────────────────----
 
@@ -112,7 +110,7 @@ render(
   params      = list(
     target_drug        = target_drug,
     nontreatment_group = nontreatment_group,
-    result_file        = result_file
+    result_file        = paste0("OutputData/nontreatment_timelines_result-", target_drug, ".rds")
   ),
   envir = new.env()
 )
@@ -123,7 +121,7 @@ render(
   input       = "report_Antidiabetic_Overlap.Rmd",
   output_file = paste0("Reports/report_Antidiabetic_Overlap-", target_drug, ".html"),
   params      = list(
-    dte_cohort_data2   = nontreat_result$dte_cohort_data2,
+    nontreat_data_filename = "OutputData/dte_cohort_wNontreat_data.rds",
     all_groups         = all_groups,
     nontreatment_group = nontreatment_group
   ),
@@ -138,16 +136,11 @@ message("Building diagnosis timeline variables")
 get_Diagnosis_Timeline(
   all_drugs        = all_drugs,
   all_diagnoses    = eligibility_inclusion_diagnoses,
-  index_dataset    = nontreat_result$dte_cohort_data2,
+  nontreat_data_filename = "OutputData/dte_cohort_wNontreat_data.rds",
   output_filename  = "OutputData/data_DTE_DiagnosisTimelineVars.rds"
 )
 
-load("OutputData/data_DTE_DiagnosisTimelineVars.rds", verbose = T)
-diagnosis_timeline_data <- this.data
-
 # ── Render eligibility criteria report ───────────────────────────────────────----
-
-load("OutputData/diag_table.rds")
 
 render(
   input       = "report_Eligibility_Criteria.Rmd",
@@ -158,9 +151,9 @@ render(
     var_name_to_pretty              = var_name_to_pretty,
     comparator_drugs                = comparator_drugs,
     target_drug                     = target_drug,
-    diagnosis_timeline_data         = diagnosis_timeline_data,
-    dte_cohort_data2                = nontreat_result$dte_cohort_data2,
-    diag_table                      = diag_table,
+    diagnosis_timeline_filename     = "OutputData/data_DTE_DiagnosisTimelineVars.rds",
+    nontreat_data_filename          = "OutputData/dte_cohort_wNontreat_data.rds",
+    diag_table_filename             = "OutputData/diag_table.rds",
     nontreatment_group              = nontreatment_group
   ),
   envir = new.env()
@@ -172,7 +165,7 @@ render(
   input       = "report_Propensity_Covariates.Rmd",
   output_file = paste0("Reports/report_Propensity_Covariates-", target_drug, ".html"),
   params      = list(
-    dte_cohort_data2   = nontreat_result$dte_cohort_data2,
+    nontreat_data_filename   = "OutputData/dte_cohort_wNontreat_data.rds",
     all_groups         = all_groups,
     target_drug        = target_drug,
     ps_covariates      = ps_covariates,
@@ -187,9 +180,10 @@ source("analysis_Propensity_Scoring.R")
 
 for (group in comparator_groups) {
   message("Running propensity scoring for: ", group)
-  ps_result <- analysis_Propensity_Scoring(group, target_drug,
-                                           "OutputData/dte_cohort_wNontreat_data.rds",
-                                           "Data/ps_covariates.csv")
+  ps_result <- analysis_Propensity_Scoring(comparator_group = group, 
+                                           target_drug = target_drug,
+                                           cohort_file = "OutputData/dte_cohort_wNontreat_data.rds",
+                                           covariates_file = "Data/ps_covariates.csv")
   
   write.csv(ps_result$matchingVars.final,
             paste0("OutputData/PS_Covariates-", group, ".csv"),
@@ -359,7 +353,7 @@ for (group in comparator_groups) {
     
     analysis_Negative_Binomial_Regression(
       matched_data_file = matched_data_files[[group]],
-      all_outcomes      = all_outcomes,
+      all_outcomes      = all_outcomes, # paste0("OutputData/all_outcomes-", target_drug, ".rds"))
       comparator_group  = group,
       target_drug       = target_drug,
       period_name       = nb_period_name,

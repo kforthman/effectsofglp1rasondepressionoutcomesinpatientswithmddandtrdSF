@@ -79,6 +79,9 @@ antidiabetics_table <- med_table %>%
   mutate(PharmaceuticalSubclass = dplyr::coalesce(subclass, PharmaceuticalSubclass)) %>%
   dplyr::select(-subclass)
 
+rm(antidiabetics_subclass_map)
+rm(med_recode)
+
 antidiabetics_Semaglutide_table <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "Semaglutide")
 save(antidiabetics_Semaglutide_table, file = "OutputData/antidiabetics_Semaglutide_table.rds")
 antidiabetics_Insulins_table    <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "Insulins")
@@ -220,6 +223,19 @@ mdd_data <- read_csv(config$files$mdd_data,
                 .names = "{sub('_Index$', '_Use', .col)}")) %>%
   mutate(Antidepressant_Use = PatientDurableKey %in% antidepressant_table$PatientDurableKey)
 save(mdd_data, file = "OutputData/mdd_data.rds")
+
+rm(diag_table)
+rm(antidepressant_table)
+rm(antipsychotics_table)
+rm(hydrochlorothiazide_table)
+rm(antidiabetics_DPP4i_table)
+rm(antidiabetics_GLP1RA_table)
+rm(antidiabetics_Insulins_table)
+rm(antidiabetics_Metformin_table)
+rm(antidiabetics_Semaglutide_table)
+rm(antidiabetics_SGLT2i_table)
+rm(antidiabetics_SU_table)
+rm(antidiabetics_TZD_table)
 
 
 antidiabetic_overlap_table <- read_csv(config$files$antidiabetic_overlap_table,
@@ -410,6 +426,7 @@ dte_cohort_data <- dte_cohort_data %>%
 save(dte_cohort_data, file = "OutputData/dte_cohort_data.rds")
 
 rm(antidiabetic_overlap_table)
+rm(dte_cohort_data)
 
 nonswitch_periods <- read_csv(config$files$nonswitch_periods,
                               col_types = make_col_types(col_schema, "nonswitch_periods")
@@ -427,6 +444,9 @@ nonswitch_periods <- read_csv(config$files$nonswitch_periods,
   )
 save(nonswitch_periods, file = "OutputData/nonswitch_periods.rds")
 
+rm(nonswitch_periods)
+rm(mdd_data)
+
 psych_proc <- read_csv(config$files$psych_proc,
                        na        = c("", "NA", "NULL", "null"),
                        col_types = make_col_types(col_schema, "psych_proc")
@@ -435,3 +455,6 @@ psych_proc <- read_csv(config$files$psych_proc,
               dplyr::select(source_concept_code, level), 
             by = join_by("CPTCode" == "source_concept_code"))
 save(psych_proc, file = "OutputData/psych_proc.rds")
+rm(psych_proc)
+
+rm(col_schema)

@@ -2,7 +2,7 @@
 # instance table for hydrochlorothiazide (active comparator).
 #
 # Arguments:
-#   hydrochlorothiazide_table — Filtered/recoded hydrochlorothiazide medication records
+#   hydrochlorothiazide_table_file — Path to RDS file containing filtered/recoded hydrochlorothiazide medication records
 #   instance_filename         — Output path for consecutive instance table (.rds)
 #   overwrite                 — If TRUE, recompute and overwrite existing file (default: TRUE)
 #

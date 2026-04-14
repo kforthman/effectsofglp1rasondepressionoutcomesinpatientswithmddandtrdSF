@@ -8,7 +8,7 @@ output:
     toc_depth: 3
     theme: flatly
 params:
-  dte_cohort_data2:   NULL
+  nontreat_data_filename:   NULL
   all_groups:         NULL
   target_drug:        "Semaglutide"
   ps_covariates:      NULL
@@ -24,7 +24,7 @@ library(kableExtra)
 
 source("helper_functions.R")
 
-this.data          <- params$dte_cohort_data2
+load(params$nontreat_data_filename)
 all_groups         <- params$all_groups
 target_drug        <- params$target_drug
 ```

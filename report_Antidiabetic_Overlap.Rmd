@@ -8,9 +8,9 @@ output:
     toc_depth: 3
     theme: flatly
 params:
-  dte_cohort_data2:   NULL
-  all_groups:         NULL
-  nontreatment_group: "Nontreatment"
+  nontreat_data_filename:   NULL
+  all_groups:               NULL
+  nontreatment_group:       "Nontreatment"
 ---
 
 ```{r setup, include=FALSE}
@@ -21,7 +21,7 @@ library(corrplot)
 library(plotrix)
 library(libRtheme)
 
-this.data         <- params$dte_cohort_data2
+load(params$nontreat_data_filename)
 all_groups        <- params$all_groups
 nontreatment_group <- params$nontreatment_group
 all_drugs         <- all_groups[all_groups != nontreatment_group]
@@ -48,7 +48,7 @@ for (i in 1:length(all_groups)) {
 
 ```{r co-occurrence-matrix}
 use_matrix    <- this.data %>%
-  select(paste0(c(all_drugs, nontreatment_group), "_Index")) %>%
+  dplyr::select(paste0(c(all_drugs, nontreatment_group), "_Index")) %>%
   mutate(across(everything(), ~ if_else(is.na(.), 0L, 1L))) %>%
   as.matrix
 co_occurrence <- t(use_matrix) %*% use_matrix

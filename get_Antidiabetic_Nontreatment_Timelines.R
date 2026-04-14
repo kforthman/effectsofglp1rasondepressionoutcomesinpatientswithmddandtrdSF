@@ -5,27 +5,28 @@
 # diagnosis and after beginning target_drug.
 #
 # Arguments:
-#   dte_cohort_data   — Treatment episode data (from Treatment_Table CSV,
+#   dte_cohort_data_file   — Path to RDS file containing treatment episode data (from Treatment_Table CSV,
 #                       already joined to mdd_data and filtered to
 #                       Eligibility_Group_B)
-#   nonswitch_periods — Nontreatment period data (from Nontreatment_Table CSV,
+#   nonswitch_periods_file — Path to RDS file containing nontreatment period data (from Nontreatment_Table CSV,
 #                       already joined to mdd_data, filtered to
 #                       Eligibility_Group_B, and with tfe_at_index_bgn /
 #                       tfe_at_index_end computed)
 #   target_drug        — Name of target treatment (default: "Semaglutide")
 #   nontreatment_group — Name of the nontreatment group (default: "Nontreatment")
-#   mdd_data           — Patient-level MDD data (used to populate demographic
+#   mdd_data_file           — Path to RDS file containing patient-level MDD data (used to populate demographic
 #                        columns for nontreatment-only patients added as new rows)
-#
-# Returns:
-#   List of diagnostic objects for report_Antidiabetic_Nontreatment_Timelines.Rmd,
-#   plus dte_cohort_data2 (saved to disk by main.R as Data/dte_cohort_wNontreat_data.rds)
+#   nontreat_data_filename - Filename for nontreatment data
+#   result_file            - Filename for results file
+
 
 get_Antidiabetic_Nontreatment_Timelines <- function(dte_cohort_data_file,
                                                     nonswitch_periods_file,
                                                     target_drug = "Semaglutide",
                                                     nontreatment_group = "Nontreatment",
-                                                    mdd_data_file) {
+                                                    mdd_data_file,
+                                                    nontreat_data_filename,
+                                                    result_file) {
   load(dte_cohort_data_file)
   load(nonswitch_periods_file)
   load(mdd_data_file)
@@ -197,7 +198,7 @@ get_Antidiabetic_Nontreatment_Timelines <- function(dte_cohort_data_file,
   
   # ── Return diagnostic results for reporting ───────────────────────────────
   
-  list(
+  nontreat_result <- list(
     dte_cohort_data2   = dte_cohort_data2,
     target_drug        = target_drug,
     n_sema             = n_sema,
@@ -214,4 +215,9 @@ get_Antidiabetic_Nontreatment_Timelines <- function(dte_cohort_data_file,
     ks_year            = ks_year,
     uniqueness_check   = length(unique(nonswitch_selected$PatientDurableKey)) == nrow(nonswitch_selected)
   )
+  
+  this.data <- nontreat_result$dte_cohort_data2
+  save(this.data, file = nontreat_data_filename)
+  
+  save(nontreat_result, file = result_file)
 }
