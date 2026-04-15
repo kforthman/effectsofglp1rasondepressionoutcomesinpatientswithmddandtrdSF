@@ -83,6 +83,7 @@ antidiabetics,Insulin Regular(Human) in NaCl,insulin,Insulins
 antidiabetics,linaGLIPtin,linagliptin,DPP4i
 antidiabetics,linaGLIPtin-metFORMIN HCl,linagliptin/metformin,
 antidiabetics,Liraglutide,liraglutide,GLP1RA
+antidiabetics,Liraglutide -Weight Management,liraglutide,GLP1RA
 antidiabetics,Lixisenatide,lixisenatide,GLP1RA
 antidiabetics,metFORMIN HCl,metformin,Metformin
 antidiabetics,Miglitol,miglitol,TZD
@@ -92,10 +93,12 @@ antidiabetics,Pioglitazone HCl-metFORMIN HCl,pioglitazone/metformin,
 antidiabetics,sAXagliptin HCl,saxagliptin,DPP4i
 antidiabetics,sAXagliptin-metFORMIN,saxagliptin/metformin,
 antidiabetics,Semaglutide,semaglutide,Semaglutide
+antidiabetics,Semaglutide-Weight Management,semaglutide,Semaglutide
 antidiabetics,Sitagliptin,sitagliptin,DPP4i
 antidiabetics,Sitagliptin Base-Metformin HCl,sitagliptin/metformin,
 antidiabetics,SITagliptin Phos-metFORMIN HCl,sitagliptin/metformin,
 antidiabetics,SITagliptin Phosphate,sitagliptin,DPP4i
+antidiabetics,Sotagliflozin,sotagliflozin,SGLT2i
 antidiabetics,TOLBUTamide,tolbutamide,SU
 antipsychotics,ARIPiprazole,aripiprazole,
 antipsychotics,ARIPiprazole (sensor),aripiprazole,
