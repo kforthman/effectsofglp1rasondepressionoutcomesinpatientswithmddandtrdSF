@@ -27,7 +27,7 @@ cpt_acuity  <- read.csv(config$files$cpt_acuity)
 check_schema(col_schema, "med_table",                  config$files$med_table)
 check_schema(col_schema, "diag_table",                 config$files$diag_table)
 check_schema(col_schema, "mdd_data",                   config$files$mdd_data)
-check_schema(col_schema, "antidiabetic_overlap_table", config$files$antidiabetic_overlap_table)
+check_schema(col_schema, "treatment_overlap_table",    config$files$treatment_overlap_table)
 check_schema(col_schema, "dte_cohort_data",            config$files$dte_cohort_data)
 check_schema(col_schema, "nonswitch_periods",          config$files$nonswitch_periods)
 check_schema(col_schema, "psych_proc",                 config$files$psych_proc)
@@ -48,7 +48,7 @@ check_recode(med_table %>% filter(ExposureLabel == "Antipsychotics"),
 check_recode(med_table %>% filter(ExposureLabel %in% c("Antihypertensive", "Diuretics")),
              med_recode, "hydrochlorothiazide")
 check_recode(med_table %>% filter(ExposureLabel %in% c("DPP-4i", "GLP-1RA", "Insulins", "Metformin", "SGLT2i", "SU", "Semaglutide", "TZD")),
-             med_recode, "antidiabetics")
+             med_recode, "treatments")
 
 antidepressant_table <- med_table %>%
   filter(PharmaceuticalClass == "Antidepressants") %>%
@@ -71,31 +71,31 @@ hydrochlorothiazide_table <- med_table %>%
   filter(ATC_code == "C03AA03")
 save(hydrochlorothiazide_table, file = "OutputData/hydrochlorothiazide_table.rds")
 
-antidiabetics_subclass_map <- med_recode %>%
-  filter(table == "antidiabetics", !is.na(subclass) & subclass != "") %>%
+treatments_subclass_map <- med_recode %>%
+  filter(table == "treatments", !is.na(subclass) & subclass != "") %>%
   distinct(canonical_name, subclass)
 
-antidiabetics_table <- med_table %>%
+treatments_table <- med_table %>%
   filter(ExposureLabel %in% c("DPP-4i", "GLP-1RA", "Insulins", "Metformin", "SGLT2i", "SU", "Semaglutide", "TZD")) %>%
-  apply_recode(med_recode, "antidiabetics") %>%
+  apply_recode(med_recode, "treatments") %>%
   separate_rows(SimpleGenericName, sep = "/") %>%
-  left_join(antidiabetics_subclass_map, by = c("SimpleGenericName" = "canonical_name")) %>%
+  left_join(treatments_subclass_map, by = c("SimpleGenericName" = "canonical_name")) %>%
   mutate(PharmaceuticalSubclass = dplyr::coalesce(subclass, PharmaceuticalSubclass)) %>%
   dplyr::select(-subclass)
 
-rm(antidiabetics_subclass_map)
+rm(treatments_subclass_map)
 rm(med_recode)
 
 for(this_drug in all_drugs){
-  table_name <- paste0("antidiabetics_", this_drug, "_table")
-  table_filename <- paste0("OutputData/antidiabetics_", this_drug,"_table.rds")
-  this_table <- antidiabetics_table %>% filter(PharmaceuticalSubclass == this_drug)
+  table_name <- paste0("treatment_", this_drug, "_table")
+  table_filename <- paste0("OutputData/treatment_", this_drug,"_table.rds")
+  this_table <- treatments_table %>% filter(PharmaceuticalSubclass == this_drug)
   assign(table_name, this_table)
   save(list = table_name, file = table_filename)
   }
 
 rm(med_table)
-rm(antidiabetics_table)
+rm(treatments_table)
 
 diag_table <- read_csv(config$files$diag_table,
                        na        = c("", "NA", "NULL", "null"),
@@ -183,7 +183,7 @@ mdd_data <- read_csv(config$files$mdd_data,
             by = "PatientDurableKey")
   
 for(this_drug in all_drugs){
-  this_table_name <- paste0("antidiabetics_", this_drug, "_table")
+  this_table_name <- paste0("treatment_", this_drug, "_table")
   this_table <- get(this_table_name)
   this_index <- paste0(this_drug, "_Index")
   mdd_data <- mdd_data %>%
@@ -209,9 +209,9 @@ rm(antipsychotics_table)
 rm(hydrochlorothiazide_table)
 
 
-antidiabetic_overlap_table <- read_csv(config$files$antidiabetic_overlap_table,
+treatment_overlap_table <- read_csv(config$files$treatment_overlap_table,
                                        na        = c("", "NA", "NULL", "null"),
-                                       col_types = make_col_types(col_schema, "antidiabetic_overlap_table")
+                                       col_types = make_col_types(col_schema, "treatment_overlap_table")
 ) %>%
   rename(DPP4i_Overlaps_Semaglutide_Index = "DPP-4i_Overlaps_Semaglutide_-6m_12m",
          GLP1RA_Overlaps_Semaglutide_Index = "GLP-1RA_Overlaps_Semaglutide_-6m_12m",
@@ -269,7 +269,7 @@ antidiabetic_overlap_table <- read_csv(config$files$antidiabetic_overlap_table,
          SGLT2i_Overlaps_GLP1RA_Index = "SGLT2i_Overlaps_GLP-1RA_-6m_12m",
          SU_Overlaps_GLP1RA_Index = "SU_Overlaps_GLP-1RA_-6m_12m",
          TZD_Overlaps_GLP1RA_Index = "TZD_Overlaps_GLP-1RA_-6m_12m")
-save(antidiabetic_overlap_table, file = "OutputData/antidiabetic_overlap_table.rds")
+save(treatment_overlap_table, file = "OutputData/treatment_overlap_table.rds")
 
 dte_cohort_data <- read_csv(config$files$dte_cohort_data,
                             na        = c("", "NA", "NULL", "null"),
@@ -370,7 +370,7 @@ dte_cohort_data <- read_csv(config$files$dte_cohort_data,
   left_join(mdd_data,
             by = "PatientDurableKey") %>%
   filter(meets_diagnosis_eligibility_criteria) %>% 
-  left_join(antidiabetic_overlap_table, by = "PatientDurableKey")
+  left_join(treatment_overlap_table, by = "PatientDurableKey")
 
 for(i in 1:length(all_drugs)){
   this_drug <-  all_drugs[i]
@@ -396,7 +396,7 @@ dte_cohort_data <- dte_cohort_data %>%
 
 save(dte_cohort_data, file = "OutputData/dte_cohort_data.rds")
 
-rm(antidiabetic_overlap_table)
+rm(treatment_overlap_table)
 rm(dte_cohort_data)
 
 nonswitch_periods <- read_csv(config$files$nonswitch_periods,

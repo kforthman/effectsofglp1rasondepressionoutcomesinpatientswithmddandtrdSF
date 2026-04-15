@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# get_Antidiabetic_Nontreatment_Timelines(): Defines periods of time for which participants
-# do not experience a change in antidiabetic treatment. Only use of a new drug
+# get_Nontreatment_Timelines(): Defines periods of time for which participants
+# do not experience a change in treatment. Only use of a new treatment drug
 # counts as a change. Eligible time is masked before 6 months before MDD first
 # diagnosis and after beginning target_drug.
 #
@@ -20,7 +20,7 @@
 #   result_file            - Filename for results file
 
 
-get_Antidiabetic_Nontreatment_Timelines <- function(dte_cohort_data_file,
+get_Nontreatment_Timelines <- function(dte_cohort_data_file,
                                                     nonswitch_periods_file,
                                                     target_drug = "Semaglutide",
                                                     nontreatment_group = "Nontreatment",
@@ -135,7 +135,7 @@ get_Antidiabetic_Nontreatment_Timelines <- function(dte_cohort_data_file,
     )
   
   # ── Add nontreatment-only patients as new rows ───────────────────────────
-  # Patients in the nontreatment arm who never had any antidiabetic drug
+  # Patients in the nontreatment arm who never had any treatment drug
   # treatment episode are not in dte_cohort_data and must be added explicitly.
 
   nontreat_only <- nonswitch_selected2 %>%

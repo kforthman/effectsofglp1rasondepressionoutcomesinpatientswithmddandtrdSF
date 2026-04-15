@@ -78,9 +78,9 @@ new_titles <- c("n",
                 rep("", length(eligibility_inclusion_diagnoses) - 1),
                 "Diagnosis occurs before the index",
                 rep("", length(eligibility_inclusion_diagnoses) - 1),
-                "Lifetime Antidiabetic Use",
+                "Lifetime Use of Drug Treatments",
                 rep("", length(all_drugs) - 1),
-                "Co-Occuring Antidiabetic Use within 6 months before or 12 months after index",
+                "Co-Occuring Treatment Use within 6 months before or 12 months after index",
                 rep("", length(all_drugs) - 1)
 )
 

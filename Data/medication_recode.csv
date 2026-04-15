@@ -37,69 +37,69 @@ antidepressant,Venlafaxine HCl,venlafaxine,
 antidepressant,Vilazodone HCl,vilazodone,
 antidepressant,Vortioxetine HBr,vortioxetine,
 antidepressant,Zuranolone,zuranolone,
-antidiabetics,Acarbose,acarbose,TZD
-antidiabetics,Alogliptin Benzoate,alogliptin,DPP4i
-antidiabetics,Alogliptin-metFORMIN HCl,alogliptin/metformin,
-antidiabetics,Alogliptin-Pioglitazone,alogliptin/pioglitazone,
-antidiabetics,Bexagliflozin,bexagliflozin,SGLT2i
-antidiabetics,Canagliflozin,canagliflozin,SGLT2i
-antidiabetics,Canagliflozin-metFORMIN HCl,canagliflozin/metformin,
-antidiabetics,ChlorproPAMIDE,chlorpropamide,SU
-antidiabetics,Dapagliflozin Prop-metFORMIN,dapagliflozin/metformin,
-antidiabetics,Dapagliflozin Propanediol,dapagliflozin,SGLT2i
-antidiabetics,Dapagliflozin-sAXagliptin,dapagliflozin/saxagliptin,
-antidiabetics,Dulaglutide,dulaglutide,GLP1RA
-antidiabetics,Empagliflozin,empagliflozin,SGLT2i
-antidiabetics,Empagliflozin-Linaglip-Metform,empagliflozin/linagliptin/metformin,
-antidiabetics,Empagliflozin-linaGLIPtin,empagliflozin/linagliptin,
-antidiabetics,Empagliflozin-metFORMIN HCl,empagliflozin/metformin,
-antidiabetics,Ertugliflozin L-PyroglutamicAc,ertugliflozin,SGLT2i
-antidiabetics,Ertugliflozin-metFORMIN HCl,ertugliflozin/metformin,
-antidiabetics,Ertugliflozin-SITagliptin,ertugliflozin/sitagliptin,
-antidiabetics,Exenatide,exenatide,GLP1RA
-antidiabetics,Glimepiride,glimepiride,SU
-antidiabetics,glipiZIDE,glipizide,SU
-antidiabetics,glipiZIDE-metFORMIN HCl,glipizide/metformin,
-antidiabetics,glyBURIDE,glibenclamide,SU
-antidiabetics,glyBURIDE Micronized,glibenclamide,SU
-antidiabetics,glyBURIDE-metFORMIN,glibenclamide/metformin,
-antidiabetics,Insulin Aspart,insulin,Insulins
-antidiabetics,Insulin Aspart (w/Niacinamide),insulin,Insulins
-antidiabetics,Insulin Aspart Prot & Aspart,insulin,Insulins
-antidiabetics,Insulin Degludec,insulin,Insulins
-antidiabetics,Insulin Degludec-Liraglutide,insulin/liraglutide,
-antidiabetics,Insulin Detemir,insulin,Insulins
-antidiabetics,Insulin Glargine,insulin,Insulins
-antidiabetics,Insulin Glargine-aglr,insulin,Insulins
-antidiabetics,Insulin Glargine-Lixisenatide,insulin/lixisenatide,
-antidiabetics,Insulin Glargine-yfgn,insulin,Insulins
-antidiabetics,Insulin Glulisine,insulin,Insulins
-antidiabetics,Insulin Lispro,insulin,Insulins
-antidiabetics,Insulin Lispro Prot & Lispro,insulin,Insulins
-antidiabetics,Insulin Lispro-aabc,insulin,Insulins
-antidiabetics,Insulin NPH Human (Isophane),insulin,Insulins
-antidiabetics,Insulin Regular Human,insulin,Insulins
-antidiabetics,Insulin Regular(Human) in NaCl,insulin,Insulins
-antidiabetics,linaGLIPtin,linagliptin,DPP4i
-antidiabetics,linaGLIPtin-metFORMIN HCl,linagliptin/metformin,
-antidiabetics,Liraglutide,liraglutide,GLP1RA
-antidiabetics,Liraglutide -Weight Management,liraglutide,GLP1RA
-antidiabetics,Lixisenatide,lixisenatide,GLP1RA
-antidiabetics,metFORMIN HCl,metformin,Metformin
-antidiabetics,Miglitol,miglitol,TZD
-antidiabetics,pioglitazone,pioglitazone,Other
-antidiabetics,Pioglitazone HCl-Glimepiride,pioglitazone/glimepiride,
-antidiabetics,Pioglitazone HCl-metFORMIN HCl,pioglitazone/metformin,
-antidiabetics,sAXagliptin HCl,saxagliptin,DPP4i
-antidiabetics,sAXagliptin-metFORMIN,saxagliptin/metformin,
-antidiabetics,Semaglutide,semaglutide,Semaglutide
-antidiabetics,Semaglutide-Weight Management,semaglutide,Semaglutide
-antidiabetics,Sitagliptin,sitagliptin,DPP4i
-antidiabetics,Sitagliptin Base-Metformin HCl,sitagliptin/metformin,
-antidiabetics,SITagliptin Phos-metFORMIN HCl,sitagliptin/metformin,
-antidiabetics,SITagliptin Phosphate,sitagliptin,DPP4i
-antidiabetics,Sotagliflozin,sotagliflozin,SGLT2i
-antidiabetics,TOLBUTamide,tolbutamide,SU
+treatments,Acarbose,acarbose,TZD
+treatments,Alogliptin Benzoate,alogliptin,DPP4i
+treatments,Alogliptin-metFORMIN HCl,alogliptin/metformin,
+treatments,Alogliptin-Pioglitazone,alogliptin/pioglitazone,
+treatments,Bexagliflozin,bexagliflozin,SGLT2i
+treatments,Canagliflozin,canagliflozin,SGLT2i
+treatments,Canagliflozin-metFORMIN HCl,canagliflozin/metformin,
+treatments,ChlorproPAMIDE,chlorpropamide,SU
+treatments,Dapagliflozin Prop-metFORMIN,dapagliflozin/metformin,
+treatments,Dapagliflozin Propanediol,dapagliflozin,SGLT2i
+treatments,Dapagliflozin-sAXagliptin,dapagliflozin/saxagliptin,
+treatments,Dulaglutide,dulaglutide,GLP1RA
+treatments,Empagliflozin,empagliflozin,SGLT2i
+treatments,Empagliflozin-Linaglip-Metform,empagliflozin/linagliptin/metformin,
+treatments,Empagliflozin-linaGLIPtin,empagliflozin/linagliptin,
+treatments,Empagliflozin-metFORMIN HCl,empagliflozin/metformin,
+treatments,Ertugliflozin L-PyroglutamicAc,ertugliflozin,SGLT2i
+treatments,Ertugliflozin-metFORMIN HCl,ertugliflozin/metformin,
+treatments,Ertugliflozin-SITagliptin,ertugliflozin/sitagliptin,
+treatments,Exenatide,exenatide,GLP1RA
+treatments,Glimepiride,glimepiride,SU
+treatments,glipiZIDE,glipizide,SU
+treatments,glipiZIDE-metFORMIN HCl,glipizide/metformin,
+treatments,glyBURIDE,glibenclamide,SU
+treatments,glyBURIDE Micronized,glibenclamide,SU
+treatments,glyBURIDE-metFORMIN,glibenclamide/metformin,
+treatments,Insulin Aspart,insulin,Insulins
+treatments,Insulin Aspart (w/Niacinamide),insulin,Insulins
+treatments,Insulin Aspart Prot & Aspart,insulin,Insulins
+treatments,Insulin Degludec,insulin,Insulins
+treatments,Insulin Degludec-Liraglutide,insulin/liraglutide,
+treatments,Insulin Detemir,insulin,Insulins
+treatments,Insulin Glargine,insulin,Insulins
+treatments,Insulin Glargine-aglr,insulin,Insulins
+treatments,Insulin Glargine-Lixisenatide,insulin/lixisenatide,
+treatments,Insulin Glargine-yfgn,insulin,Insulins
+treatments,Insulin Glulisine,insulin,Insulins
+treatments,Insulin Lispro,insulin,Insulins
+treatments,Insulin Lispro Prot & Lispro,insulin,Insulins
+treatments,Insulin Lispro-aabc,insulin,Insulins
+treatments,Insulin NPH Human (Isophane),insulin,Insulins
+treatments,Insulin Regular Human,insulin,Insulins
+treatments,Insulin Regular(Human) in NaCl,insulin,Insulins
+treatments,linaGLIPtin,linagliptin,DPP4i
+treatments,linaGLIPtin-metFORMIN HCl,linagliptin/metformin,
+treatments,Liraglutide,liraglutide,GLP1RA
+treatments,Liraglutide -Weight Management,liraglutide,GLP1RA
+treatments,Lixisenatide,lixisenatide,GLP1RA
+treatments,metFORMIN HCl,metformin,Metformin
+treatments,Miglitol,miglitol,TZD
+treatments,pioglitazone,pioglitazone,Other
+treatments,Pioglitazone HCl-Glimepiride,pioglitazone/glimepiride,
+treatments,Pioglitazone HCl-metFORMIN HCl,pioglitazone/metformin,
+treatments,sAXagliptin HCl,saxagliptin,DPP4i
+treatments,sAXagliptin-metFORMIN,saxagliptin/metformin,
+treatments,Semaglutide,semaglutide,Semaglutide
+treatments,Semaglutide-Weight Management,semaglutide,Semaglutide
+treatments,Sitagliptin,sitagliptin,DPP4i
+treatments,Sitagliptin Base-Metformin HCl,sitagliptin/metformin,
+treatments,SITagliptin Phos-metFORMIN HCl,sitagliptin/metformin,
+treatments,SITagliptin Phosphate,sitagliptin,DPP4i
+treatments,Sotagliflozin,sotagliflozin,SGLT2i
+treatments,TOLBUTamide,tolbutamide,SU
 antipsychotics,ARIPiprazole,aripiprazole,
 antipsychotics,ARIPiprazole (sensor),aripiprazole,
 antipsychotics,ARIPiprazole Lauroxil,aripiprazole,

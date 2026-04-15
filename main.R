@@ -89,10 +89,10 @@ get_Hydrochlorothiazide_Treatment_Timeline(
 
 # ── Build nontreatment cohort ─────────────────────────────────────────────────----
 
-source("get_Antidiabetic_Nontreatment_Timelines.R")
+source("get_Nontreatment_Timelines.R")
 
 message("Building nontreatment cohort for: ", target_drug)
-nontreat_result <- get_Antidiabetic_Nontreatment_Timelines(
+nontreat_result <- get_Nontreatment_Timelines(
   dte_cohort_data_file   = "OutputData/dte_cohort_data.rds",
   nonswitch_periods_file = "OutputData/nonswitch_periods.rds",
   target_drug            = target_drug,
@@ -105,8 +105,8 @@ nontreat_result <- get_Antidiabetic_Nontreatment_Timelines(
 # ── Render nontreatment timelines report ──────────────────────────────────────----
 
 render(
-  input       = "report_Antidiabetic_Nontreatment_Timelines.Rmd",
-  output_file = paste0("Reports/report_Antidiabetic_Nontreatment_Timelines-", target_drug, ".html"),
+  input       = "report_Nontreatment_Timelines.Rmd",
+  output_file = paste0("Reports/report_Nontreatment_Timelines-", target_drug, ".html"),
   params      = list(
     target_drug        = target_drug,
     nontreatment_group = nontreatment_group,
@@ -115,11 +115,11 @@ render(
   envir = new.env()
 )
 
-# ── Render antidiabetic overlap report ───────────────────────────────────────----
+# ── Render treatment overlap report ───────────────────────────────────────----
 
 render(
-  input       = "report_Antidiabetic_Overlap.Rmd",
-  output_file = paste0("Reports/report_Antidiabetic_Overlap-", target_drug, ".html"),
+  input       = "report_Treatment_Overlap.Rmd",
+  output_file = paste0("Reports/report_Treatment_Overlap.html"),
   params      = list(
     nontreat_data_filename = "OutputData/dte_cohort_wNontreat_data.rds",
     all_groups         = all_groups,
