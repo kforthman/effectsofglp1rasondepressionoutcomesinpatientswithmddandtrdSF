@@ -222,3 +222,17 @@ psych_proc,PatientDurableKey,character,
 psych_proc,OutcomeDate,date,%Y-%m-%d
 psych_proc,OutcomeName,character,
 psych_proc,CPTCode,integer,
+encounter_table,PatientDurableKey,character,
+encounter_table,EncounterKey,character,
+encounter_table,PatientClass,character,
+encounter_table,StartVisit,date,%Y-%m-%d %H:%M:%S
+encounter_table,EndVisit,date,%Y-%m-%d %H:%M:%S
+encounter_table,SystolicBloodPressure,integer,
+encounter_table,DiastolicBloodPressure,integer,
+encounter_table,PulseRate,integer,
+encounter_table,RespirationRate,integer,
+encounter_table,WeightInGrams,double,
+encounter_table,WeightInOunces,double,
+encounter_table,HeightInInches,double,
+encounter_table,TemperatureInFahrenheit,double,
+encounter_table,BodyMassIndex,double,

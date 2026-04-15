@@ -235,26 +235,26 @@ matched_data_files <- setNames(
   comparator_groups
 )
 
-# visits_file      <- "OutputData/dte_cohort_visits.rds"
+visits_file      <- "OutputData/encounter_table.rds"
 med_changes_file <- "OutputData/antidepressant_antipsychotic_consecutive_period.rds"
 hc_med_file      <- "OutputData/hydrochlorothiazide_consecutive_instance.rds"
 psych_proc_file  <- "OutputData/psych_proc.rds"
 
 outcomes_files <- list(
   psych   = paste0("OutputData/outcomes_psych-",         target_drug, ".rds"),
-  # visits  = paste0("OutputData/outcomes_visits-",        target_drug, ".rds"),
+  visits  = paste0("OutputData/outcomes_visits-",        target_drug, ".rds"),
   med     = paste0("OutputData/outcomes_med_changes-",   target_drug, ".rds"),
   hc_med  = paste0("OutputData/outcomes_hc_med_changes-",target_drug, ".rds")
 )
 
 source("get_Outcomes_PsychProc.R")
-# source("get_Outcomes_Visits.R")
+source("get_Outcomes_Visits.R")
 source("get_Outcomes_MedChanges.R")
 source("get_Outcomes_HCMedChanges.R")
 
 outcome_tasks <- list(
   list(fn = get_Outcomes_PsychProc,   src_file = psych_proc_file,   out_file = outcomes_files$psych),
-  # list(fn = get_Outcomes_Visits,      src_file = visits_file,       out_file = outcomes_files$visits),
+  list(fn = get_Outcomes_Visits,      src_file = visits_file,       out_file = outcomes_files$visits),
   list(fn = get_Outcomes_MedChanges,  src_file = med_changes_file,  out_file = outcomes_files$med),
   list(fn = get_Outcomes_HCMedChanges,src_file = hc_med_file,       out_file = outcomes_files$hc_med)
 )
@@ -270,7 +270,7 @@ foreach(
   .export   = c("matched_data_files", "period_info", "target_drug",
                 "comparator_groups",
                 "get_Outcomes_PsychProc",
-                # "get_Outcomes_Visits",
+                "get_Outcomes_Visits",
                 "get_Outcomes_MedChanges",
                 "get_Outcomes_HCMedChanges")
 ) %dopar% {

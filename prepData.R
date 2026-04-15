@@ -31,6 +31,7 @@ check_schema(col_schema, "treatment_overlap_table",    config$files$treatment_ov
 check_schema(col_schema, "dte_cohort_data",            config$files$dte_cohort_data)
 check_schema(col_schema, "nonswitch_periods",          config$files$nonswitch_periods)
 check_schema(col_schema, "psych_proc",                 config$files$psych_proc)
+check_schema(col_schema, "encounter_table",            config$files$encounter_table)
 
 # ── Read input data ───────────────────────────────────────────────────────────----
 
@@ -427,5 +428,14 @@ psych_proc <- read_csv(config$files$psych_proc,
             by = join_by("CPTCode" == "source_concept_code"))
 save(psych_proc, file = "OutputData/psych_proc.rds")
 rm(psych_proc)
+
+encounter_table <- read_csv(config$files$encounter_table,
+                       na        = c("", "NA", "NULL", "null"),
+                       col_types = make_col_types(col_schema, "encounter_table")
+) %>%
+  mutate(StartVisit = as.Date(StartVisit),
+         EndVisit   = as.Date(EndVisit))
+save(encounter_table, file = "OutputData/encounter_table.rds")
+rm(encounter_table)
 
 rm(col_schema)
