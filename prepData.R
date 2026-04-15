@@ -41,10 +41,14 @@ med_table <- read_csv(config$files$med_table,
   mutate(DaysSupply = as.integer(DaysSupply))
 
 # ── Validate medication recode coverage ───────────────────────────────────────
-check_recode(med_table %>% filter(PharmaceuticalClass == "Antidepressants"),                     med_recode, "antidepressant")
-check_recode(med_table %>% filter(PharmaceuticalClass == "Antipsychotics"),                      med_recode, "antipsychotics")
-check_recode(med_table %>% filter(PharmaceuticalClass %in% c("Antihypertensive", "Diuretics")), med_recode, "hydrochlorothiazide")
-check_recode(med_table %>% filter(PharmaceuticalClass == "Antidiabetic"),                        med_recode, "antidiabetics")
+check_recode(med_table %>% filter(ExposureLabel == "Antidepressants"),
+             med_recode, "antidepressant")
+check_recode(med_table %>% filter(ExposureLabel == "Antipsychotics"),
+             med_recode, "antipsychotics")
+check_recode(med_table %>% filter(ExposureLabel %in% c("Antihypertensive", "Diuretics")),
+             med_recode, "hydrochlorothiazide")
+check_recode(med_table %>% filter(ExposureLabel %in% c("DPP-4i", "GLP-1RA", "Insulins", "Metformin", "SGLT2i", "SU", "Semaglutide", "TZD")),
+             med_recode, "antidiabetics")
 
 antidepressant_table <- med_table %>%
   filter(PharmaceuticalClass == "Antidepressants") %>%
@@ -72,7 +76,7 @@ antidiabetics_subclass_map <- med_recode %>%
   distinct(canonical_name, subclass)
 
 antidiabetics_table <- med_table %>%
-  filter(PharmaceuticalClass == "Antidiabetic") %>%
+  filter(ExposureLabel %in% c("DPP-4i", "GLP-1RA", "Insulins", "Metformin", "SGLT2i", "SU", "Semaglutide", "TZD")) %>%
   apply_recode(med_recode, "antidiabetics") %>%
   separate_rows(SimpleGenericName, sep = "/") %>%
   left_join(antidiabetics_subclass_map, by = c("SimpleGenericName" = "canonical_name")) %>%
@@ -82,22 +86,13 @@ antidiabetics_table <- med_table %>%
 rm(antidiabetics_subclass_map)
 rm(med_recode)
 
-antidiabetics_Semaglutide_table <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "Semaglutide")
-save(antidiabetics_Semaglutide_table, file = "OutputData/antidiabetics_Semaglutide_table.rds")
-antidiabetics_Insulins_table    <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "Insulins")
-save(antidiabetics_Insulins_table, file = "OutputData/antidiabetics_Insulins_table.rds")
-antidiabetics_Metformin_table   <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "Metformin")
-save(antidiabetics_Metformin_table, file = "OutputData/antidiabetics_Metformin_table.rds")
-antidiabetics_DPP4i_table       <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "DPP4i")
-save(antidiabetics_DPP4i_table, file = "OutputData/antidiabetics_DPP4i_table.rds")
-antidiabetics_SGLT2i_table      <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "SGLT2i")
-save(antidiabetics_SGLT2i_table, file = "OutputData/antidiabetics_SGLT2i_table.rds")
-antidiabetics_SU_table          <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "SU")
-save(antidiabetics_SU_table, file = "OutputData/antidiabetics_SU_table.rds")
-antidiabetics_TZD_table         <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "TZD")
-save(antidiabetics_TZD_table, file = "OutputData/antidiabetics_TZD_table.rds")
-antidiabetics_GLP1RA_table      <- antidiabetics_table %>% filter(PharmaceuticalSubclass == "GLP1RA")
-save(antidiabetics_GLP1RA_table, file = "OutputData/antidiabetics_GLP1RA_table.rds")
+for(this_drug in all_drugs){
+  table_name <- paste0("antidiabetics_", this_drug, "_table")
+  table_filename <- paste0("OutputData/antidiabetics_", this_drug,"_table.rds")
+  this_table <- antidiabetics_table %>% filter(PharmaceuticalSubclass == this_drug)
+  assign(table_name, this_table)
+  save(list = table_name, file = table_filename)
+  }
 
 rm(med_table)
 rm(antidiabetics_table)
@@ -178,38 +173,6 @@ mdd_data <- read_csv(config$files$mdd_data,
               group_by(PatientDurableKey) %>% 
               summarize(Antidepressant_Index = min(MedicationStartDate)),
             by = "PatientDurableKey") %>%
-  left_join(antidiabetics_DPP4i_table %>% 
-              group_by(PatientDurableKey) %>% 
-              summarize(DPP4i_Index = min(MedicationStartDate)),
-            by = "PatientDurableKey") %>%
-  left_join(antidiabetics_GLP1RA_table %>% 
-              group_by(PatientDurableKey) %>% 
-              summarize(GLP1RA_Index = min(MedicationStartDate)),
-            by = "PatientDurableKey") %>%
-  left_join(antidiabetics_Insulins_table %>% 
-              group_by(PatientDurableKey) %>% 
-              summarize(Insulins_Index = min(MedicationStartDate)),
-            by = "PatientDurableKey") %>%
-  left_join(antidiabetics_Metformin_table %>% 
-              group_by(PatientDurableKey) %>% 
-              summarize(Metformin_Index = min(MedicationStartDate)),
-            by = "PatientDurableKey") %>%
-  left_join(antidiabetics_Semaglutide_table %>% 
-              group_by(PatientDurableKey) %>% 
-              summarize(Semaglutide_Index = min(MedicationStartDate)),
-            by = "PatientDurableKey") %>%
-  left_join(antidiabetics_SGLT2i_table %>% 
-              group_by(PatientDurableKey) %>% 
-              summarize(SGLT2i_Index = min(MedicationStartDate)),
-            by = "PatientDurableKey") %>%
-  left_join(antidiabetics_SU_table %>% 
-              group_by(PatientDurableKey) %>% 
-              summarize(SU_Index = min(MedicationStartDate)),
-            by = "PatientDurableKey") %>%
-  left_join(antidiabetics_TZD_table %>% 
-              group_by(PatientDurableKey) %>% 
-              summarize(TZD_Index = min(MedicationStartDate)),
-            by = "PatientDurableKey") %>%
   left_join(antipsychotics_table %>% 
               group_by(PatientDurableKey) %>% 
               summarize(Antipsychotic_Index = min(MedicationStartDate)),
@@ -217,25 +180,33 @@ mdd_data <- read_csv(config$files$mdd_data,
   left_join(hydrochlorothiazide_table %>% 
               group_by(PatientDurableKey) %>% 
               summarize(Hydrochlorothiazide_Index = min(MedicationStartDate)),
-            by = "PatientDurableKey") %>%
+            by = "PatientDurableKey")
+  
+for(this_drug in all_drugs){
+  this_table_name <- paste0("antidiabetics_", this_drug, "_table")
+  this_table <- get(this_table_name)
+  this_index <- paste0(this_drug, "_Index")
+  mdd_data <- mdd_data %>%
+    left_join(this_table %>% 
+                group_by(PatientDurableKey) %>% 
+                summarize(!!sym(this_index) := min(MedicationStartDate)),
+              by = "PatientDurableKey") 
+  rm(list = this_table_name)
+}
+rm(this_table)
+
+mdd_data <- mdd_data %>%
   mutate(across(paste0(all_drugs, "_Index"),
                 ~ if_else(is.na(.), FALSE, TRUE),
                 .names = "{sub('_Index$', '_Use', .col)}")) %>%
   mutate(Antidepressant_Use = PatientDurableKey %in% antidepressant_table$PatientDurableKey)
+
 save(mdd_data, file = "OutputData/mdd_data.rds")
 
 rm(diag_table)
 rm(antidepressant_table)
 rm(antipsychotics_table)
 rm(hydrochlorothiazide_table)
-rm(antidiabetics_DPP4i_table)
-rm(antidiabetics_GLP1RA_table)
-rm(antidiabetics_Insulins_table)
-rm(antidiabetics_Metformin_table)
-rm(antidiabetics_Semaglutide_table)
-rm(antidiabetics_SGLT2i_table)
-rm(antidiabetics_SU_table)
-rm(antidiabetics_TZD_table)
 
 
 antidiabetic_overlap_table <- read_csv(config$files$antidiabetic_overlap_table,
