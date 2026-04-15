@@ -434,7 +434,8 @@ encounter_table <- read_csv(config$files$encounter_table,
                        col_types = make_col_types(col_schema, "encounter_table")
 ) %>%
   mutate(StartVisit = as.Date(StartVisit),
-         EndVisit   = as.Date(EndVisit))
+         EndVisit   = as.Date(EndVisit)) %>%
+  mutate(EndVisit = pmax(EndVisit, StartVisit)) # End visit should not come before start visit.
 save(encounter_table, file = "OutputData/encounter_table.rds")
 rm(encounter_table)
 

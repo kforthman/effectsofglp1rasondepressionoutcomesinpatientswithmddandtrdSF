@@ -138,7 +138,7 @@ get_Outcomes_Visits <- function(visits_file,
           n_visit_days             = replace_na(n_visit_days, 0L),
           n_emergency_visit_days   = replace_na(n_emergency_visit_days, 0L),
           n_inpatient_visit_days   = replace_na(n_inpatient_visit_days, 0L),
-          n_observation_visit_days = replace_na(n_observation_visit_days, 0L),
+          n_observation_visit_days = replace_na(n_observation_visit_days, 0L)
         )
     }
   }
