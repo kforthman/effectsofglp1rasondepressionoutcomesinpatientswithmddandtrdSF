@@ -42,9 +42,9 @@ med_table <- read_csv(config$files$med_table,
   mutate(DaysSupply = as.integer(DaysSupply))
 
 # ── Validate medication recode coverage ───────────────────────────────────────
-check_recode(med_table %>% filter(ExposureLabel == "Antidepressants"),
+check_recode(med_table %>% filter(ExposureLabel %in% c("Antidepressants", "Misc. Psychotherapeutic")),
              med_recode, "antidepressant")
-check_recode(med_table %>% filter(ExposureLabel == "Antipsychotics"),
+check_recode(med_table %>% filter(ExposureLabel  %in% c("Antipsychotics", "Misc. Psychotherapeutic")),
              med_recode, "antipsychotics")
 check_recode(med_table %>% filter(ExposureLabel %in% c("Antihypertensive", "Diuretics")),
              med_recode, "hydrochlorothiazide")
@@ -52,14 +52,14 @@ check_recode(med_table %>% filter(ExposureLabel %in% c("DPP-4i", "GLP-1RA", "Ins
              med_recode, "treatments")
 
 antidepressant_table <- med_table %>%
-  filter(PharmaceuticalClass == "Antidepressants") %>%
+  filter(PharmaceuticalClass %in% c("Antidepressants", "Misc. Psychotherapeutic")) %>%
   apply_recode(med_recode, "antidepressant") %>%
   left_join(atc_drugs, by = join_by("SimpleGenericName" == "Name")) %>%
   filter(substr(ATC_code, 1, 4) == "N06A")
 save(antidepressant_table, file = "OutputData/antidepressant_table.rds")
 
 antipsychotics_table <- med_table %>%
-  filter(PharmaceuticalClass == "Antipsychotics") %>%
+  filter(PharmaceuticalClass %in% c("Antipsychotics", "Misc. Psychotherapeutic")) %>%
   apply_recode(med_recode, "antipsychotics") %>%
   left_join(atc_drugs, by = join_by("SimpleGenericName" == "Name")) %>%
   filter(substr(ATC_code, 1, 5) %in% c("N05AE", "N05AH", "N05AL", "N05AN", "N05AX") & ATC_code != "N05AH02")
