@@ -10,6 +10,7 @@ output:
 params:
   eligibility_inclusion_diagnoses: NULL
   all_drugs:                       NULL
+  comparator_groups:               NULL
   var_name_to_pretty:              NULL
   comparator_drugs:                NULL
   target_drug:                     "Semaglutide"
@@ -30,6 +31,7 @@ source("helper_functions.R")
 
 eligibility_inclusion_diagnoses <- params$eligibility_inclusion_diagnoses
 all_drugs                       <- params$all_drugs
+comparator_groups               <- params$comparator_groups
 var_name_to_pretty              <- params$var_name_to_pretty
 comparator_drugs                <- params$comparator_drugs
 target_drug                     <- params$target_drug
@@ -51,7 +53,7 @@ all_drugs_pretty <- data.frame(var_name = all_drugs) %>%
   pull(pretty_name)
 
 cohort_names <- do.call(c, lapply(
-  comparator_drugs,
+  comparator_groups,
   function(x) {
     c(paste0(target_drug, "_Population_for_", target_drug, "_vs_", x),
       paste0(x, "_Population_for_", target_drug, "_vs_", x))
@@ -93,20 +95,21 @@ new_names <- c("",
 ```
 
 ```{r tables, results='asis'}
-for (this_drug in all_drugs) {
+for (this_group in comparator_groups) {
 
-  if (this_drug == target_drug) { next }
+  if (this_group == target_drug) { next }
 
-  Target_Population_for_Target_vs_Drug <- paste0(target_drug, "_Population_for_", target_drug, "_vs_", this_drug)
-  Drug_Population_for_Target_vs_Drug   <- paste0(this_drug, "_Population_for_", target_drug, "_vs_", this_drug)
+  Target_Population_for_Target_vs_Drug <- paste0(target_drug, "_Population_for_", target_drug, "_vs_", this_group)
+  Drug_Population_for_Target_vs_Drug   <- paste0(this_group, "_Population_for_", target_drug, "_vs_", this_group)
 
   this.data <- all.data %>%
-    filter(!!sym(Target_Population_for_Target_vs_Drug) | !!sym(Drug_Population_for_Target_vs_Drug))
+    filter(!!sym(Target_Population_for_Target_vs_Drug) | !!sym(Drug_Population_for_Target_vs_Drug)) %>%
+    mutate(false_col = FALSE)
 
   for (this_diag in eligibility_inclusion_diagnoses) {
     new_col    <- paste0(this_diag, "_Before_Drug_Index")
     target_col <- paste0(this_diag, "_Before_", target_drug, "_Index")
-    other_col  <- paste0(this_diag, "_Before_", this_drug, "_Index")
+    other_col  <- paste0(this_diag, "_Before_", this_group, "_Index")
 
     this.data <- this.data %>%
       mutate(!!new_col := ifelse(!!sym(Target_Population_for_Target_vs_Drug),
@@ -116,14 +119,17 @@ for (this_drug in all_drugs) {
   for (this_demo_drug in all_drugs) {
     if (this_demo_drug == target_drug) {
       target_col <- paste0(target_drug, "_Use")
-      other_col  <- paste0(this_demo_drug, "_Overlaps_", this_drug, "_Index")
-    } else if (this_demo_drug == this_drug) {
-      target_col <- paste0(this_demo_drug, "_Overlaps_", target_drug, "_Index")
-      other_col  <- paste0(this_demo_drug, "_Use")
     } else {
       target_col <- paste0(this_demo_drug, "_Overlaps_", target_drug, "_Index")
-      other_col  <- paste0(this_demo_drug, "_Overlaps_", this_drug, "_Index")
     }
+    
+    if (this_demo_drug == this_group) {
+      other_col  <- paste0(this_demo_drug, "_Use")
+    } else if(this_group == nontreatment_group){
+      other_col <- "false_col"
+    } else {
+      other_col  <- paste0(this_demo_drug, "_Overlaps_", this_group, "_Index")
+    } 
 
     new_col <- paste0(this_demo_drug, "_Overlaps_Drug_Index")
 
@@ -134,18 +140,18 @@ for (this_drug in all_drugs) {
 
   html <- my_table1(this.data     = this.data,
                     my_strata     = Drug_Population_for_Target_vs_Drug,
-                    filename      = paste0(target_drug, "_vs_", this_drug, "-Eligibility_Criteria"),
+                    filename      = paste0(target_drug, "_vs_", this_group, "-Eligibility_Criteria"),
                     varsToFactor  = varsToFactor,
                     new_colnames  = c("Variable",
                                       "",
-                                      paste0("TOTAL ", target_drug, " vs ", this_drug, " Population"),
+                                      paste0("TOTAL ", target_drug, " vs ", this_group, " Population"),
                                       paste0(target_drug, " Population"),
-                                      paste0(this_drug, " Population"),
+                                      paste0(this_group, " Population"),
                                       "p"),
                     verbose       = FALSE,
                     new_titles    = new_titles,
                     new_names     = new_names)
-  cat("\n\n##", target_drug, "vs", this_drug, "\n\n")
+  cat("\n\n##", target_drug, "vs", this_group, "\n\n")
   cat(html)
 }
 ```

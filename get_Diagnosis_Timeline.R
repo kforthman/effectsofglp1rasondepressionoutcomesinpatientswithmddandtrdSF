@@ -22,7 +22,7 @@ define_before_diagnosis_ids <- function(index_drug_record, diagnosis_timeline){
 # flags whether each participant had that diagnosis before their index date.
 #
 # Arguments:
-#   all_drugs        — Character vector of target and comparator drug names
+#   all_groups        — Character vector of target and comparator drug names
 #   all_diagnoses    — Character vector of diagnosis names to evaluate
 #   nontreat_data_filename    — RDS filename containing cohort data frame with PatientDurableKey and {drug}_Index columns
 #   output_filename  — Output path for the diagnosis timeline variables (.rds)
@@ -31,7 +31,7 @@ define_before_diagnosis_ids <- function(index_drug_record, diagnosis_timeline){
 #   {output_filename} — this.data (PatientDurableKey + one logical column per diagnosis/drug combo)
 
 get_Diagnosis_Timeline <- function(
-    all_drugs,
+    all_groups,
     all_diagnoses,
     nontreat_data_filename,
     output_filename
@@ -47,14 +47,14 @@ get_Diagnosis_Timeline <- function(
       dplyr::select(PatientDurableKey, !!sym(paste0(this_diagnosis, "_FirstDiagnosis"))) %>%
       rename(FirstDiagnosisDate = paste0(this_diagnosis, "_FirstDiagnosis")) %>%
       filter(!is.na(FirstDiagnosisDate))
-    for(j in 1:length(all_drugs)){
-      this_drug <- all_drugs[j]
+    for(j in 1:length(all_groups)){
+      this_group <- all_groups[j]
       this_index_drug_data <- index_dataset %>%
-        dplyr::select(PatientDurableKey, !!sym(paste0(this_drug, "_Index"))) %>%
-        filter(!is.na(!!sym(paste0(this_drug, "_Index")))) %>%
-        rename(index_drug_start_datetime = paste0(this_drug, "_Index"))
+        dplyr::select(PatientDurableKey, !!sym(paste0(this_group, "_Index"))) %>%
+        filter(!is.na(!!sym(paste0(this_group, "_Index")))) %>%
+        rename(index_drug_start_datetime = paste0(this_group, "_Index"))
       this_before <- define_before_diagnosis_ids(this_index_drug_data, this_diagnosis_data) %>% pull(PatientDurableKey)
-      all.data <- all.data %>% mutate(!!sym(paste0(this_diagnosis, "_Before_", this_drug, "_Index")) := PatientDurableKey %in% this_before)
+      all.data <- all.data %>% mutate(!!sym(paste0(this_diagnosis, "_Before_", this_group, "_Index")) := PatientDurableKey %in% this_before)
     }
   }
   

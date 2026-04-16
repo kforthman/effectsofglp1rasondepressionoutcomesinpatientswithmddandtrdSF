@@ -134,7 +134,7 @@ source("get_Diagnosis_Timeline.R")
 
 message("Building diagnosis timeline variables")
 get_Diagnosis_Timeline(
-  all_drugs        = all_drugs,
+  all_groups       = all_groups,
   all_diagnoses    = eligibility_inclusion_diagnoses,
   nontreat_data_filename = "OutputData/dte_cohort_wNontreat_data.rds",
   output_filename  = "OutputData/data_DTE_DiagnosisTimelineVars.rds"
@@ -148,6 +148,7 @@ render(
   params      = list(
     eligibility_inclusion_diagnoses = eligibility_inclusion_diagnoses,
     all_drugs                       = all_drugs,
+    comparator_groups               = comparator_groups,
     var_name_to_pretty              = var_name_to_pretty,
     comparator_drugs                = comparator_drugs,
     target_drug                     = target_drug,
