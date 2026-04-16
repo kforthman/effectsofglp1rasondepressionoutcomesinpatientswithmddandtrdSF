@@ -1,5 +1,5 @@
 {
-  "data_pull_date": "2026-04-10",
+  "data_pull_date": "2026-04-15",
   "target_drug": "Semaglutide",
   "comparator_drugs": ["DPP4i", "GLP1RA", "Insulins", "Metformin", "SGLT2i", "SU", "TZD"],
   "nontreatment_group": "Nontreatment",
