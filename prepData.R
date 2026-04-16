@@ -38,35 +38,34 @@ check_schema(col_schema, "encounter_table",            config$files$encounter_ta
 med_table <- read_csv(config$files$med_table,
                       na        = c("", "NA", "NULL", "null"),
                       col_types = make_col_types(col_schema, "med_table")
-) %>%
-  mutate(DaysSupply = as.integer(DaysSupply))
+)
 
 # ── Validate medication recode coverage ───────────────────────────────────────
 check_recode(med_table %>% filter(ExposureLabel %in% c("Antidepressants", "Misc. Psychotherapeutic")),
              med_recode, "antidepressant")
 check_recode(med_table %>% filter(ExposureLabel  %in% c("Antipsychotics", "Misc. Psychotherapeutic")),
              med_recode, "antipsychotics")
-check_recode(med_table %>% filter(ExposureLabel %in% c("Antihypertensive", "Diuretics")),
+check_recode(med_table %>% filter(ExposureLabel %in% c("Antihypertensive", "Diuretics", "Hydrochlorothiazide")),
              med_recode, "hydrochlorothiazide")
-check_recode(med_table %>% filter(ExposureLabel %in% c("DPP-4i", "GLP-1RA", "Insulins", "Metformin", "SGLT2i", "SU", "Semaglutide", "TZD")),
+check_recode(med_table %>% filter(ExposureLabel %in% all_drugs),
              med_recode, "treatments")
 
 antidepressant_table <- med_table %>%
-  filter(PharmaceuticalClass %in% c("Antidepressants", "Misc. Psychotherapeutic")) %>%
+  filter(ExposureLabel %in% c("Antidepressants", "Misc. Psychotherapeutic")) %>%
   apply_recode(med_recode, "antidepressant") %>%
   left_join(atc_drugs, by = join_by("SimpleGenericName" == "Name")) %>%
   filter(substr(ATC_code, 1, 4) == "N06A")
 save(antidepressant_table, file = "OutputData/antidepressant_table.rds")
 
 antipsychotics_table <- med_table %>%
-  filter(PharmaceuticalClass %in% c("Antipsychotics", "Misc. Psychotherapeutic")) %>%
+  filter(ExposureLabel %in% c("Antipsychotics", "Misc. Psychotherapeutic")) %>%
   apply_recode(med_recode, "antipsychotics") %>%
   left_join(atc_drugs, by = join_by("SimpleGenericName" == "Name")) %>%
   filter(substr(ATC_code, 1, 5) %in% c("N05AE", "N05AH", "N05AL", "N05AN", "N05AX") & ATC_code != "N05AH02")
 save(antipsychotics_table, file = "OutputData/antipsychotics_table.rds")
 
 hydrochlorothiazide_table <- med_table %>%
-  filter(PharmaceuticalClass == "Antihypertensive" | PharmaceuticalClass == "Diuretics") %>%
+  filter(ExposureLabel %in% c("Antihypertensive", "Diuretics", "Hydrochlorothiazide")) %>%
   apply_recode(med_recode, "hydrochlorothiazide") %>%
   left_join(atc_drugs, by = join_by("SimpleGenericName" == "Name")) %>%
   filter(ATC_code == "C03AA03")
@@ -77,7 +76,7 @@ treatments_subclass_map <- med_recode %>%
   distinct(canonical_name, subclass)
 
 treatments_table <- med_table %>%
-  filter(ExposureLabel %in% c("DPP-4i", "GLP-1RA", "Insulins", "Metformin", "SGLT2i", "SU", "Semaglutide", "TZD")) %>%
+  filter(ExposureLabel %in% all_drugs) %>%
   apply_recode(med_recode, "treatments") %>%
   separate_rows(SimpleGenericName, sep = "/") %>%
   left_join(treatments_subclass_map, by = c("SimpleGenericName" = "canonical_name")) %>%
@@ -101,18 +100,7 @@ rm(treatments_table)
 diag_table <- read_csv(config$files$diag_table,
                        na        = c("", "NA", "NULL", "null"),
                        col_types = make_col_types(col_schema, "diag_table")
-) %>%
-  rename(Diagnosis = "EligibilityLabel") %>%
-  mutate(Diagnosis = recode(Diagnosis,
-                            "Type 1 Diabetes"          = "T1DM",
-                            "Type 2 Diabetes Mellitus" = "T2DM",
-                            "Depression"               = "MDD",
-                            "Heart Disease"            = "Heart_Disease",
-                            "Chronic Kidney Disease"   = "Chronic_Kidney_Disease",
-                            "A1C"                      = "A1C_over_8p5",
-                            "Thyroid Cancer"           = "Thyroid_Cancer"
-                            
-  )) %>% 
+) %>% 
   arrange(PatientDurableKey, Diagnosis)
 save(diag_table, file = "OutputData/diag_table.rds")
 
@@ -121,6 +109,7 @@ mdd_data <- read_csv(config$files$mdd_data,
                      na        = c("", "NA", "NULL", "null"),
                      col_types = make_col_types(col_schema, "mdd_data")
 ) %>%
+  rename(Sex = "PatientSex") %>%
   mutate(Race = case_when(
     !is.na(SecondRace) | !is.na(ThirdRace) | !is.na(FourthRace) | !is.na(FifthRace) | MultiRacial ~ "Multi-Race",
     FirstRace == "American Indian or Alaska Native" ~ "American Indian or Alaska Native",
@@ -133,35 +122,15 @@ mdd_data <- read_csv(config$files$mdd_data,
     !is.na(Ethnicity) & Ethnicity == "Hispanic or Latino" ~ "Hispanic or Latino",
     TRUE ~ Race
   ),
+  Race_Ethnicity_white = Race_Ethnicity == "White or Caucasian",
+  Sex_male = Sex == "Male",
   Age = time_length(interval(BirthDate, data_pull_date), "years")
   ) %>%
-  dplyr::select(
-    -Mo6_Before_MDD_Index,
-    -Eligibility_Group_A,
-    -Eligibility_Group_C,
-    -Eligibility_Group_D,
-    -Eligibility_Group_E,
-    -HasInclA,
-    -HasOrInclA,
-    -HasInclB,
-    -HasOrInclB,
-    -HasExclA,
-    -HasExclB,
-    -HasExclC,
-    -FirstRace,
-    -SecondRace,
-    -ThirdRace,
-    -FourthRace,
-    -FifthRace,
-    -MultiRacial,
-    -Ethnicity
+  filter(Sex != "Unknown" & 
+           !is.na(Sex) & 
+           !is.na(Race_Ethnicity) & 
+           meets_diagnosis_eligibility_criteria
   ) %>%
-  filter(PatientSex != "Unknown" & !is.na(PatientSex) & !is.na(Race_Ethnicity)) %>%
-  filter(Eligibility_Group_B) %>%
-  rename(meets_diagnosis_eligibility_criteria = "Eligibility_Group_B",
-         Sex = "PatientSex") %>%
-  mutate(Race_Ethnicity_white = Race_Ethnicity == "White or Caucasian",
-         Sex_male = Sex == "Male") %>%
   left_join(diag_table %>%
               filter(Diagnosis %in% eligibility_inclusion_diagnoses) %>%
               pivot_wider(names_from = Diagnosis, values_from = FirstDiagnosisDate,
@@ -181,7 +150,16 @@ mdd_data <- read_csv(config$files$mdd_data,
   left_join(hydrochlorothiazide_table %>% 
               group_by(PatientDurableKey) %>% 
               summarize(Hydrochlorothiazide_Index = min(MedicationStartDate)),
-            by = "PatientDurableKey")
+            by = "PatientDurableKey") %>%
+  dplyr::select(
+    -FirstRace,
+    -SecondRace,
+    -ThirdRace,
+    -FourthRace,
+    -FifthRace,
+    -MultiRacial,
+    -Ethnicity
+  ) 
   
 for(this_drug in all_drugs){
   this_table_name <- paste0("treatment_", this_drug, "_table")
@@ -213,161 +191,13 @@ rm(hydrochlorothiazide_table)
 treatment_overlap_table <- read_csv(config$files$treatment_overlap_table,
                                        na        = c("", "NA", "NULL", "null"),
                                        col_types = make_col_types(col_schema, "treatment_overlap_table")
-) %>%
-  rename(DPP4i_Overlaps_Semaglutide_Index = "DPP-4i_Overlaps_Semaglutide_-6m_12m",
-         GLP1RA_Overlaps_Semaglutide_Index = "GLP-1RA_Overlaps_Semaglutide_-6m_12m",
-         Insulins_Overlaps_Semaglutide_Index = "Insulins_Overlaps_Semaglutide_-6m_12m",
-         Metformin_Overlaps_Semaglutide_Index = "Metformin_Overlaps_Semaglutide_-6m_12m",
-         SGLT2i_Overlaps_Semaglutide_Index = "SGLT2i_Overlaps_Semaglutide_-6m_12m",
-         SU_Overlaps_Semaglutide_Index = "SU_Overlaps_Semaglutide_-6m_12m",
-         TZD_Overlaps_Semaglutide_Index = "TZD_Overlaps_Semaglutide_-6m_12m",
-         DPP4i_Overlaps_Insulins_Index = "DPP-4i_Overlaps_Insulins_-6m_12m",
-         GLP1RA_Overlaps_Insulins_Index = "GLP-1RA_Overlaps_Insulins_-6m_12m",
-         Metformin_Overlaps_Insulins_Index = "Metformin_Overlaps_Insulins_-6m_12m",
-         Semaglutide_Overlaps_Insulins_Index = "Semaglutide_Overlaps_Insulins_-6m_12m",
-         SGLT2i_Overlaps_Insulins_Index = "SGLT2i_Overlaps_Insulins_-6m_12m",
-         SU_Overlaps_Insulins_Index = "SU_Overlaps_Insulins_-6m_12m",
-         TZD_Overlaps_Insulins_Index = "TZD_Overlaps_Insulins_-6m_12m",
-         DPP4i_Overlaps_Metformin_Index = "DPP-4i_Overlaps_Metformin_-6m_12m",
-         GLP1RA_Overlaps_Metformin_Index = "GLP-1RA_Overlaps_Metformin_-6m_12m",
-         Insulins_Overlaps_Metformin_Index = "Insulins_Overlaps_Metformin_-6m_12m",
-         Semaglutide_Overlaps_Metformin_Index = "Semaglutide_Overlaps_Metformin_-6m_12m",
-         SGLT2i_Overlaps_Metformin_Index = "SGLT2i_Overlaps_Metformin_-6m_12m",
-         SU_Overlaps_Metformin_Index = "SU_Overlaps_Metformin_-6m_12m",
-         TZD_Overlaps_Metformin_Index = "TZD_Overlaps_Metformin_-6m_12m",
-         GLP1RA_Overlaps_DPP4i_Index = "GLP-1RA_Overlaps_DPP-4i_-6m_12m",
-         Insulins_Overlaps_DPP4i_Index = "Insulins_Overlaps_DPP-4i_-6m_12m",
-         Metformin_Overlaps_DPP4i_Index = "Metformin_Overlaps_DPP-4i_-6m_12m",
-         Semaglutide_Overlaps_DPP4i_Index = "Semaglutide_Overlaps_DPP-4i_-6m_12m",
-         SGLT2i_Overlaps_DPP4i_Index = "SGLT2i_Overlaps_DPP-4i_-6m_12m",
-         SU_Overlaps_DPP4i_Index = "SU_Overlaps_DPP-4i_-6m_12m",
-         TZD_Overlaps_DPP4i_Index = "TZD_Overlaps_DPP-4i_-6m_12m",
-         DPP4i_Overlaps_SGLT2i_Index = "DPP-4i_Overlaps_SGLT2i_-6m_12m",
-         GLP1RA_Overlaps_SGLT2i_Index = "GLP-1RA_Overlaps_SGLT2i_-6m_12m",
-         Insulins_Overlaps_SGLT2i_Index = "Insulins_Overlaps_SGLT2i_-6m_12m",
-         Metformin_Overlaps_SGLT2i_Index = "Metformin_Overlaps_SGLT2i_-6m_12m",
-         Semaglutide_Overlaps_SGLT2i_Index = "Semaglutide_Overlaps_SGLT2i_-6m_12m",
-         SU_Overlaps_SGLT2i_Index = "SU_Overlaps_SGLT2i_-6m_12m",
-         TZD_Overlaps_SGLT2i_Index = "TZD_Overlaps_SGLT2i_-6m_12m",
-         DPP4i_Overlaps_SU_Index = "DPP-4i_Overlaps_SU_-6m_12m",
-         GLP1RA_Overlaps_SU_Index = "GLP-1RA_Overlaps_SU_-6m_12m",
-         Insulins_Overlaps_SU_Index = "Insulins_Overlaps_SU_-6m_12m",
-         Metformin_Overlaps_SU_Index = "Metformin_Overlaps_SU_-6m_12m",
-         Semaglutide_Overlaps_SU_Index = "Semaglutide_Overlaps_SU_-6m_12m",
-         SGLT2i_Overlaps_SU_Index = "SGLT2i_Overlaps_SU_-6m_12m",
-         TZD_Overlaps_SU_Index = "TZD_Overlaps_SU_-6m_12m",
-         DPP4i_Overlaps_TZD_Index = "DPP-4i_Overlaps_TZD_-6m_12m",
-         GLP1RA_Overlaps_TZD_Index = "GLP-1RA_Overlaps_TZD_-6m_12m",
-         Insulins_Overlaps_TZD_Index = "Insulins_Overlaps_TZD_-6m_12m",
-         Metformin_Overlaps_TZD_Index = "Metformin_Overlaps_TZD_-6m_12m",
-         Semaglutide_Overlaps_TZD_Index = "Semaglutide_Overlaps_TZD_-6m_12m",
-         SGLT2i_Overlaps_TZD_Index = "SGLT2i_Overlaps_TZD_-6m_12m",
-         SU_Overlaps_TZD_Index = "SU_Overlaps_TZD_-6m_12m",
-         DPP4i_Overlaps_GLP1RA_Index = "DPP-4i_Overlaps_GLP-1RA_-6m_12m",
-         Insulins_Overlaps_GLP1RA_Index = "Insulins_Overlaps_GLP-1RA_-6m_12m",
-         Metformin_Overlaps_GLP1RA_Index = "Metformin_Overlaps_GLP-1RA_-6m_12m",
-         Semaglutide_Overlaps_GLP1RA_Index = "Semaglutide_Overlaps_GLP-1RA_-6m_12m",
-         SGLT2i_Overlaps_GLP1RA_Index = "SGLT2i_Overlaps_GLP-1RA_-6m_12m",
-         SU_Overlaps_GLP1RA_Index = "SU_Overlaps_GLP-1RA_-6m_12m",
-         TZD_Overlaps_GLP1RA_Index = "TZD_Overlaps_GLP-1RA_-6m_12m")
+)
 save(treatment_overlap_table, file = "OutputData/treatment_overlap_table.rds")
 
 dte_cohort_data <- read_csv(config$files$dte_cohort_data,
                             na        = c("", "NA", "NULL", "null"),
                             col_types = make_col_types(col_schema, "dte_cohort_data")
 ) %>%
-  rename(DPP4i_Exposure                       = "DPP-4i_Exposure",
-         DPP4i_Index                          = "DPP-4i_Index",
-         DPP4i_Iplus15                        = "DPP-4i_Iplus15",
-         DPP4i_Iplus365                       = "DPP-4i_Iplus365",
-         MDD_before_DPP4i                     = "MDD_before_DPP-4i",
-         DPP4i_PreIndexEncounterCount         = "DPP-4i_PreIndexEncounterCount",
-         DPP4i_PostIndexEncounterCount        = "DPP-4i_PostIndexEncounterCount",
-         DPP4i_PrePostInclusionCriteriaMet    = "DPP-4i_PrePostInclusionCriteriaMet",
-         GLP1RA_Exposure                      = "GLP-1RA_Exposure",
-         GLP1RA_Index                         = "GLP-1RA_Index",
-         GLP1RA_Iplus15                       = "GLP-1RA_Iplus15",
-         GLP1RA_Iplus365                      = "GLP-1RA_Iplus365",
-         MDD_before_GLP1RA                    = "MDD_before_GLP-1RA",
-         GLP1RA_PreIndexEncounterCount        = "GLP-1RA_PreIndexEncounterCount",
-         GLP1RA_PostIndexEncounterCount       = "GLP-1RA_PostIndexEncounterCount",
-         GLP1RA_PrePostInclusionCriteriaMet   = "GLP-1RA_PrePostInclusionCriteriaMet",
-         
-         Semaglutide_Population_for_Semaglutide_vs_Insulins = "Semaglutide_vs_Insulins_AllCriteriaMet",
-         Semaglutide_Population_for_Semaglutide_vs_DPP4i = "Semaglutide_vs_DPP-4i_AllCriteriaMet",
-         Semaglutide_Population_for_Semaglutide_vs_GLP1RA = "Semaglutide_vs_GLP-1RA_AllCriteriaMet",
-         Semaglutide_Population_for_Semaglutide_vs_Metformin = "Semaglutide_vs_Metformin_AllCriteriaMet",
-         Semaglutide_Population_for_Semaglutide_vs_SGLT2i = "Semaglutide_vs_SGLT2i_AllCriteriaMet",
-         Semaglutide_Population_for_Semaglutide_vs_SU = "Semaglutide_vs_SU_AllCriteriaMet",
-         Semaglutide_Population_for_Semaglutide_vs_TZD = "Semaglutide_vs_TZD_AllCriteriaMet",
-         Insulins_Population_for_Semaglutide_vs_Insulins = "Insulins_vs_Semaglutide_AllCriteriaMet",
-         DPP4i_Population_for_Semaglutide_vs_DPP4i = "DPP-4i_vs_Semaglutide_AllCriteriaMet",
-         GLP1RA_Population_for_Semaglutide_vs_GLP1RA = "GLP-1RA_vs_Semaglutide_AllCriteriaMet",
-         Metformin_Population_for_Semaglutide_vs_Metformin = "Metformin_vs_Semaglutide_AllCriteriaMet",
-         SGLT2i_Population_for_Semaglutide_vs_SGLT2i = "SGLT2i_vs_Semaglutide_AllCriteriaMet",
-         SU_Population_for_Semaglutide_vs_SU = "SU_vs_Semaglutide_AllCriteriaMet",
-         TZD_Population_for_Semaglutide_vs_TZD = "TZD_vs_Semaglutide_AllCriteriaMet"
-  ) %>%
-  mutate(
-    Semaglutide_meets_timeline_criteria = Semaglutide_PrePostInclusionCriteriaMet & MDD_before_Semaglutide,
-    Insulins_meets_timeline_criteria = Insulins_PrePostInclusionCriteriaMet & MDD_before_Insulins,
-    DPP4i_meets_timeline_criteria = DPP4i_PrePostInclusionCriteriaMet & MDD_before_DPP4i,
-    GLP1RA_meets_timeline_criteria = GLP1RA_PrePostInclusionCriteriaMet & MDD_before_GLP1RA,
-    Metformin_meets_timeline_criteria = Metformin_PrePostInclusionCriteriaMet & MDD_before_Metformin,
-    SGLT2i_meets_timeline_criteria = SGLT2i_PrePostInclusionCriteriaMet & MDD_before_SGLT2i,
-    SU_meets_timeline_criteria = SU_PrePostInclusionCriteriaMet & MDD_before_SU,
-    TZD_meets_timeline_criteria = TZD_PrePostInclusionCriteriaMet & MDD_before_TZD
-  ) %>%
-  dplyr::select(
-    -Semaglutide_Index,
-    -Semaglutide_Exposure,
-    -Semaglutide_Iplus15,
-    -Semaglutide_Iplus365,
-    -MDD_before_Semaglutide,
-    -Semaglutide_PrePostInclusionCriteriaMet,
-    -Insulins_Index,
-    -Insulins_Exposure,
-    -Insulins_Iplus15,
-    -Insulins_Iplus365,
-    -MDD_before_Insulins,
-    -Insulins_PrePostInclusionCriteriaMet,
-    -DPP4i_Index,
-    -DPP4i_Exposure,
-    -DPP4i_Iplus15,
-    -DPP4i_Iplus365,
-    -MDD_before_DPP4i,
-    -DPP4i_PrePostInclusionCriteriaMet,
-    -GLP1RA_Index,
-    -GLP1RA_Exposure,
-    -GLP1RA_Iplus15,
-    -GLP1RA_Iplus365,
-    -MDD_before_GLP1RA,
-    -GLP1RA_PrePostInclusionCriteriaMet,
-    -Metformin_Index,
-    -Metformin_Exposure,
-    -Metformin_Iplus15,
-    -Metformin_Iplus365,
-    -MDD_before_Metformin,
-    -Metformin_PrePostInclusionCriteriaMet,
-    -SGLT2i_Index,
-    -SGLT2i_Exposure,
-    -SGLT2i_Iplus15,
-    -SGLT2i_Iplus365,
-    -MDD_before_SGLT2i,
-    -SGLT2i_PrePostInclusionCriteriaMet,
-    -SU_Index,
-    -SU_Exposure,
-    -SU_Iplus15,
-    -SU_Iplus365,
-    -MDD_before_SU,
-    -SU_PrePostInclusionCriteriaMet,
-    -TZD_Index,
-    -TZD_Exposure,
-    -TZD_Iplus15,
-    -TZD_Iplus365,
-    -MDD_before_TZD,
-    -TZD_PrePostInclusionCriteriaMet
-  ) %>%
   left_join(mdd_data,
             by = "PatientDurableKey") %>%
   filter(meets_diagnosis_eligibility_criteria) %>% 
@@ -403,8 +233,6 @@ rm(dte_cohort_data)
 nonswitch_periods <- read_csv(config$files$nonswitch_periods,
                               col_types = make_col_types(col_schema, "nonswitch_periods")
 ) %>%
-  mutate(StartDate = as.Date(StartDate),
-         EndDate   = as.Date(EndDate)) %>%
   left_join(mdd_data %>% dplyr::select(PatientDurableKey, MDD_Index, meets_diagnosis_eligibility_criteria),
             by = "PatientDurableKey") %>%
   filter(meets_diagnosis_eligibility_criteria) %>%

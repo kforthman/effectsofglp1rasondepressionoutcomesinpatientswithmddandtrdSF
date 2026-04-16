@@ -4,7 +4,7 @@ age_at_index_years,continuous
 index_year,continuous
 Sex_male,binary
 Race_Ethnicity_white,binary
-Type_2_Diabetes_Mellitus_with_Complications,binary
+T2DM_with_Complications,binary
 Obesity,binary
 Bariatric_Surgery,binary
 ADHD,binary
