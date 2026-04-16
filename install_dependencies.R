@@ -1,0 +1,1 @@
+install.packages(c("rmarkdown", "tidyverse", "doParallel", "corrplot", "libRtheme", "plotrix", "tableone", "kableExtra", "viridis", "caret", "twang", "MatchIt", "ggplot2", "ggcorrplot", "survey", "scales", "MASS", "performance", "DHARMa", "sjPlot", "jsonlite"))
