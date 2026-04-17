@@ -299,18 +299,17 @@ analysis_Propensity_Scoring <- function(comparator_group,
     # ── 3. Propensity scoring (twang GBM) ────────────────────────────────────
 
     set.seed(123)
+
     ps.out <- twang::ps(
-        matchingFormula,
-        data              = this.data,
-        estimand          = "ATT",
-        n.trees           = 5000,
-        shrinkage         = 0.01,
-        interaction.depth = 2,
-        bag.fraction      = 0.8,
-        n.minobsinnode    = 10,
-        stop.method       = c("es.mean", "ks.max"),
-        version           = "xgboost",
-        verbose           = FALSE
+      matchingFormula,
+      data              = this.data,
+      estimand          = "ATT",
+      n.trees           = 5000,
+      shrinkage         = 0.01,
+      interaction.depth = 2,
+      stop.method       = c("es.mean", "ks.max"),
+      version           = "gbm",
+      verbose           = FALSE
     )
 
     this.data.ps              <- this.data %>%
