@@ -18,6 +18,13 @@
     "Thyroid_Cancer",
     "Gastroparesis"
   ],
+  "database": {
+    "driver":             "ODBC Driver 17 for SQL Server",
+    "server":             "tcp:PROJECTS",
+    "database":           "ProjectD91201F",
+    "trusted_connection": "yes",
+    "timeout":            10
+  },
   "files": {
     "var_name_to_pretty":         "Data/var_name_to_pretty.csv",
     "ps_covariates":              "Data/ps_covariates.csv",
@@ -25,14 +32,14 @@
     "drug_class":                 "Data/DrugClasses.csv",
     "cpt_acuity":                 "Data/psych_proc_tiers-manualEdit-MPP.csv",
     "period_info":                "Data/period_info.csv",
-    "med_table":                  "/media/studies/ehr_study/uploaded-data/20260415-1800/CCM-Medication_Table-26_04_15-v1.csv",
-    "diag_table":                 "/media/studies/ehr_study/uploaded-data/20260415-1800/CCM-FirstDiagnosis_Table-26_04_15-v1.csv",
-    "mdd_data":                   "/media/studies/ehr_study/uploaded-data/20260415-1800/CCM-MDDPatientList_Table-26_04_15-v1.csv",
-    "treatment_overlap_table":    "/media/studies/ehr_study/uploaded-data/20260415-1800/CCM-OverlapWide_Table-26_04_15-v1.csv",
-    "dte_cohort_data":            "/media/studies/ehr_study/uploaded-data/20260415-1800/CCM-Treatment_Table-26_04_15-v1.csv",
-    "nonswitch_periods":          "/media/studies/ehr_study/uploaded-data/20260415-1800/CCM-Nontreatment_Table-26_04_15-v1.csv",
-    "psych_proc":                 "/media/studies/ehr_study/uploaded-data/20260415-1800/CCM-Outcomes_Table-26_04_15-v1.csv",
-    "encounter_table":            "/media/studies/ehr_study/uploaded-data/20260415-1800/CCM-Encounter_Table-26_04_15-v1.csv",
+    "med_table":                  "dbo.MedicationTable",
+    "diag_table":                 "dbo.FirstDiagnosisTable",
+    "mdd_data":                   "dbo.MDDPatientList",
+    "treatment_overlap_table":    "dbo.OverlapWideTable",
+    "dte_cohort_data":            "dbo.TreatmentTable",
+    "nonswitch_periods":          "dbo.NontreatmentTable",
+    "psych_proc":                 "dbo.OutcomesTable",
+    "encounter_table":            "dbo.EncounterTable",
     "column_schema":              "Data/column_schema.csv",
     "medication_recode":          "Data/medication_recode.csv"
   }
