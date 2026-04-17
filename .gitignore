@@ -46,3 +46,11 @@ IDs*.txt
 # ignore error demos
 errorDemos/
 
+# renv files
+install_dependencies.R
+.Rproj.user
+!GLP1_DTE-SF.Rproj
+!renv.lock
+!renv/.gitignore
+!renv/activate.R
+!.Rprofile
