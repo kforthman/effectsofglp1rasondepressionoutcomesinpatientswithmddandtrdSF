@@ -45,7 +45,7 @@ check_recode(med_table %>% filter(ExposureLabel %in% c("Antidepressants", "Misc.
              med_recode, "antidepressant")
 check_recode(med_table %>% filter(ExposureLabel  %in% c("Antipsychotics", "Misc. Psychotherapeutic")),
              med_recode, "antipsychotics")
-check_recode(med_table %>% filter(ExposureLabel %in% c("Antihypertensive", "Diuretics", "Hydrochlorothiazide")),
+check_recode(med_table %>% filter(ExposureLabel %in% c("Hydrochlorothiazide")),
              med_recode, "hydrochlorothiazide")
 check_recode(med_table %>% filter(ExposureLabel %in% all_drugs),
              med_recode, "treatments")
@@ -65,7 +65,7 @@ antipsychotics_table <- med_table %>%
 save(antipsychotics_table, file = "OutputData/antipsychotics_table.rds")
 
 hydrochlorothiazide_table <- med_table %>%
-  filter(ExposureLabel %in% c("Antihypertensive", "Diuretics", "Hydrochlorothiazide")) %>%
+  filter(ExposureLabel %in% c("Hydrochlorothiazide")) %>%
   apply_recode(med_recode, "hydrochlorothiazide") %>%
   left_join(atc_drugs, by = join_by("SimpleGenericName" == "Name")) %>%
   filter(ATC_code == "C03AA03")
