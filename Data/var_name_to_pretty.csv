@@ -31,7 +31,7 @@ index_year,Index Year,Index Variables
 mdd_to_index_days,MDD to Index (days),Index Variables
 Bariatric_Surgery,Bariatric Surgery,Cardiometabolic Conditions
 Diseases_of_the_Arteries_Artrioles_and_Capillaries,"Diseases of the Arteries, Atrioles, and Capillaries",Cardiometabolic Conditions
-Type_2_Diabetes_Mellitus_with_Complications,Type 2 Diabetes with Complications,Cardiometabolic Conditions
+T2DM_with_Complications,Type 2 Diabetes with Complications,Cardiometabolic Conditions
 ADHD,ADHD,Psychiatric Comorbidities
 Agoraphobia,Agoraphobia,Psychiatric Comorbidities
 Anxiety_Disorder_NOS,Anxiety Disorder NOS,Psychiatric Comorbidities
