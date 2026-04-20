@@ -300,17 +300,17 @@ analysis_Propensity_Scoring <- function(comparator_group,
 
     set.seed(123)
     ps.out <- twang::ps(
-        matchingFormula,
-        data              = this.data,
-        estimand          = "ATT",
-        n.trees           = 5000,
-        shrinkage         = 0.01,
-        interaction.depth = 2,
-        bag.fraction      = 0.8,
-        n.minobsinnode    = 10,
-        stop.method       = c("es.mean", "ks.max"),
-        version           = "xgboost",
-        verbose           = FALSE
+      matchingFormula,
+      data              = this.data,
+      estimand          = "ATT",
+      n.trees           = 5000,
+      shrinkage         = 0.01,
+      interaction.depth = 2,
+      bag.fraction      = 0.8,
+      n.minobsinnode    = 10,
+      stop.method       = c("es.mean", "ks.max"),
+      version           = "xgboost",
+      verbose           = FALSE
     )
 
     this.data.ps              <- this.data %>%
@@ -339,14 +339,33 @@ analysis_Propensity_Scoring <- function(comparator_group,
 
     # ── 5. Nearest-neighbour matched dataset ─────────────────────────────────
 
-    m.out <- matchit(
+    n_control   <- sum(this.data.ps$treatment == 0)
+    n_treatment <- sum(this.data.ps$treatment == 1)
+    
+    raw_ratio <- max(n_control, n_treatment) / min(n_control, n_treatment)
+    
+    this_ratio <- ifelse(raw_ratio > 4, 2, 1)
+    
+    this.data.ps$treatment_flipped <- 1 - this.data.ps$treatment
+    
+    if(n_control < n_treatment){
+      m.out <- matchit(
+        treatment_flipped ~ logit_pscore,
+        data    = this.data.ps,
+        method  = "nearest",
+        replace = FALSE,
+        ratio   = this_ratio
+      )
+    }else{
+      m.out <- matchit(
         treatment ~ logit_pscore,
         data    = this.data.ps,
         method  = "nearest",
         replace = FALSE,
-        ratio   = 2
-    )
-
+        ratio   = this_ratio
+      )
+    }
+    
     matched.data <- match.data(m.out)
 
     total_n_alternate_matched   <- matched.data %>%
