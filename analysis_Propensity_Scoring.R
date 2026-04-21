@@ -299,6 +299,7 @@ analysis_Propensity_Scoring <- function(comparator_group,
     # ── 3. Propensity scoring (twang GBM) ────────────────────────────────────
 
     set.seed(123)
+
     ps.out <- twang::ps(
       matchingFormula,
       data              = this.data,
