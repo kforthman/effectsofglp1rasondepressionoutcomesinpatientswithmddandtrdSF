@@ -5,6 +5,24 @@ source("helper_functions.R")
 
 config <- fromJSON("config.json")
 
+if (!is.null(config$database)) {
+  library(DBI)
+  library(odbc)
+  conProjects <- dbConnect(
+    odbc(),
+    .connection_string = sprintf(
+      "Driver={%s};Server=%s;Database=%s;Trusted_Connection=%s;",
+      config$database$driver,
+      config$database$server,
+      config$database$database,
+      config$database$trusted_connection
+    ),
+    timeout = config$database$timeout
+  )
+} else {
+  conProjects <- NULL
+}
+
 col_schema  <- read.csv(config$files$column_schema,   stringsAsFactors = FALSE)
 med_recode  <- read.csv(config$files$medication_recode, stringsAsFactors = FALSE)
 
@@ -23,22 +41,19 @@ atc_drugs <- read.csv(config$files$atc_drugs) %>%
   arrange(Name)
 cpt_acuity  <- read.csv(config$files$cpt_acuity)
 
-# ── Validate column schema against data files ─────────────────────────────────
-check_schema(col_schema, "med_table",                  config$files$med_table)
-check_schema(col_schema, "diag_table",                 config$files$diag_table)
-check_schema(col_schema, "mdd_data",                   config$files$mdd_data)
-check_schema(col_schema, "treatment_overlap_table",    config$files$treatment_overlap_table)
-check_schema(col_schema, "dte_cohort_data",            config$files$dte_cohort_data)
-check_schema(col_schema, "nonswitch_periods",          config$files$nonswitch_periods)
-check_schema(col_schema, "psych_proc",                 config$files$psych_proc)
-check_schema(col_schema, "encounter_table",            config$files$encounter_table)
+# ── Validate column schema ────────────────────────────────────────────────────
+check_schema_table(col_schema, "med_table",               config, conn = conProjects)
+check_schema_table(col_schema, "diag_table",              config, conn = conProjects)
+check_schema_table(col_schema, "mdd_data",                config, conn = conProjects)
+check_schema_table(col_schema, "treatment_overlap_table", config, conn = conProjects)
+check_schema_table(col_schema, "dte_cohort_data",         config, conn = conProjects)
+check_schema_table(col_schema, "nonswitch_periods",       config, conn = conProjects)
+check_schema_table(col_schema, "psych_proc",              config, conn = conProjects)
+check_schema_table(col_schema, "encounter_table",         config, conn = conProjects)
 
 # ── Read input data ───────────────────────────────────────────────────────────----
 
-med_table <- read_csv(config$files$med_table,
-                      na        = c("", "NA", "NULL", "null"),
-                      col_types = make_col_types(col_schema, "med_table")
-)
+med_table <- read_table(config, col_schema, "med_table", conn = conProjects)
 
 # ── Validate medication recode coverage ───────────────────────────────────────
 check_recode(med_table %>% filter(ExposureLabel %in% c("Antidepressants", "Misc. Psychotherapeutic")),
@@ -97,18 +112,12 @@ for(this_drug in all_drugs){
 rm(med_table)
 rm(treatments_table)
 
-diag_table <- read_csv(config$files$diag_table,
-                       na        = c("", "NA", "NULL", "null"),
-                       col_types = make_col_types(col_schema, "diag_table")
-) %>% 
+diag_table <- read_table(config, col_schema, "diag_table", conn = conProjects) %>%
   arrange(PatientDurableKey, Diagnosis)
 save(diag_table, file = "OutputData/diag_table.rds")
 
 # Patients with MDD, no Bipolar Disorder, no Schizophrenia
-mdd_data <- read_csv(config$files$mdd_data,
-                     na        = c("", "NA", "NULL", "null"),
-                     col_types = make_col_types(col_schema, "mdd_data")
-) %>%
+mdd_data <- read_table(config, col_schema, "mdd_data", conn = conProjects) %>%
   rename(Sex = "PatientSex") %>%
   mutate(Race = case_when(
     !is.na(SecondRace) | !is.na(ThirdRace) | !is.na(FourthRace) | !is.na(FifthRace) | MultiRacial ~ "Multi-Race",
@@ -188,16 +197,10 @@ rm(antipsychotics_table)
 rm(hydrochlorothiazide_table)
 
 
-treatment_overlap_table <- read_csv(config$files$treatment_overlap_table,
-                                       na        = c("", "NA", "NULL", "null"),
-                                       col_types = make_col_types(col_schema, "treatment_overlap_table")
-)
+treatment_overlap_table <- read_table(config, col_schema, "treatment_overlap_table", conn = conProjects)
 save(treatment_overlap_table, file = "OutputData/treatment_overlap_table.rds")
 
-dte_cohort_data <- read_csv(config$files$dte_cohort_data,
-                            na        = c("", "NA", "NULL", "null"),
-                            col_types = make_col_types(col_schema, "dte_cohort_data")
-) %>%
+dte_cohort_data <- read_table(config, col_schema, "dte_cohort_data", conn = conProjects) %>%
   left_join(mdd_data,
             by = "PatientDurableKey") %>%
   filter(meets_diagnosis_eligibility_criteria) %>% 
@@ -230,9 +233,7 @@ save(dte_cohort_data, file = "OutputData/dte_cohort_data.rds")
 rm(treatment_overlap_table)
 rm(dte_cohort_data)
 
-nonswitch_periods <- read_csv(config$files$nonswitch_periods,
-                              col_types = make_col_types(col_schema, "nonswitch_periods")
-) %>%
+nonswitch_periods <- read_table(config, col_schema, "nonswitch_periods", conn = conProjects) %>%
   left_join(mdd_data %>% dplyr::select(PatientDurableKey, MDD_Index, meets_diagnosis_eligibility_criteria),
             by = "PatientDurableKey") %>%
   filter(meets_diagnosis_eligibility_criteria) %>%
@@ -247,20 +248,14 @@ save(nonswitch_periods, file = "OutputData/nonswitch_periods.rds")
 rm(nonswitch_periods)
 rm(mdd_data)
 
-psych_proc <- read_csv(config$files$psych_proc,
-                       na        = c("", "NA", "NULL", "null"),
-                       col_types = make_col_types(col_schema, "psych_proc")
-) %>%
+psych_proc <- read_table(config, col_schema, "psych_proc", conn = conProjects) %>%
   left_join(cpt_acuity %>% 
               dplyr::select(source_concept_code, level), 
             by = join_by("CPTCode" == "source_concept_code"))
 save(psych_proc, file = "OutputData/psych_proc.rds")
 rm(psych_proc)
 
-encounter_table <- read_csv(config$files$encounter_table,
-                       na        = c("", "NA", "NULL", "null"),
-                       col_types = make_col_types(col_schema, "encounter_table")
-) %>%
+encounter_table <- read_table(config, col_schema, "encounter_table", conn = conProjects) %>%
   mutate(StartVisit = as.Date(StartVisit),
          EndVisit   = as.Date(EndVisit)) %>%
   mutate(EndVisit = pmax(EndVisit, StartVisit)) # End visit should not come before start visit.
@@ -268,3 +263,8 @@ save(encounter_table, file = "OutputData/encounter_table.rds")
 rm(encounter_table)
 
 rm(col_schema)
+
+if (!is.null(conProjects)) {
+  DBI::dbDisconnect(conProjects)
+  rm(conProjects)
+}

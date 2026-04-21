@@ -1,0 +1,46 @@
+{
+  "data_pull_date": "YYYY-MM-DD",
+  "target_drug": "Semaglutide",
+  "comparator_drugs": ["DPP4i", "GLP1RA", "Insulins", "Metformin", "SGLT2i", "SU", "TZD"],
+  "nontreatment_group": "Nontreatment",
+  "eligibility_inclusion_diagnoses": [
+    "T1DM",
+    "T2DM",
+    "Obesity",
+    "Hypertension",
+    "Hypercholesterolemia",
+    "Hyperlipidemia",
+    "Heart_Disease",
+    "Stroke",
+    "Chronic_Kidney_Disease",
+    "A1C_over_8p5",
+    "Pancreatitis",
+    "Thyroid_Cancer",
+    "Gastroparesis"
+  ],
+  "database": {
+    "driver":             "ODBC Driver 17 for SQL Server",
+    "server":             "tcp:YOUR_SERVER",
+    "database":           "YOUR_DATABASE_NAME",
+    "trusted_connection": "yes",
+    "timeout":            10
+  },
+  "files": {
+    "var_name_to_pretty":         "Data/var_name_to_pretty.csv",
+    "ps_covariates":              "Data/ps_covariates.csv",
+    "atc_drugs":                  "Data/Drug_ATC_Categories.csv",
+    "drug_class":                 "Data/DrugClasses.csv",
+    "cpt_acuity":                 "Data/psych_proc_tiers-manualEdit-MPP.csv",
+    "period_info":                "Data/period_info.csv",
+    "med_table":                  "dbo.MedicationTable",
+    "diag_table":                 "dbo.FirstDiagnosisTable",
+    "mdd_data":                   "dbo.MDDPatientList",
+    "treatment_overlap_table":    "dbo.OverlapWideTable",
+    "dte_cohort_data":            "dbo.TreatmentTable",
+    "nonswitch_periods":          "dbo.NontreatmentTable",
+    "psych_proc":                 "dbo.OutcomesTable",
+    "encounter_table":            "dbo.EncounterTable",
+    "column_schema":              "Data/column_schema.csv",
+    "medication_recode":          "Data/medication_recode.csv"
+  }
+}

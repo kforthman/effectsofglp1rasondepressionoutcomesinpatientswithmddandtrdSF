@@ -67,6 +67,29 @@ apply_col_types <- function(data, schema, table_name, na_strings = c("", "NA", "
   data
 }
 
+# Dispatch schema check to CSV or SQL version based on whether conn is provided.
+check_schema_table <- function(schema, table_name, config, conn = NULL) {
+  if (!is.null(conn)) {
+    check_schema_sql(schema, table_name, conn, config$files[[table_name]])
+  } else {
+    check_schema(schema, table_name, config$files[[table_name]])
+  }
+}
+
+# Read a table from either a SQL database or a CSV file, returning a typed data frame.
+# conn = NULL reads from the CSV file path in config$files[[table_name]].
+read_table <- function(config, col_schema, table_name, conn = NULL) {
+  if (!is.null(conn)) {
+    DBI::dbGetQuery(conn, sprintf("SELECT * FROM %s", config$files[[table_name]])) %>%
+      apply_col_types(col_schema, table_name)
+  } else {
+    read_csv(config$files[[table_name]],
+             na        = c("", "NA", "NULL", "null"),
+             col_types = make_col_types(col_schema, table_name))
+  }
+}
+
+>>>>>>> origin/claude/init-project-setup-IcCln
 # Build a readr cols() spec from a row-per-column schema data frame.
 # schema must have columns: table, column, type, format
 make_col_types <- function(schema, table_name) {

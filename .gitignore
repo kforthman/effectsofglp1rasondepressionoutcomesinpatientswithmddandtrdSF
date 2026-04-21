@@ -40,8 +40,9 @@ IDs*.txt
 # Track CLAUDE.md
 !CLAUDE.md
 
-# Track JSON config files
+# Track JSON config files (but not the local config itself)
 !*.json
+config.json
 
 # ignore error demos
 errorDemos/
