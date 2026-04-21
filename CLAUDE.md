@@ -4,90 +4,114 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is an R-based epidemiological study analyzing the effects of GLP-1 receptor agonists (semaglutide) on depression outcomes in patients with MDD and TRD. The project runs on the **NIH All of Us Research Program Workbench** (Terra/JupyterLab environment) and queries patient data from **BigQuery** (the All of Us Curated Data Repository).
+This is an R-based epidemiological study analyzing the effects of GLP-1 receptor agonists (semaglutide) on depression outcomes in patients with MDD and TRD. It uses clinical data exported from a research EHR system (CCM tables) stored locally at `/media/studies/ehr_study/uploaded-data/`.
 
 ## Running Scripts
 
-Scripts are R files with Jupyter-style `# %%` cell markers. They are run interactively on the All of Us Workbench Jupyter environment. To run a script:
+Run the full pipeline from the project root:
 
 ```bash
-Rscript <script_name>.R
+Rscript install_dependencies.R  # first-time setup
+Rscript main.R                  # runs full pipeline
 ```
 
-To regenerate pipeline metadata after modifying scripts:
+Individual scripts can be run standalone but depend on upstream `OutputData/*.rds` files being present.
 
-```bash
-python generate_pipeline_map.py
-```
+## Configuration (`config.json`)
 
-This rewrites `pipeline_map.csv` (per-script I/O dependencies) and `file_order.csv` / `file_order.html` (topological execution order).
+All parameterization is in `config.json` (local overrides in `config_local.json`):
 
-## Environment & Key Variables
+- `target_drug` — The treatment drug ("Semaglutide")
+- `comparator_drugs` — Array of 7 comparator drug classes (DPP4i, GLP1RA, Insulins, Metformin, SGLT2i, SU, TZD)
+- `nontreatment_group` — Label for the no-treatment arm ("Nontreatment")
+- `data_pull_date` — EHR snapshot date (YYYY-MM-DD); used in file naming
+- `files` — Maps 16 named inputs to file paths (6 `Data/` reference files + 10 external CCM CSVs)
 
-All scripts depend on these environment variables (set automatically on the workbench):
+## Shared Utilities (`helper_functions.R`)
 
-- `WORKSPACE_BUCKET` — Google Cloud Storage bucket for intermediate `.rds`/`.csv` files
-- `WORKSPACE_CDR` — BigQuery dataset path for the All of Us CDR
-- `GOOGLE_PROJECT` — GCP billing project
-- `OWNER_EMAIL` — Workspace owner email (used for GCS auth and file paths)
+Every analysis script sources `helper_functions.R`. Key functions:
 
-## Shared Utility Files (sourced at top of every script)
+- `check_schema(schema, table_name, file_path)` — Validates CSV columns against `column_schema.csv`; stops on mismatch
+- `make_col_types(schema, table_name)` — Builds a `readr::cols()` spec from the schema data frame
+- `apply_recode(data, mapping, table_name)` — Normalizes `SimpleGenericName` via `medication_recode.csv`
+- `check_recode(data, mapping, table_name)` — Warns and writes unmapped names to `OutputData/missing_recodes-{table}.csv`
+- `interpret_nb(model, term, outcome, comparison)` — Prints rate ratio + CI + p-value for a NB GLM term
+- `interpret_pwp(model, term, outcome, comparison)` — Same for PWP Cox model hazard ratios
+- `check_od(model)` / `check_poisson(model)` / `check_mc(model)` — Model diagnostic helpers
+- `my_table1(this.data, my_strata, filename, varsToFactor)` — Creates Table 1 CSV and HTML (writes to `OutputData/` and `html_tables/`)
+- `summarize_interaction(model, mod_label)` / `summarize_strata(emm_contrast, mod_var)` — Sensitivity analysis interaction helpers
 
-Every script begins with:
+`workbench_functions.txt` is retained for All of Us Research Workbench runs (provides `notebook_setup()` and BigQuery helpers) but is not sourced by scripts in this local codebase.
+
+## Data Reference Files (`Data/`)
+
+| File | Purpose |
+|---|---|
+| `ps_covariates.csv` | 38 PS model covariates (6 continuous, 32 binary) |
+| `column_schema.csv` | Expected column names and types for all CCM input tables |
+| `medication_recode.csv` | Canonical drug name mappings (`raw_name` → `canonical_name`) |
+| `Drug_ATC_Categories.csv` | ATC codes used to filter drug classes |
+| `DrugClasses.csv` | Drug class hierarchy |
+| `period_info.csv` | 5 outcome time windows (`bgn_win`, `end_win` in days from index) |
+| `psych_proc_tiers-manualEdit-MPP.csv` | CPT code acuity tiers for psychiatric procedures |
+| `var_name_to_pretty.csv` | Variable name → display label mappings for reports |
+
+## Pipeline Architecture (`main.R` orchestrated)
+
+Outputs go to `OutputData/*.rds` (intermediate data) and `Reports/*.html` (rendered Rmd reports).
+
+1. **`prepData.R`** — Schema-validates and ingests CCM CSVs → `antidepressant_table.rds`, `antipsychotics_table.rds`, `hydrochlorothiazide_table.rds`, `treatments_table.rds`, `dte_cohort_data.rds`, `mdd_data.rds`, `diag_table.rds`
+
+2. **`get_TRD.R`** — Identifies TRD patients from antidepressant consecutive periods
+
+3. **`get_Antidepressant_Treatment_Timeline.R`** / **`get_Hydrochlorothiazide_Treatment_Timeline.R`** — Build consecutive medication instance and period records
+
+4. **`get_Nontreatment_Timelines.R`** — Adds nontreatment arm via index date emulation (samples time-from-eligibility distribution from target drug patients) → `dte_cohort_wNontreat_data.rds` (primary cohort used by most downstream scripts)
+
+5. **`get_Diagnosis_Timeline.R`** — Appends diagnosis timeline flag variables to the cohort
+
+6. **`analysis_Propensity_Scoring.R`** (loop over each comparator) → `PS_Matched_Dataset-{drug}.rds`, `PS_Weighted_Dataset-{drug}.rds`, `PS_Covariates-{drug}.csv`
+
+7. **Outcome scripts** (run in parallel via `doParallel`):
+   - `get_Outcomes_Visits.R` → `outcomes_visits.rds`
+   - `get_Outcomes_PsychProc.R` → `outcomes_psych_proc.rds`
+   - `get_Outcomes_MedChanges.R` → `outcomes_med_changes.rds`
+   - `get_Outcomes_HCMedChanges.R` → `outcomes_hc_med_changes.rds`
+
+8. **Analysis** (loop over comparators × outcomes × periods):
+   - `analysis_Negative_Binomial_Regression.R` — Count outcomes (NB GLM, IRR)
+   - `analysis_PWP_Gap_Time_Cox_Model.R` — Recurrent events (PWP gap-time Cox, HR)
+   - `analysis_Sensitivity_Med_Changes.R` / `analysis_Sensitivity_Med_Changes-Change_Type.R` — Sensitivity analyses
+
+Reports are rendered via `rmarkdown::render()` with `params = list(...)` per comparator. `explore_*.R` and `plot-*.R` scripts are for EDA and do not produce files used by downstream analyses.
+
+## Key Conventions
+
+**Script header pattern:**
 ```r
-source("workbench_functions.txt")
-source("easy_delete_copy_R.txt")
-notebook_setup()
+library(tidyverse)
+library(jsonlite)
+source("helper_functions.R")
+config <- fromJSON("config.json")
 ```
 
-- **`workbench_functions.txt`** — Core utilities: `notebook_setup()` (installs/loads all packages, sets options), `grab_data()` / `download_data()` (BigQuery helpers), `stat_smd()` / `stat_pval()` (SMD and p-value stats for balance checking)
-- **`easy_delete_copy_R.txt`** — File management: `delete_if_exists_local()`, `gs_exists()`, `copy_to_bucket()`, `download_nonexist_data()`
-- **`data_prep_functions.txt`** — ETL helpers: `read_bq_export_from_workspace_bucket()`, `prep_save_condition_table()`, `prep_save_drug_table()`, `prep_save_visit_table()`, etc., `translate_table()` (applies drug name translation tables)
-- **`my_table1.txt`** — Table 1 formatting utilities
+**Function pattern:** `get_*()` and `analysis_*()` functions save results to disk via `save()` or `write.csv()` and `return(invisible())`. Most accept an `overwrite` flag (default `TRUE`) for conditional recomputation.
 
-## Pipeline Architecture
+**RDS payload:** When loading with `load("file.rds")`, the variable name restored matches the name used at save time — check the creating script for the exact name.
 
-Scripts have a strict dependency order (see `file_order.csv`). The high-level stages are:
+**Consecutive instances:** A gap > 180 days between prescriptions of the same `SimpleGenericName` starts a new `consecutive_instance`. Used in TRD identification and treatment timeline scripts.
 
-### Stage 1 — Concept extraction (`get_All_Concepts.R`)
-Queries BigQuery for all clinical concepts (conditions, drugs, visits, measurements). Saves standardized `.rds` files to `Data_Prepped/` with naming convention:
-- `Data_Prepped/Prepped_Data-All_Participants-{concept_name}-{table_type}.rds`
-- `Data_Prepped/IDs-{concept_name}-{table_type}.txt` (participant ID lists)
+**Study cohort label:** Always `"{target_drug} vs {comparator_group}"` (e.g., `"Semaglutide vs DPP4i"`).
 
-### Stage 2 — Ancillary data preparation (`get_EHR_Availability_Timeframes_noObs_v2.R`, `get_BMI.R`, `get_TRD.R`, `get_Diagnoses.R`, `get_Antidiabetic_Drug_Exposure.R`, `get_Antidiabetic_Timelines_v2.R`, `get_Diagnosis_Timeline.R`, `get_Visit_Vars.R`, `get_zip.R`, `prep_Participant_survey_answers.R`)
-Each script loads raw `Data_Prepped/` files and produces intermediate `.rds` files used downstream (e.g., `ehr_length_noObs_v2.rds`, `data_DTE_diagnoses.rds`).
+**Outcome periods** (from `period_info.csv`):
+- `a`: −180 to 0 days (baseline)
+- `b`: 15–90 days post-index
+- `c`: 15–180 days post-index
+- `d`: 15–360 days post-index (primary analysis period)
+- `e`: 180–360 days post-index
 
-### Stage 3 — DTE cohort assembly (`get_DTE_cohort.R`)
-Applies eligibility criteria and assembles the Drug Treatment Episode cohort → `dte_cohort_data.rds`.
+**Treatment variable:** `treatment = 1` (target drug, Semaglutide), `treatment = 0` (comparator/nontreatment).
 
-### Stage 4 — Nontreatment timelines (`get_Antidiabetic_Nontreatment_Timelines_v3.R`)
-Adds nontreatment comparison arm → `dte_cohort_wNontreat_data.rds`. This is the primary cohort dataset used by most downstream scripts.
+**Patient IDs:** `PatientDurableKey` in CCM medication/diagnosis tables; `person_id` in some cohort assembly and sensitivity scripts. These refer to the same patients; join carefully when combining tables.
 
-### Stage 5 — Propensity scoring (`analysis_Propensity_Scoring_SemaglutideVs*.R`)
-One script per comparator drug class: DPP4i, GLP1RA, Insulins, Metformin, Nontreatment, SGLT2i, SU, TZD. Each reads `dte_cohort_wNontreat_data.rds` and `ps_covariates.csv`, and produces:
-- `PS_Matched_Dataset-{drug}.rds` — 1:1 propensity-matched cohort
-- `PS_Weighted_Dataset-{drug}.rds` — IPTW-weighted cohort
-- `PS_Covariates-{drug}.csv` — covariate balance summary
-
-### Stage 6 — Treatment timelines and outcomes
-- `get_Drug_Translation_Tables_v3.R` → translated antidepressant/antipsychotic drug records
-- `get_Antidepressant_Treatment_Timeline_v2.R` → `antidepressant_antipsychotic_consecutive_period.rds`
-- `get_DTE_visits.R` → `dte_cohort_psych_visits.rds`, `dte_cohort_visits.rds`
-- `get_Hydrochlorothiazide_Treatment_Timeline.R` → active comparator for sensitivity analyses
-- `get_Outcomes_v3.R` → `all_outcomes.rds`
-
-### Stage 7 — Statistical analyses
-- `analysis_Negative_Binomial_Regression.R` — count outcomes (healthcare utilization)
-- `analysis_PWP_Gap_Time_Cox_Model_v2.R` — Prentice-Williams-Peterson gap time Cox model for recurrent events (psychiatric visits)
-- `analysis_Sensitivity_Med_Changes.R` / `analysis_Sensitivity_Med_Changes-Change_Type.R` — sensitivity analyses
-
-### Exploratory and demonstration scripts
-`explore_*.R` scripts are for EDA and do not produce files used by downstream analysis. `demonstration_*.R` scripts are standalone debugging examples.
-
-## Key Data Conventions
-
-- Intermediate data is persisted to the local Jupyter disk as `.rds` (R binary) or `.csv` files; large exports live in `$WORKSPACE_BUCKET` on GCS.
-- `Data_Prepped/` contains all concept-level preprocessed data.
-- The drug treatment comparison pairs are always **Semaglutide vs {comparator}**; the `treatment` variable is 1=Semaglutide, 0=comparator.
-- Index date logic: for drug comparators, index = first dispense date; for "Nontreatment", index = `Nontreatment_index`.
-- Loaded `.rds` files consistently assign their payload to `this.data` (or a named variable immediately after `load()`).
+**PS matching:** Caliper = 0.1 × SD(logit PS); acceptable covariate balance threshold = SMD < 0.1.
