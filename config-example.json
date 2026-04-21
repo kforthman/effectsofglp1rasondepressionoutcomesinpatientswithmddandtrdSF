@@ -1,5 +1,5 @@
 {
-  "data_pull_date": "2026-04-15",
+  "data_pull_date": "YYYY-MM-DD",
   "target_drug": "Semaglutide",
   "comparator_drugs": ["DPP4i", "GLP1RA", "Insulins", "Metformin", "SGLT2i", "SU", "TZD"],
   "nontreatment_group": "Nontreatment",
@@ -20,8 +20,8 @@
   ],
   "database": {
     "driver":             "ODBC Driver 17 for SQL Server",
-    "server":             "tcp:PROJECTS",
-    "database":           "ProjectD91201F",
+    "server":             "tcp:YOUR_SERVER",
+    "database":           "YOUR_DATABASE_NAME",
     "trusted_connection": "yes",
     "timeout":            10
   },
