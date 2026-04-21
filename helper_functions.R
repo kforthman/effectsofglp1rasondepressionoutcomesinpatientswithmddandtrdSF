@@ -25,6 +25,48 @@ check_schema <- function(schema, table_name, file_path, na = c("", "NA", "NULL",
   invisible(TRUE)
 }
 
+# Verify that a SQL table's columns match the schema exactly.
+# Uses SELECT TOP 0 to avoid fetching rows.
+check_schema_sql <- function(schema, table_name, conn, sql_table) {
+  db_cols     <- names(DBI::dbGetQuery(conn, sprintf("SELECT TOP 0 * FROM %s", sql_table)))
+  schema_cols <- schema[schema$table == table_name, "column"]
+
+  extra_in_db     <- setdiff(db_cols,     schema_cols)
+  extra_in_schema <- setdiff(schema_cols, db_cols)
+
+  msgs <- character(0)
+  if (length(extra_in_db) > 0)
+    msgs <- c(msgs, sprintf("  In DB but missing from schema: %s",     paste(extra_in_db,     collapse = ", ")))
+  if (length(extra_in_schema) > 0)
+    msgs <- c(msgs, sprintf("  In schema but missing from DB: %s", paste(extra_in_schema, collapse = ", ")))
+
+  if (length(msgs) > 0)
+    stop(sprintf("Schema mismatch for '%s':\n%s", table_name, paste(msgs, collapse = "\n")))
+
+  message(sprintf("Schema OK: %s (%d columns)", table_name, length(schema_cols)))
+  invisible(TRUE)
+}
+
+# Coerce a data frame's columns to R types defined in the schema.
+# character columns have na_strings replaced with NA. Dates are coerced via
+# as.Date() which handles character, Date, and POSIXct inputs uniformly.
+apply_col_types <- function(data, schema, table_name, na_strings = c("", "NA", "NULL", "null")) {
+  specs <- schema[schema$table == table_name, ]
+  for (i in seq_len(nrow(specs))) {
+    col  <- specs$column[i]
+    type <- specs$type[i]
+    if (!col %in% names(data)) next
+    data[[col]] <- switch(type,
+      character = { x <- as.character(data[[col]]); x[x %in% na_strings] <- NA_character_; x },
+      date      = as.Date(data[[col]]),
+      logical   = as.logical(data[[col]]),
+      integer   = as.integer(data[[col]]),
+      double    = as.double(data[[col]])
+    )
+  }
+  data
+}
+
 # Build a readr cols() spec from a row-per-column schema data frame.
 # schema must have columns: table, column, type, format
 make_col_types <- function(schema, table_name) {
