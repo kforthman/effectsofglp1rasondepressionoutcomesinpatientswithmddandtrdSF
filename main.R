@@ -43,6 +43,10 @@ drug_class  <- read.csv(config$files$drug_class)
 cpt_acuity  <- read.csv(config$files$cpt_acuity)
 period_info <- read.csv(config$files$period_info)
 
+if(!dir.exists("OutputData")){
+  dir.create("OutputData")
+}
+
 # ── Prep Data ─────────────────────────────────────────────────────----
 source("prepData.R")
 

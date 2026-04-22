@@ -41,6 +41,10 @@ atc_drugs <- read.csv(config$files$atc_drugs) %>%
   arrange(Name)
 cpt_acuity  <- read.csv(config$files$cpt_acuity)
 
+if(!dir.exists("OutputData")){
+  dir.create("OutputData")
+}
+
 # ── Validate column schema ────────────────────────────────────────────────────
 check_schema_table(col_schema, "med_table",               config, conn = conProjects)
 check_schema_table(col_schema, "diag_table",              config, conn = conProjects)

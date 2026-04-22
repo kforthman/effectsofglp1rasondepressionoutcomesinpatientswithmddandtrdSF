@@ -89,7 +89,6 @@ read_table <- function(config, col_schema, table_name, conn = NULL) {
   }
 }
 
->>>>>>> origin/claude/init-project-setup-IcCln
 # Build a readr cols() spec from a row-per-column schema data frame.
 # schema must have columns: table, column, type, format
 make_col_types <- function(schema, table_name) {
