@@ -23,6 +23,9 @@
 !Data/period_info.csv
 !Data/psych_proc_tiers-manualEdit-MPP.csv
 
+# Track data diary
+!Data_Diary/prepData-schema.xlsx
+
 # Track the pipeline map generator
 !generate_pipeline_map.py
 
