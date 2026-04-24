@@ -46,6 +46,12 @@ period_info <- read.csv(config$files$period_info)
 if(!dir.exists("OutputData")){
   dir.create("OutputData")
 }
+if(!dir.exists("Reports")){
+  dir.create("Reports")
+}
+if(!dir.exists("html_tables")){
+  dir.create("html_tables")
+}
 
 # ── Prep Data ─────────────────────────────────────────────────────----
 source("prepData.R")
@@ -341,8 +347,6 @@ nb_analyses <- list(
 )
 
 nb_period_name <- "15 days-12 months after index"
-
-dir.create("Reports", showWarnings = FALSE)
 
 nb_result_files <- character(0)
 

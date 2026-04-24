@@ -43,6 +43,9 @@ IDs*.txt
 # Track CLAUDE.md
 !CLAUDE.md
 
+# Track README
+!README.md
+
 # Track JSON config files (but not the local config itself)
 !*.json
 config.json
