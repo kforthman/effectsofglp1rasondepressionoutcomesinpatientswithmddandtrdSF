@@ -64,7 +64,7 @@ Every analysis script sources `helper_functions.R`. Key functions:
 
 ## Pipeline Architecture (`main.R` orchestrated)
 
-Outputs go to `OutputData/*.rds` (intermediate data) and `Reports/*.html` (rendered Rmd reports). `main.R` creates `OutputData/` if missing but not `Reports/` or `html_tables/`.
+Outputs go to `OutputData/*.rds` (intermediate data) and `Reports/*.html` (rendered Rmd reports). `main.R` auto-creates `OutputData/`, `Reports/`, and `html_tables/` if missing.
 
 1. **`prepData.R`** — Opens an ODBC connection (if `config$database` is set), schema-validates every source table, then builds:
    - `antidepressant_table.rds`, `antipsychotics_table.rds`, `hydrochlorothiazide_table.rds` (ATC-filtered, recoded)

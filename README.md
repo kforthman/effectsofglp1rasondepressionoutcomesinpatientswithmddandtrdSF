@@ -13,7 +13,7 @@ Rscript main.R                 # runs the full pipeline
 
 `.Rprofile` sources `renv/activate.R`, so R sessions in this directory automatically use the project library. Individual `get_*.R` and `analysis_*.R` scripts can be run standalone but depend on upstream `OutputData/*.rds` artifacts, which `main.R` creates in order.
 
-Intermediate data lands in `OutputData/`; rendered HTML reports land in `Reports/`; formatted Table 1 HTML lands in `html_tables/`. Only `OutputData/` is auto-created — create the other two before the first run if needed.
+Intermediate data lands in `OutputData/`; rendered HTML reports land in `Reports/`; formatted Table 1 HTML lands in `html_tables/`. All three directories are auto-created by `main.R` on first run.
 
 ## Configuration
 
