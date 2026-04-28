@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-R-based epidemiological study of the effect of GLP-1 receptor agonists (semaglutide) on depression outcomes in patients with MDD and TRD. Clinical inputs come from a research SQL Server database (Epic-derived Caboodle-style tables) read via ODBC; the pipeline falls back to local CSVs when the DB block is absent from the config.
+R-based epidemiological study of the effect of GLP-1 receptor agonists (semaglutide) on depression outcomes in patients with MDD and TRD. Clinical inputs come from a research SQL Server database (Epic-derived Caboodle-style tables) read via ODBC and/or local CSVs; each source table can independently be a SQL object name or a CSV path (see Configuration).
 
 ## Running Scripts
 
@@ -24,16 +24,17 @@ Rscript main.R                 # runs full pipeline
   - `nontreatment_group` — label for the no-treatment arm (`"Nontreatment"`).
   - `data_pull_date` — EHR snapshot date (YYYY-MM-DD).
   - `eligibility_inclusion_diagnoses` — diagnosis keys driving `diag_table` wide-pivot and `mdd_data` eligibility flags.
-  - `database` — ODBC connection (`driver`, `server`, `database`, `trusted_connection`, `timeout`). If this block is omitted, `prepData.R` reads each `files.*` entry as a CSV path instead.
-  - `files` — 8 `Data/` reference CSVs + 8 source tables (`med_table`, `diag_table`, `mdd_data`, `treatment_overlap_table`, `dte_cohort_data`, `nonswitch_periods`, `psych_proc`, `encounter_table`). The source-table values are SQL object names when `database` is set (e.g. `dbo.MedicationTable`) or file paths otherwise.
+  - `database` — ODBC connection (`driver`, `server`, `database`, `trusted_connection`, `timeout`). Optional: omit if every source table is a CSV. Required if any source table is a SQL object name.
+  - `files` — 8 `Data/` reference CSVs + 8 source tables (`med_table`, `diag_table`, `mdd_data`, `treatment_overlap_table`, `dte_cohort_data`, `nonswitch_periods`, `psych_proc`, `encounter_table`). Each source-table value is dispatched per-table by `helper_functions.R::is_csv_source()`: values ending in `.csv` or containing a path separator are read as CSV files, all others (e.g. `dbo.MedicationTable`) are read as SQL objects. Sources can be mixed freely.
 
 ## Shared Utilities (`helper_functions.R`)
 
 Every analysis script sources `helper_functions.R`. Key functions:
 
-- **Schema + I/O (DB/CSV-dispatch)**:
-  - `check_schema_table(schema, table_name, config, conn)` — dispatches to `check_schema_sql` (uses `SELECT TOP 0`) or `check_schema` (reads CSV header). Stops on column mismatch.
-  - `read_table(config, col_schema, table_name, conn)` — reads via `DBI::dbGetQuery` or `readr::read_csv`, returning a typed data frame.
+- **Schema + I/O (per-table DB/CSV-dispatch)**:
+  - `is_csv_source(value)` — heuristic that flags a `config$files` entry as a CSV path when it ends in `.csv` or contains a path separator; otherwise the value is treated as a SQL object name.
+  - `check_schema_table(schema, table_name, config, conn)` — dispatches per-table to `check_schema_sql` (uses `SELECT TOP 0`) or `check_schema` (reads CSV header). SQL sources require a non-NULL `conn`; otherwise it errors. Stops on column mismatch.
+  - `read_table(config, col_schema, table_name, conn)` — dispatches per-table to `DBI::dbGetQuery` or `readr::read_csv`, returning a typed data frame. SQL sources require a non-NULL `conn`.
   - `make_col_types(schema, table_name)` — builds a `readr::cols()` spec from the schema rows (used on CSV paths).
   - `apply_col_types(data, schema, table_name)` — coerces DB rows to R types from the schema.
 - **Recoding**:
@@ -66,7 +67,7 @@ Every analysis script sources `helper_functions.R`. Key functions:
 
 Outputs go to `OutputData/*.rds` (intermediate data) and `Reports/*.html` (rendered Rmd reports). `main.R` auto-creates `OutputData/`, `Reports/`, and `html_tables/` if missing.
 
-1. **`prepData.R`** — Opens an ODBC connection (if `config$database` is set), schema-validates every source table, then builds:
+1. **`prepData.R`** — Opens an ODBC connection (if `config$database` is set), schema-validates every source table, then builds the following. The connection is used only for source tables whose `config$files` value is a SQL object name; any source pointing to a `.csv` path is read directly from disk regardless of whether the DB block is present.
    - `antidepressant_table.rds`, `antipsychotics_table.rds`, `hydrochlorothiazide_table.rds` (ATC-filtered, recoded)
    - `treatment_{drug}_table.rds` for each `all_drugs` entry (from `treatments_table`, split by `PharmaceuticalSubclass`)
    - `diag_table.rds`, `mdd_data.rds` (with `Race`, `Race_Ethnicity`, `Sex_male`, `Age`, wide-pivoted diagnosis flags, and per-drug `*_Index` / `*_Use` columns)
