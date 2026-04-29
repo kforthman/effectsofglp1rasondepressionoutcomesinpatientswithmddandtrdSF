@@ -67,25 +67,42 @@ apply_col_types <- function(data, schema, table_name, na_strings = c("", "NA", "
   data
 }
 
-# Dispatch schema check to CSV or SQL version based on whether conn is provided.
+# Detect whether a config$files entry refers to a CSV file path versus a SQL
+# object name. A value ending in .csv or containing a path separator is treated
+# as a file path; anything else (e.g. "dbo.MedicationTable") is treated as SQL.
+is_csv_source <- function(value) {
+  grepl("\\.csv$", value, ignore.case = TRUE) || grepl("[/\\\\]", value)
+}
+
+# Dispatch schema check to CSV or SQL version per-table based on the value of
+# config$files[[table_name]]. SQL sources require a non-NULL conn.
 check_schema_table <- function(schema, table_name, config, conn = NULL) {
-  if (!is.null(conn)) {
-    check_schema_sql(schema, table_name, conn, config$files[[table_name]])
+  source_value <- config$files[[table_name]]
+  if (is_csv_source(source_value)) {
+    check_schema(schema, table_name, source_value)
   } else {
-    check_schema(schema, table_name, config$files[[table_name]])
+    if (is.null(conn))
+      stop(sprintf("Table '%s' is configured as a SQL source ('%s') but no database connection was provided. Add a 'database' block to config.json or change this entry to a .csv path.",
+                   table_name, source_value))
+    check_schema_sql(schema, table_name, conn, source_value)
   }
 }
 
-# Read a table from either a SQL database or a CSV file, returning a typed data frame.
-# conn = NULL reads from the CSV file path in config$files[[table_name]].
+# Read a table from either a SQL database or a CSV file per-table based on the
+# value of config$files[[table_name]], returning a typed data frame. SQL
+# sources require a non-NULL conn.
 read_table <- function(config, col_schema, table_name, conn = NULL) {
-  if (!is.null(conn)) {
-    DBI::dbGetQuery(conn, sprintf("SELECT * FROM %s", config$files[[table_name]])) %>%
-      apply_col_types(col_schema, table_name)
-  } else {
-    read_csv(config$files[[table_name]],
+  source_value <- config$files[[table_name]]
+  if (is_csv_source(source_value)) {
+    read_csv(source_value,
              na        = c("", "NA", "NULL", "null"),
              col_types = make_col_types(col_schema, table_name))
+  } else {
+    if (is.null(conn))
+      stop(sprintf("Table '%s' is configured as a SQL source ('%s') but no database connection was provided. Add a 'database' block to config.json or change this entry to a .csv path.",
+                   table_name, source_value))
+    DBI::dbGetQuery(conn, sprintf("SELECT * FROM %s", source_value)) %>%
+      apply_col_types(col_schema, table_name)
   }
 }
 
