@@ -5,6 +5,7 @@ library(lubridate)
 source("helper_functions.R")
 
 config <- fromJSON("config.json")
+source(config$dataset_adapter)
 
 if (!is.null(config$database)) {
   library(DBI)
@@ -50,6 +51,9 @@ if(!dir.exists("OutputData")){
 check_schema_table(col_schema, "med_table",               config, conn = conProjects)
 check_schema_table(col_schema, "diag_table",              config, conn = conProjects)
 check_schema_table(col_schema, "mdd_data",                config, conn = conProjects)
+if (has_treatment_overlap_table) {
+  check_schema_table(col_schema, "treatment_overlap_table", config, conn = conProjects)
+}
 check_schema_table(col_schema, "dte_cohort_data",         config, conn = conProjects)
 check_schema_table(col_schema, "nonswitch_periods",       config, conn = conProjects)
 check_schema_table(col_schema, "psych_proc",              config, conn = conProjects)
@@ -116,8 +120,12 @@ for(this_drug in all_drugs){
 rm(med_table)
 rm(treatments_table)
 
-diag_table <- read_table(config, col_schema, "diag_table", conn = conProjects) %>%
-  arrange(PatientDurableKey)
+diag_table <- read_table(config, col_schema, "diag_table", conn = conProjects)
+if (diag_table_format == "long") {
+  diag_table <- diag_table %>% arrange(PatientDurableKey, Diagnosis)
+} else {
+  diag_table <- diag_table %>% arrange(PatientDurableKey)
+}
 save(diag_table, file = "OutputData/diag_table.rds")
 
 # Patients with MDD, no Bipolar Disorder, no Schizophrenia
@@ -144,8 +152,16 @@ mdd_data <- read_table(config, col_schema, "mdd_data", conn = conProjects) %>%
            !is.na(Race_Ethnicity) & 
            meets_diagnosis_eligibility_criteria
   ) %>%
-  left_join(diag_table,
-            by = "PatientDurableKey") %>%
+  left_join(
+    if (diag_table_format == "long") {
+      diag_table %>%
+        filter(Diagnosis %in% eligibility_inclusion_diagnoses) %>%
+        pivot_wider(names_from = Diagnosis, values_from = FirstDiagnosisDate,
+                    values_fill = NA, names_glue = "{Diagnosis}_FirstDiagnosis")
+    } else {
+      diag_table
+    },
+    by = "PatientDurableKey") %>%
   mutate(across(ends_with("_FirstDiagnosis"),
                 ~ if_else(is.na(.), FALSE, TRUE),
                 .names = "{sub('_FirstDiagnosis$', '', .col)}")) %>%
@@ -197,10 +213,21 @@ rm(antidepressant_table)
 rm(antipsychotics_table)
 rm(hydrochlorothiazide_table)
 
+if (has_treatment_overlap_table) {
+  treatment_overlap_table <- read_table(config, col_schema, "treatment_overlap_table", conn = conProjects)
+  save(treatment_overlap_table, file = "OutputData/treatment_overlap_table.rds")
+}
+
 dte_cohort_data <- read_table(config, col_schema, "dte_cohort_data", conn = conProjects) %>%
   left_join(mdd_data,
             by = "PatientDurableKey") %>%
   filter(meets_diagnosis_eligibility_criteria)
+
+if (has_treatment_overlap_table) {
+  dte_cohort_data <- dte_cohort_data %>%
+    left_join(treatment_overlap_table, by = "PatientDurableKey")
+  rm(treatment_overlap_table)
+}
 
 for(i in 1:length(all_drugs)){
   this_drug <-  all_drugs[i]

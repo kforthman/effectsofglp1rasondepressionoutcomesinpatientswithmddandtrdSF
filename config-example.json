@@ -1,4 +1,5 @@
 {
+  "dataset_adapter": "dataset_adapter_SF.R",
   "data_pull_date": "YYYY-MM-DD",
   "target_drug": "Semaglutide",
   "comparator_drugs": ["DPP4i", "GLP1RA", "Insulins", "Metformin", "SGLT2i", "SU", "TZD"],
@@ -40,7 +41,7 @@
     "nonswitch_periods":          "dbo.NontreatmentTable",
     "psych_proc":                 "dbo.OutcomesTable",
     "encounter_table":            "dbo.EncounterTable",
-    "column_schema":              "Data/column_schema.csv",
+    "column_schema":              "Data/column_schema-SF.csv",
     "medication_recode":          "Data/medication_recode.csv"
   }
 }
