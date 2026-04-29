@@ -1,7 +1,7 @@
 # helper_functions.R
 # Shared utility functions used across multiple analysis and exploration scripts.
 
-# ── Data loading helpers ──────────────────────────────────────────────────────
+# -- Data loading helpers ------------------------------------------------------
 
 # Verify that a file's columns match the schema exactly.
 # Stops if any mismatch is found; otherwise prints an OK message.
@@ -50,7 +50,7 @@ check_schema_sql <- function(schema, table_name, conn, sql_table) {
 # Coerce a data frame's columns to R types defined in the schema.
 # character columns have na_strings replaced with NA. Dates are coerced via
 # as.Date() which handles character, Date, and POSIXct inputs uniformly.
-apply_col_types <- function(data, schema, table_name, na_strings = c("", "NA", "NULL", "null")) {
+apply_col_types <- function(data, schema, table_name, na_strings = c("", "NA", "NULL", "null", "*Unspecified")) {
   specs <- schema[schema$table == table_name, ]
   for (i in seq_len(nrow(specs))) {
     col  <- specs$column[i]
@@ -95,7 +95,7 @@ read_table <- function(config, col_schema, table_name, conn = NULL) {
   source_value <- config$files[[table_name]]
   if (is_csv_source(source_value)) {
     read_csv(source_value,
-             na        = c("", "NA", "NULL", "null"),
+             na        = c("", "NA", "NULL", "null", "*Unspecified"),
              col_types = make_col_types(col_schema, table_name))
   } else {
     if (is.null(conn))
@@ -150,7 +150,7 @@ check_recode <- function(data, mapping, table_name) {
   }
 }
 
-# ── Negative binomial regression helpers ─────────────────────────────────────
+# -- Negative binomial regression helpers -------------------------------------
 
 interpret_nb <- function(model, term, outcome, comparison, alpha = 0.05, digits = 2) {
   coefs <- summary(model)$coefficients
@@ -259,7 +259,7 @@ check_poisson <- function(model, threshold = 1.5) {
   od <- sum(residuals(model, type = "pearson")^2) / model$df.residual
   degree  <- dplyr::case_when(od < 1.5 ~ "minimal", od < 3 ~ "mild", od < 10 ~ "moderate", TRUE ~ "severe")
   verdict <- if(od >= threshold) "NB model recommended" else "Poisson likely sufficient"
-  cat(sprintf("Poisson overdispersion: %.2f (%s) — %s\n\n", od, degree, verdict))
+  cat(sprintf("Poisson overdispersion: %.2f (%s) - %s\n\n", od, degree, verdict))
 }
 
 my_cut <- function(my_value, range, my_min = 1) {
@@ -289,7 +289,7 @@ my_cut <- function(my_value, range, my_min = 1) {
   }
 }
 
-# ── Table formatting helpers ──────────────────────────────────────────────────
+# -- Table formatting helpers --------------------------------------------------
 
 number_to_viridis <- function(x) {
   x <- as.numeric(x)
@@ -408,9 +408,9 @@ my_table1 <- function(this.data, my_strata, filename, varsToFactor, new_names = 
   invisible(html_text)
 }
 
-# ── Sensitivity analysis helpers ──────────────────────────────────────────────
+# -- Sensitivity analysis helpers ----------------------------------------------
 
-# Print IRR + 95% CI + p-value for the treatment × modifier interaction term
+# Print IRR + 95% CI + p-value for the treatment x modifier interaction term
 summarize_interaction <- function(model, mod_label,
                                   trt_term = "treatment_nameSemaglutide",
                                   alpha = 0.05, digits = 2) {
