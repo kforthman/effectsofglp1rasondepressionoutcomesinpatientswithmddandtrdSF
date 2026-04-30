@@ -131,7 +131,7 @@ make_fread_colClasses <- function(schema, table_name) {
     double    = "numeric",
     factor    = "character"
   )
-  cc <- as.list(type_map[specs$type])
+  cc <- unname(type_map[specs$type])
   names(cc) <- specs$column
   cc
 }
