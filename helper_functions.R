@@ -161,11 +161,13 @@ make_col_types <- function(schema, table_name) {
 # Build a recoded SimpleGenericName column from a row-per-mapping recode data frame.
 # mapping must have columns: table, raw_name, canonical_name
 apply_recode <- function(data, mapping, table_name) {
-  tbl_map <- mapping[mapping$table == table_name, c("raw_name", "canonical_name")]
-  data %>%
-    left_join(tbl_map, by = c("SimpleGenericName" = "raw_name")) %>%
-    mutate(SimpleGenericName = dplyr::coalesce(canonical_name, SimpleGenericName)) %>%
-    dplyr::select(-canonical_name)
+  tbl_map <- mapping[mapping$table == table_name, ]
+  idx <- match(data$SimpleGenericName, tbl_map$raw_name)
+  hit <- !is.na(idx)
+  if (any(hit)) {
+    data$SimpleGenericName[hit] <- tbl_map$canonical_name[idx[hit]]
+  }
+  data
 }
 
 # Warn if any SimpleGenericName in data has no entry in mapping for table_name.
