@@ -104,12 +104,13 @@ read_table <- function(config, col_schema, table_name, conn = NULL) {
     )
     for (col in specs$column[specs$type == "date"]) {
       fmt <- specs$format[specs$column == col]
-      data.table::set(dt, j = col, value = as.Date(dt[[col]], format = fmt))
+      data.table::set(dt, j = col, value = data.table::as.IDate(dt[[col]], format = fmt))
     }
     for (col in specs$column[specs$type == "factor"]) {
       data.table::set(dt, j = col, value = as.factor(dt[[col]]))
     }
-    tibble::as_tibble(dt)
+    data.table::setDF(dt)
+    tibble::as_tibble(dt, .name_repair = "minimal")
   } else {
     if (is.null(conn))
       stop(sprintf("Table '%s' is configured as a SQL source ('%s') but no database connection was provided. Add a 'database' block to config.json or change this entry to a .csv path.",
