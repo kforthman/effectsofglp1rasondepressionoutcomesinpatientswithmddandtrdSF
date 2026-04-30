@@ -116,7 +116,8 @@ make_col_types <- function(schema, table_name) {
            date      = col_date(format = specs$format[i]),
            logical   = col_logical(),
            integer   = col_integer(),
-           double    = col_double()
+           double    = col_double(),
+           factor    = col_factor()
     )
   })
   names(col_list) <- specs$column
@@ -136,8 +137,8 @@ apply_recode <- function(data, mapping, table_name) {
 # Warn if any SimpleGenericName in data has no entry in mapping for table_name.
 # Returns a data frame with columns (table, name) listing every missing name.
 check_recode <- function(data, mapping, table_name) {
-  data_names <- unique(data$SimpleGenericName)
-  map_names  <- mapping[mapping$table == table_name, "raw_name"]
+  data_names <- data %>% distinct(SimpleGenericName) %>% pull(SimpleGenericName)
+  map_names  <- mapping %>% filter(table == table_name) %>% pull(raw_name)
   missing    <- sort(setdiff(data_names, map_names))
   if(length(missing) > 0){
     out_filename <- str_glue("OutputData/missing_recodes-{table_name}.csv")
