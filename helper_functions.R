@@ -90,13 +90,26 @@ check_schema_table <- function(schema, table_name, config, conn = NULL) {
 
 # Read a table from either a SQL database or a CSV file per-table based on the
 # value of config$files[[table_name]], returning a typed data frame. SQL
-# sources require a non-NULL conn.
+# sources require a non-NULL conn. CSV sources are read with data.table::fread
+# for speed, then date and factor columns are coerced using the schema.
 read_table <- function(config, col_schema, table_name, conn = NULL) {
   source_value <- config$files[[table_name]]
   if (is_csv_source(source_value)) {
-    read_csv(source_value,
-             na        = c("", "NA", "NULL", "null", "*Unspecified"),
-             col_types = make_col_types(col_schema, table_name))
+    specs <- col_schema[col_schema$table == table_name, ]
+    dt <- data.table::fread(
+      source_value,
+      colClasses   = make_fread_colClasses(col_schema, table_name),
+      na.strings   = c("", "NA", "NULL", "null", "*Unspecified"),
+      showProgress = TRUE
+    )
+    for (col in specs$column[specs$type == "date"]) {
+      fmt <- specs$format[specs$column == col]
+      data.table::set(dt, j = col, value = as.Date(dt[[col]], format = fmt))
+    }
+    for (col in specs$column[specs$type == "factor"]) {
+      data.table::set(dt, j = col, value = as.factor(dt[[col]]))
+    }
+    tibble::as_tibble(dt)
   } else {
     if (is.null(conn))
       stop(sprintf("Table '%s' is configured as a SQL source ('%s') but no database connection was provided. Add a 'database' block to config.json or change this entry to a .csv path.",
@@ -104,6 +117,23 @@ read_table <- function(config, col_schema, table_name, conn = NULL) {
     DBI::dbGetQuery(conn, sprintf("SELECT * FROM %s", source_value)) %>%
       apply_col_types(col_schema, table_name)
   }
+}
+
+# Build a named list of colClasses for data.table::fread from the schema.
+# Dates are read as character so that format strings can be applied afterward.
+make_fread_colClasses <- function(schema, table_name) {
+  specs <- schema[schema$table == table_name, ]
+  type_map <- c(
+    character = "character",
+    date      = "character",
+    logical   = "logical",
+    integer   = "integer",
+    double    = "numeric",
+    factor    = "character"
+  )
+  cc <- as.list(type_map[specs$type])
+  names(cc) <- specs$column
+  cc
 }
 
 # Build a readr cols() spec from a row-per-column schema data frame.
