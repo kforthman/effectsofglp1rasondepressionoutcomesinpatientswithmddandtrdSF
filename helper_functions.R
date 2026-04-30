@@ -103,6 +103,7 @@ read_table <- function(config, col_schema, table_name, conn = NULL) {
       showProgress = TRUE
     )
     for (col in specs$column[specs$type == "date"]) {
+      if (inherits(dt[[col]], "IDate")) next
       fmt <- specs$format[specs$column == col]
       data.table::set(dt, j = col, value = data.table::as.IDate(dt[[col]], format = fmt))
     }
@@ -120,21 +121,23 @@ read_table <- function(config, col_schema, table_name, conn = NULL) {
   }
 }
 
-# Build a named list of colClasses for data.table::fread from the schema.
-# Dates are read as character so that format strings can be applied afterward.
+# Build a colClasses spec for data.table::fread from the schema.
+# ISO dates (%Y-%m-%d) are parsed directly into IDate by fread's C parser,
+# avoiding the POSIXlt intermediate that as.Date.character allocates
+# (~9x the final size). Non-ISO dates fall back to character and are
+# converted afterward.
 make_fread_colClasses <- function(schema, table_name) {
   specs <- schema[schema$table == table_name, ]
-  type_map <- c(
-    character = "character",
-    date      = "character",
-    logical   = "logical",
-    integer   = "integer",
-    double    = "numeric",
-    factor    = "character"
+  is_iso_date <- specs$type == "date" & specs$format == "%Y-%m-%d"
+  groups <- list(
+    IDate     = specs$column[is_iso_date],
+    character = specs$column[specs$type %in% c("character", "factor") |
+                              (specs$type == "date" & !is_iso_date)],
+    logical   = specs$column[specs$type == "logical"],
+    integer   = specs$column[specs$type == "integer"],
+    numeric   = specs$column[specs$type == "double"]
   )
-  cc <- unname(type_map[specs$type])
-  names(cc) <- specs$column
-  cc
+  groups[lengths(groups) > 0]
 }
 
 # Build a readr cols() spec from a row-per-column schema data frame.
