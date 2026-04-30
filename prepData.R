@@ -75,12 +75,12 @@ check_schema_table(col_schema, "encounter_table",   config, conn = conProjects)
 
 # -- Read input data ---------------------------------------------------------------
 
-antidepressant_table <- read_table(config, col_schema, "med_table_ad",    conn = conProjects)
+antidepressant_table <- read_table(config, col_schema, "med_table_ad",    conn = conProjects,
+                                   where = "ExposureLabel IN ('Antidepressant', 'Misc. Psychotherapeutic')")
 gc()
-check_recode(antidepressant_table %>% filter(ExposureLabel %in% c("Antidepressant", "Misc. Psychotherapeutic")),
+check_recode(antidepressant_table,
              med_recode, "antidepressant")
 antidepressant_table <- antidepressant_table %>%
-  filter(ExposureLabel %in% c("Antidepressant", "Misc. Psychotherapeutic")) %>%
   apply_recode(med_recode, "antidepressant") %>%
   left_join(atc_drugs, by = join_by("SimpleGenericName" == "Name")) %>%
   filter(substr(ATC_code, 1, 4) == "N06A")

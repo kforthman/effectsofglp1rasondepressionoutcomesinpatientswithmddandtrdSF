@@ -92,7 +92,9 @@ check_schema_table <- function(schema, table_name, config, conn = NULL) {
 # value of config$files[[table_name]], returning a typed data frame. SQL
 # sources require a non-NULL conn. CSV sources are read with data.table::fread
 # for speed, then date and factor columns are coerced using the schema.
-read_table <- function(config, col_schema, table_name, conn = NULL) {
+# `where` is an optional SQL WHERE clause (without the "WHERE" keyword) applied
+# only to SQL sources to reduce the result set before it reaches R memory.
+read_table <- function(config, col_schema, table_name, conn = NULL, where = NULL) {
   source_value <- config$files[[table_name]]
   if (is_csv_source(source_value)) {
     specs <- col_schema[col_schema$table == table_name, ]
@@ -114,7 +116,9 @@ read_table <- function(config, col_schema, table_name, conn = NULL) {
     if (is.null(conn))
       stop(sprintf("Table '%s' is configured as a SQL source ('%s') but no database connection was provided. Add a 'database' block to config.json or change this entry to a .csv path.",
                    table_name, source_value))
-    DBI::dbGetQuery(conn, sprintf("SELECT * FROM %s", source_value)) %>%
+    sql <- sprintf("SELECT * FROM %s", source_value)
+    if (!is.null(where)) sql <- paste(sql, "WHERE", where)
+    DBI::dbGetQuery(conn, sql) %>%
       apply_col_types(col_schema, table_name)
   }
 }
