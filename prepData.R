@@ -93,6 +93,7 @@ rm(antidepressant_table)
 gc()
 
 antipsychotics_table <- read_table(config, col_schema, "med_table_ap",    conn = conProjects)
+gc()
 check_recode(antipsychotics_table %>% filter(ExposureLabel  %in% c("Antipsychotic", "Misc. Psychotherapeutic")),
              med_recode, "antipsychotics")
 antipsychotics_table <- antipsychotics_table %>%
@@ -109,6 +110,7 @@ rm(antipsychotics_table)
 gc()
 
 # hydrochlorothiazide_table           <- read_table(config, col_schema, "med_table_hctz",  conn = conProjects)
+# gc()
 # check_recode(hydrochlorothiazide_table %>% filter(ExposureLabel %in% c("Hydrochlorothiazide")),
 #              med_recode, "hydrochlorothiazide")
 # hydrochlorothiazide_table <- hydrochlorothiazide_table %>%
@@ -125,6 +127,7 @@ gc()
 # gc()
 
 treatments_table     <- read_table(config, col_schema, "med_table_treat", conn = conProjects)
+gc()
 check_recode(treatments_table %>% filter(ExposureLabel %in% all_drugs),
              med_recode, "treatments")
 treatments_subclass_map <- med_recode %>%
@@ -165,6 +168,7 @@ gc()
 
 diag_table <- read_table(config, col_schema, "diag_table", conn = conProjects) %>%
   arrange(PatientDurableKey)
+gc()
 save(diag_table, file = "OutputData/diag_table.rds")
 
 # Patients with MDD, no Bipolar Disorder, no Schizophrenia
@@ -211,6 +215,7 @@ mdd_data <- read_table(config, col_schema, "mdd_data", conn = conProjects) %>%
     -MultiRacial,
     -Ethnicity
   ) 
+gc()
   
 for(this_drug in all_drugs){
   this_index_table_name <- paste0("treatment_", this_drug, "_index")
@@ -241,6 +246,8 @@ dte_cohort_data <- read_table(config, col_schema, "dte_cohort_data", conn = conP
   left_join(mdd_data,
             by = "PatientDurableKey") %>%
   filter(meets_diagnosis_eligibility_criteria)
+
+gc()
 
 for(i in 1:length(all_drugs)){
   this_drug <-  all_drugs[i]
