@@ -62,10 +62,11 @@ if(!dir.exists("OutputData")){
 }
 
 # -- Validate column schema ----------------------------------------------------
-check_schema_table(col_schema, "med_table_ad",      config, conn = conProjects)
-check_schema_table(col_schema, "med_table_ap",      config, conn = conProjects)
+# check_schema_table(col_schema, "med_table_ad",      config, conn = conProjects)
+# check_schema_table(col_schema, "med_table_ap",      config, conn = conProjects)
 # check_schema_table(col_schema, "med_table_hctz",   config, conn = conProjects)
-check_schema_table(col_schema, "med_table_treat",   config, conn = conProjects)
+# check_schema_table(col_schema, "med_table_treat",   config, conn = conProjects)
+check_schema_table(col_schema, "med_index_table",   config, conn = conProjects)
 check_schema_table(col_schema, "diag_table",        config, conn = conProjects)
 check_schema_table(col_schema, "mdd_data",          config, conn = conProjects)
 check_schema_table(col_schema, "dte_cohort_data",   config, conn = conProjects)
@@ -75,40 +76,40 @@ check_schema_table(col_schema, "encounter_table",   config, conn = conProjects)
 
 # -- Read input data ---------------------------------------------------------------
 
-antidepressant_table <- read_table(config, col_schema, "med_table_ad",    conn = conProjects)
-gc()
-check_recode(antidepressant_table %>% filter(ExposureLabel %in% c("Antidepressant", "Misc. Psychotherapeutic")),
-             med_recode, "antidepressant")
-antidepressant_table <- antidepressant_table %>%
-  filter(ExposureLabel %in% c("Antidepressant", "Misc. Psychotherapeutic")) %>%
-  apply_recode(med_recode, "antidepressant") %>%
-  left_join(atc_drugs, by = join_by("SimpleGenericName" == "Name")) %>%
-  filter(substr(ATC_code, 1, 4) == "N06A")
-save(antidepressant_table, file = "OutputData/antidepressant_table.rds")
-
-antidepressant_index <- antidepressant_table %>% 
-  group_by(PatientDurableKey) %>% 
-  summarize(Antidepressant_Index = min(MedicationStartDate))
-rm(antidepressant_table)
-gc()
-
-antipsychotics_table <- read_table(config, col_schema, "med_table_ap",    conn = conProjects)
-gc()
-check_recode(antipsychotics_table %>% filter(ExposureLabel  %in% c("Antipsychotic", "Misc. Psychotherapeutic")),
-             med_recode, "antipsychotics")
-antipsychotics_table <- antipsychotics_table %>%
-  filter(ExposureLabel %in% c("Antipsychotic", "Misc. Psychotherapeutic")) %>%
-  apply_recode(med_recode, "antipsychotics") %>%
-  left_join(atc_drugs, by = join_by("SimpleGenericName" == "Name")) %>%
-  filter(substr(ATC_code, 1, 5) %in% c("N05AE", "N05AH", "N05AL", "N05AN", "N05AX") & ATC_code != "N05AH02")
-save(antipsychotics_table, file = "OutputData/antipsychotics_table.rds")
-
-antipsychotics_index <- antipsychotics_table %>% 
-  group_by(PatientDurableKey) %>% 
-  summarize(Antipsychotic_Index = min(MedicationStartDate))
-rm(antipsychotics_table)
-gc()
-
+# antidepressant_table <- read_table(config, col_schema, "med_table_ad",    conn = conProjects)
+# gc()
+# check_recode(antidepressant_table %>% filter(ExposureLabel %in% c("Antidepressant", "Misc. Psychotherapeutic")),
+#              med_recode, "antidepressant")
+# antidepressant_table <- antidepressant_table %>%
+#   filter(ExposureLabel %in% c("Antidepressant", "Misc. Psychotherapeutic")) %>%
+#   apply_recode(med_recode, "antidepressant") %>%
+#   left_join(atc_drugs, by = join_by("SimpleGenericName" == "Name")) %>%
+#   filter(substr(ATC_code, 1, 4) == "N06A")
+# save(antidepressant_table, file = "OutputData/antidepressant_table.rds")
+# 
+# antidepressant_index <- antidepressant_table %>% 
+#   group_by(PatientDurableKey) %>% 
+#   summarize(Antidepressant_Index = min(MedicationStartDate))
+# rm(antidepressant_table)
+# gc()
+# 
+# antipsychotics_table <- read_table(config, col_schema, "med_table_ap",    conn = conProjects)
+# gc()
+# check_recode(antipsychotics_table %>% filter(ExposureLabel  %in% c("Antipsychotic", "Misc. Psychotherapeutic")),
+#              med_recode, "antipsychotics")
+# antipsychotics_table <- antipsychotics_table %>%
+#   filter(ExposureLabel %in% c("Antipsychotic", "Misc. Psychotherapeutic")) %>%
+#   apply_recode(med_recode, "antipsychotics") %>%
+#   left_join(atc_drugs, by = join_by("SimpleGenericName" == "Name")) %>%
+#   filter(substr(ATC_code, 1, 5) %in% c("N05AE", "N05AH", "N05AL", "N05AN", "N05AX") & ATC_code != "N05AH02")
+# save(antipsychotics_table, file = "OutputData/antipsychotics_table.rds")
+# 
+# antipsychotics_index <- antipsychotics_table %>% 
+#   group_by(PatientDurableKey) %>% 
+#   summarize(Antipsychotic_Index = min(MedicationStartDate))
+# rm(antipsychotics_table)
+# gc()
+# 
 # hydrochlorothiazide_table           <- read_table(config, col_schema, "med_table_hctz",  conn = conProjects)
 # gc()
 # check_recode(hydrochlorothiazide_table %>% filter(ExposureLabel %in% c("Hydrochlorothiazide")),
@@ -125,46 +126,50 @@ gc()
 #   summarize(Hydrochlorothiazide_Index = min(MedicationStartDate))
 # rm(hydrochlorothiazide_table)
 # gc()
+# 
+# treatments_table     <- read_table(config, col_schema, "med_table_treat", conn = conProjects)
+# gc()
+# check_recode(treatments_table %>% filter(ExposureLabel %in% all_drugs),
+#              med_recode, "treatments")
+# treatments_subclass_map <- med_recode %>%
+#   filter(table == "treatments", !is.na(subclass) & subclass != "") %>%
+#   distinct(canonical_name, subclass)
+# 
+# treatments_table <- treatments_table %>%
+#   filter(ExposureLabel %in% all_drugs) %>%
+#   apply_recode(med_recode, "treatments") %>%
+#   separate_rows(SimpleGenericName, sep = "/") %>%
+#   left_join(treatments_subclass_map, by = c("SimpleGenericName" = "canonical_name")) %>%
+#   mutate(PharmaceuticalSubclass = dplyr::coalesce(subclass, PharmaceuticalSubclass)) %>%
+#   dplyr::select(-subclass)
+# 
+# rm(treatments_subclass_map)
+# gc()
+# 
+# for(this_drug in all_drugs){
+#   this_table_name <- paste0("treatment_", this_drug, "_table")
+#   table_filename <- paste0("OutputData/treatment_", this_drug,"_table.rds")
+#   assign(this_table_name, 
+#          treatments_table %>% 
+#            filter(PharmaceuticalSubclass == this_drug))
+#   save(list = this_table_name, file = table_filename)
+#   rm(this_table_name)
+#   
+#   this_index_table_name <- paste0("treatment_", this_drug, "_index")
+#   this_index <- paste0(this_drug, "_Index")
+#   assign(this_index_table_name, 
+#          treatments_table %>% 
+#            filter(PharmaceuticalSubclass == this_drug) %>% 
+#            group_by(PatientDurableKey) %>% 
+#            summarize(!!sym(this_index) := min(MedicationStartDate)))
+# }
+# 
+# rm(treatments_table)
+# gc()
 
-treatments_table     <- read_table(config, col_schema, "med_table_treat", conn = conProjects)
+med_index_table <- read_table(config, col_schema, "med_index_table", conn = conProjects)
 gc()
-check_recode(treatments_table %>% filter(ExposureLabel %in% all_drugs),
-             med_recode, "treatments")
-treatments_subclass_map <- med_recode %>%
-  filter(table == "treatments", !is.na(subclass) & subclass != "") %>%
-  distinct(canonical_name, subclass)
-
-treatments_table <- treatments_table %>%
-  filter(ExposureLabel %in% all_drugs) %>%
-  apply_recode(med_recode, "treatments") %>%
-  separate_rows(SimpleGenericName, sep = "/") %>%
-  left_join(treatments_subclass_map, by = c("SimpleGenericName" = "canonical_name")) %>%
-  mutate(PharmaceuticalSubclass = dplyr::coalesce(subclass, PharmaceuticalSubclass)) %>%
-  dplyr::select(-subclass)
-
-rm(treatments_subclass_map)
-gc()
-
-for(this_drug in all_drugs){
-  this_table_name <- paste0("treatment_", this_drug, "_table")
-  table_filename <- paste0("OutputData/treatment_", this_drug,"_table.rds")
-  assign(this_table_name, 
-         treatments_table %>% 
-           filter(PharmaceuticalSubclass == this_drug))
-  save(list = this_table_name, file = table_filename)
-  rm(this_table_name)
-  
-  this_index_table_name <- paste0("treatment_", this_drug, "_index")
-  this_index <- paste0(this_drug, "_Index")
-  assign(this_index_table_name, 
-         treatments_table %>% 
-           filter(PharmaceuticalSubclass == this_drug) %>% 
-           group_by(PatientDurableKey) %>% 
-           summarize(!!sym(this_index) := min(MedicationStartDate)))
-}
-
-rm(treatments_table)
-gc()
+save(med_index_table, file = "OutputData/med_index_table.rds")
 
 diag_table <- read_table(config, col_schema, "diag_table", conn = conProjects) %>%
   arrange(PatientDurableKey)
@@ -200,12 +205,8 @@ mdd_data <- read_table(config, col_schema, "mdd_data", conn = conProjects) %>%
   mutate(across(ends_with("_FirstDiagnosis"),
                 ~ if_else(is.na(.), FALSE, TRUE),
                 .names = "{sub('_FirstDiagnosis$', '', .col)}")) %>%
-  left_join(antidepressant_index,
+  left_join(med_index_table,
             by = "PatientDurableKey") %>%
-  left_join(antipsychotics_index,
-            by = "PatientDurableKey") %>%
-  # left_join(hydrochlorothiazide_index,
-  #           by = "PatientDurableKey") %>%
   dplyr::select(
     -FirstRace,
     -SecondRace,
@@ -214,32 +215,15 @@ mdd_data <- read_table(config, col_schema, "mdd_data", conn = conProjects) %>%
     -FifthRace,
     -MultiRacial,
     -Ethnicity
-  ) 
-gc()
-  
-for(this_drug in all_drugs){
-  this_index_table_name <- paste0("treatment_", this_drug, "_index")
-  mdd_data <- mdd_data %>%
-    left_join(get(this_index_table_name),
-              by = "PatientDurableKey") 
-  rm(list = this_table_name)
-  gc()
-}
-rm(this_table)
-gc()
-
-mdd_data <- mdd_data %>%
+  ) %>%
   mutate(across(paste0(all_drugs, "_Index"),
                 ~ if_else(is.na(.), FALSE, TRUE),
-                .names = "{sub('_Index$', '_Use', .col)}")) %>%
-  mutate(Antidepressant_Use = PatientDurableKey %in% antidepressant_index$PatientDurableKey)
+                .names = "{sub('_Index$', '_Use', .col)}"))
 
 save(mdd_data, file = "OutputData/mdd_data.rds")
 
 rm(diag_table)
-rm(antidepressant_index)
-rm(antipsychotics_index)
-# rm(hydrochlorothiazide_index)
+rm(med_index_table)
 gc()
 
 dte_cohort_data <- read_table(config, col_schema, "dte_cohort_data", conn = conProjects) %>%

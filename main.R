@@ -53,51 +53,51 @@ if(!dir.exists("html_tables")){
   dir.create("html_tables")
 }
 
-# ── Prep Data ─────────────────────────────────────────────────────----
-source("prepData.R")
+# -- Prep Data ---------------------------------------------------------
+# source("prepData.R")
 
-# ── Identify TRD patients ─────────────────────────────────────────────────────----
+# # -- Identify TRD patients ---------------------------------------------------------
+# 
+# source("get_TRD.R")
+# 
+# message("Identifying TRD patients")
+# get_TRD(
+#   mdd_data_file             = "OutputData/mdd_data.rds",
+#   antidepressant_table_file = "OutputData/antidepressant_table.rds",
+#   instance_filename         = "OutputData/antidepressant_consecutive_instance.csv",
+#   period_filename           = "OutputData/antidepressant_consecutive_period.csv",
+#   period_summ_filename      = "OutputData/antidepressant_consecutive_period_tab_summ.csv",
+#   period_max_drugs_filename = "OutputData/antidepressant_consecutive_period_maxDrugs.csv",
+#   trd_ids_filename          = "OutputData/IDs-TRD.csv",
+#   overwrite                 = TRUE
+# )
+# 
+# # -- Build antidepressant/antipsychotic treatment timelines ------------------------
+# 
+# source("get_Antidepressant_Treatment_Timeline.R")
+# 
+# message("Building antidepressant/antipsychotic treatment timelines")
+# get_Antidepressant_Treatment_Timeline(
+#   drug_class           = drug_class,
+#   antidepressant_table_file = "OutputData/antidepressant_table.rds",
+#   antipsychotics_table_file = "OutputData/antipsychotics_table.rds",
+#   instance_filename    = "OutputData/antidepressant_antipsychotic_consecutive_instance.rds",
+#   period_filename      = "OutputData/antidepressant_antipsychotic_consecutive_period.rds",
+#   overwrite            = TRUE
+# )
+# 
+# # -- Build hydrochlorothiazide treatment timelines ---------------------------------
+# 
+# source("get_Hydrochlorothiazide_Treatment_Timeline.R")
+# 
+# message("Building hydrochlorothiazide treatment timelines")
+# get_Hydrochlorothiazide_Treatment_Timeline(
+#   hydrochlorothiazide_table_file = "OutputData/hydrochlorothiazide_table.rds",
+#   instance_filename         = "OutputData/hydrochlorothiazide_consecutive_instance.rds",
+#   overwrite                 = TRUE
+# )
 
-source("get_TRD.R")
-
-message("Identifying TRD patients")
-get_TRD(
-  mdd_data_file             = "OutputData/mdd_data.rds",
-  antidepressant_table_file = "OutputData/antidepressant_table.rds",
-  instance_filename         = "OutputData/antidepressant_consecutive_instance.csv",
-  period_filename           = "OutputData/antidepressant_consecutive_period.csv",
-  period_summ_filename      = "OutputData/antidepressant_consecutive_period_tab_summ.csv",
-  period_max_drugs_filename = "OutputData/antidepressant_consecutive_period_maxDrugs.csv",
-  trd_ids_filename          = "OutputData/IDs-TRD.csv",
-  overwrite                 = TRUE
-)
-
-# ── Build antidepressant/antipsychotic treatment timelines ────────────────────----
-
-source("get_Antidepressant_Treatment_Timeline.R")
-
-message("Building antidepressant/antipsychotic treatment timelines")
-get_Antidepressant_Treatment_Timeline(
-  drug_class           = drug_class,
-  antidepressant_table_file = "OutputData/antidepressant_table.rds",
-  antipsychotics_table_file = "OutputData/antipsychotics_table.rds",
-  instance_filename    = "OutputData/antidepressant_antipsychotic_consecutive_instance.rds",
-  period_filename      = "OutputData/antidepressant_antipsychotic_consecutive_period.rds",
-  overwrite            = TRUE
-)
-
-# ── Build hydrochlorothiazide treatment timelines ─────────────────────────────----
-
-source("get_Hydrochlorothiazide_Treatment_Timeline.R")
-
-message("Building hydrochlorothiazide treatment timelines")
-get_Hydrochlorothiazide_Treatment_Timeline(
-  hydrochlorothiazide_table_file = "OutputData/hydrochlorothiazide_table.rds",
-  instance_filename         = "OutputData/hydrochlorothiazide_consecutive_instance.rds",
-  overwrite                 = TRUE
-)
-
-# ── Build nontreatment cohort ─────────────────────────────────────────────────----
+# -- Build nontreatment cohort -----------------------------------------------------
 
 source("get_Nontreatment_Timelines.R")
 
@@ -112,7 +112,7 @@ nontreat_result <- get_Nontreatment_Timelines(
   result_file            = paste0("OutputData/nontreatment_timelines_result-", target_drug, ".rds")
 )
 
-# ── Render nontreatment timelines report ──────────────────────────────────────----
+# -- Render nontreatment timelines report ------------------------------------------
 
 render(
   input       = "report_Nontreatment_Timelines.Rmd",
@@ -125,7 +125,7 @@ render(
   envir = new.env()
 )
 
-# ── Render treatment overlap report ───────────────────────────────────────----
+# -- Render treatment overlap report -------------------------------------------
 
 render(
   input       = "report_Treatment_Overlap.Rmd",
@@ -138,7 +138,7 @@ render(
   envir = new.env()
 )
 
-# ── Build diagnosis timeline variables ────────────────────────────────────────----
+# -- Build diagnosis timeline variables --------------------------------------------
 
 source("get_Diagnosis_Timeline.R")
 
@@ -150,7 +150,7 @@ get_Diagnosis_Timeline(
   output_filename  = "OutputData/data_DTE_DiagnosisTimelineVars.rds"
 )
 
-# ── Render eligibility criteria report ───────────────────────────────────────----
+# -- Render eligibility criteria report -------------------------------------------
 
 render(
   input       = "report_Eligibility_Criteria.Rmd",
@@ -170,7 +170,7 @@ render(
   envir = new.env()
 )
 
-# ── Render propensity covariates report ──────────────────────────────────────----
+# -- Render propensity covariates report ------------------------------------------
 
 render(
   input       = "report_Propensity_Covariates.Rmd",
@@ -185,7 +185,7 @@ render(
   envir = new.env()
 )
 
-# ── Run propensity scoring and render reports ─────────────────────────────────----
+# -- Run propensity scoring and render reports -------------------------------------
 
 source("analysis_Propensity_Scoring.R")
 
@@ -225,7 +225,7 @@ for (group in comparator_groups) {
   )
 }
 
-# ── Render PS covariate summary report ───────────────────────────────────────
+# -- Render PS covariate summary report ---------------------------------------
 
 render(
   input       = "report_PS_Covariate_Summary.Rmd",
@@ -239,7 +239,7 @@ render(
   envir = new.env()
 )
 
-# ── Compute outcomes ──────────────────────────────────────────────────────────----
+# -- Compute outcomes --------------------------------------------------------------
 
 matched_data_files <- setNames(
   paste0("OutputData/PS_Matched_Dataset-", comparator_groups, ".rds"),
@@ -265,9 +265,9 @@ source("get_Outcomes_HCMedChanges.R")
 
 outcome_tasks <- list(
   list(fn = get_Outcomes_PsychProc,   src_file = psych_proc_file,   out_file = outcomes_files$psych),
-  list(fn = get_Outcomes_Visits,      src_file = visits_file,       out_file = outcomes_files$visits),
-  list(fn = get_Outcomes_MedChanges,  src_file = med_changes_file,  out_file = outcomes_files$med),
-  list(fn = get_Outcomes_HCMedChanges,src_file = hc_med_file,       out_file = outcomes_files$hc_med)
+  list(fn = get_Outcomes_Visits,      src_file = visits_file,       out_file = outcomes_files$visits)#,
+  # list(fn = get_Outcomes_MedChanges,  src_file = med_changes_file,  out_file = outcomes_files$med),
+  # list(fn = get_Outcomes_HCMedChanges,src_file = hc_med_file,       out_file = outcomes_files$hc_med)
 )
 
 n_workers <- min(length(outcome_tasks), max(1L, detectCores(logical = TRUE) - 1L))
@@ -293,27 +293,27 @@ foreach(
 stopCluster(cl)
 message("All outcome computations complete.")
 
-# ── Join outcome tables and pivot to long format ──────────────────────────────----
+# -- Join outcome tables and pivot to long format ----------------------------------
 
 load(outcomes_files$psych)
 outcomes_psych <- outcomes
 
-# load(outcomes_files$visits)
-# outcomes_visits <- outcomes
+load(outcomes_files$visits)
+outcomes_visits <- outcomes
 
-load(outcomes_files$med)
-outcomes_med_changes <- outcomes
-
-load(outcomes_files$hc_med)
-outcomes_hc_med_changes <- outcomes
+# load(outcomes_files$med)
+# outcomes_med_changes <- outcomes
+# 
+# load(outcomes_files$hc_med)
+# outcomes_hc_med_changes <- outcomes
 
 all_outcomes_wide <- outcomes_psych %>%
-  # left_join(outcomes_visits,
+  left_join(outcomes_visits,
+            by = c("PatientDurableKey", "study_cohort", "period")) # %>%
+  # left_join(outcomes_med_changes,
   #           by = c("PatientDurableKey", "study_cohort", "period")) %>%
-  left_join(outcomes_med_changes,
-            by = c("PatientDurableKey", "study_cohort", "period")) %>%
-  left_join(outcomes_hc_med_changes,
-            by = c("PatientDurableKey", "study_cohort", "period"))
+  # left_join(outcomes_hc_med_changes,
+  #           by = c("PatientDurableKey", "study_cohort", "period"))
 
 all_outcomes <- all_outcomes_wide %>%
   pivot_longer(4:ncol(.), names_to = "var_name", values_to = "value") %>%
@@ -325,7 +325,7 @@ all_outcomes <- all_outcomes_wide %>%
 
 save(all_outcomes, file = paste0("OutputData/all_outcomes-", target_drug, ".rds"))
 
-# ── Negative Binomial Regression analyses ─────────────────────────────────────----
+# -- Negative Binomial Regression analyses -----------------------------------------
 
 source("analysis_Negative_Binomial_Regression.R")
 load(paste0("OutputData/all_outcomes-", target_drug, ".rds"))
@@ -341,9 +341,9 @@ psych_proc_file  <- "OutputData/psych_proc.rds"
 
 nb_analyses <- list(
   list(dep_var    = "n_psych_days",
-       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")),
-  list(dep_var    = "n_med_changes",
-       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years"))
+       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years"))#,
+  # list(dep_var    = "n_med_changes",
+  #      covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years"))
 )
 
 nb_period_name <- "15 days-12 months after index"
@@ -398,7 +398,7 @@ render(
   envir = new.env()
 )
 
-# ── PWP Gap Time Cox Model analyses ───────────────────────────────────────────----
+# -- PWP Gap Time Cox Model analyses -----------------------------------------------
 
 source("analysis_PWP_Gap_Time_Cox_Model.R")
 
