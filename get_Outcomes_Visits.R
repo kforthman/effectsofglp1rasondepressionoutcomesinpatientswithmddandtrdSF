@@ -3,20 +3,20 @@
 # inpatient days) for all comparator groups and time periods.
 #
 # Arguments:
-#   visits_file        — Path to the encounter_table.rds file. Must restore
+#   visits_file        - Path to the encounter_table.rds file. Must restore
 #                        variable `encounter_table` with columns: PatientDurableKey,
 #                        EncounterKey, StartVisit, EndVisit,
 #                        standard_concept_name.
-#   matched_data_files — Named character vector mapping each comparator group
+#   matched_data_files - Named character vector mapping each comparator group
 #                        name to its PS_Matched_Dataset .rds file path.
-#   period_info        — Data frame with columns: period (label), bgn_win,
+#   period_info        - Data frame with columns: period (label), bgn_win,
 #                        end_win (days from index).
-#   target_drug        — Name of the target treatment (e.g. "Semaglutide").
-#   comparator_groups  — Character vector of comparator group names.
-#   output_file        — Path to save the result .rds file.
+#   target_drug        - Name of the target treatment (e.g. "Semaglutide").
+#   comparator_groups  - Character vector of comparator group names.
+#   output_file        - Path to save the result .rds file.
 #
 # Returns (invisibly):
-#   Wide data frame: one row per (PatientDurableKey × study_cohort × period) with
+#   Wide data frame: one row per (PatientDurableKey x study_cohort x period) with
 #   columns n_visits and n_visit_days. Also saved to output_file as `outcomes`.
 
 get_Outcomes_Visits <- function(visits_file,
@@ -96,10 +96,10 @@ get_Outcomes_Visits <- function(visits_file,
       total_visits <- visits_w %>%
         group_by(PatientDurableKey, study_cohort) %>%
         summarize(n_visits             = n(), 
-                  n_emergency_visits   = sum(PatientClass == "Emergency"),
-                  n_inpatient_visits   = sum(PatientClass == "Inpatient"),
-                  n_observation_visits = sum(PatientClass == "Observation"),
-                  n_outpatient_visits  = sum(PatientClass == "Outpatient"),
+                  n_emergency_visits   = sum(EmergencyVisit),
+                  n_inpatient_visits   = sum(InpatientVisit),
+                  # n_observation_visits = sum(PatientClass == "Observation"),
+                  # n_outpatient_visits  = sum(PatientClass == "Outpatient"),
                   .groups = "drop")
       
       visits_by_day <- visits_w %>%
@@ -116,9 +116,9 @@ get_Outcomes_Visits <- function(visits_file,
         group_by(PatientDurableKey, study_cohort) %>%
         summarize(
           n_visit_days             = n(),
-          n_emergency_visit_days   = sum(PatientClass == "Emergency"),
-          n_inpatient_visit_days   = sum(PatientClass == "Inpatient"),
-          n_observation_visit_days = sum(PatientClass == "Observation"),
+          n_emergency_visit_days   = sum(EmergencyVisit),
+          n_inpatient_visit_days   = sum(InpatientVisit),
+          # n_observation_visit_days = sum(PatientClass == "Observation"),
           .groups = "drop"
         )
 
