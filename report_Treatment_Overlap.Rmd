@@ -19,7 +19,7 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 library(tidyverse)
 library(corrplot)
 library(plotrix)
-library(libRtheme)
+source("../libr.R")
 
 load(params$nontreat_data_filename)
 all_groups        <- params$all_groups

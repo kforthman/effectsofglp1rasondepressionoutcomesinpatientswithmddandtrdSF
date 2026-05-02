@@ -172,7 +172,15 @@ gc()
 save(med_index_table, file = "OutputData/med_index_table.rds")
 
 diag_table <- read_table(config, col_schema, "diag_table", conn = conProjects) %>%
-  arrange(PatientDurableKey)
+  arrange(PatientDurableKey) %>%
+  dplyr::select(c("PatientDurableKey",
+                  setdiff(col_schema %>%
+                            filter(table == "diag_table") %>%
+                            pull(column),
+                          col_schema %>%
+                            filter(table == "mdd_data") %>%
+                            pull(column)
+                          )))
 gc()
 save(diag_table, file = "OutputData/diag_table.rds")
 
@@ -216,7 +224,7 @@ mdd_data <- read_table(config, col_schema, "mdd_data", conn = conProjects) %>%
     -MultiRacial,
     -Ethnicity
   ) %>%
-  mutate(across(paste0(all_drugs, "_Index"),
+  mutate(across(ends_with("_Index"),
                 ~ if_else(is.na(.), FALSE, TRUE),
                 .names = "{sub('_Index$', '_Use', .col)}"))
 

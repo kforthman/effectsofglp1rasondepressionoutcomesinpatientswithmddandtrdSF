@@ -19,6 +19,7 @@ library(performance)
 # library(DHARMa)
 library(sjPlot)
 library(jsonlite)
+library(lubridate)
 
 config <- fromJSON("config.json")
 
@@ -111,6 +112,7 @@ nontreat_result <- get_Nontreatment_Timelines(
   nontreat_data_filename = "OutputData/dte_cohort_wNontreat_data.rds",
   result_file            = paste0("OutputData/nontreatment_timelines_result-", target_drug, ".rds")
 )
+gc()
 
 # -- Render nontreatment timelines report ------------------------------------------
 
@@ -124,6 +126,7 @@ render(
   ),
   envir = new.env()
 )
+gc()
 
 # -- Render treatment overlap report -------------------------------------------
 
@@ -137,6 +140,7 @@ render(
   ),
   envir = new.env()
 )
+gc()
 
 # -- Build diagnosis timeline variables --------------------------------------------
 
@@ -149,6 +153,7 @@ get_Diagnosis_Timeline(
   nontreat_data_filename = "OutputData/dte_cohort_wNontreat_data.rds",
   output_filename  = "OutputData/data_DTE_DiagnosisTimelineVars.rds"
 )
+gc()
 
 # -- Render eligibility criteria report -------------------------------------------
 
@@ -164,11 +169,11 @@ render(
     target_drug                     = target_drug,
     diagnosis_timeline_filename     = "OutputData/data_DTE_DiagnosisTimelineVars.rds",
     nontreat_data_filename          = "OutputData/dte_cohort_wNontreat_data.rds",
-    diag_table_filename             = "OutputData/diag_table.rds",
     nontreatment_group              = nontreatment_group
   ),
   envir = new.env()
 )
+gc()
 
 # -- Render propensity covariates report ------------------------------------------
 
@@ -184,6 +189,7 @@ render(
   ),
   envir = new.env()
 )
+gc()
 
 # -- Run propensity scoring and render reports -------------------------------------
 
@@ -199,18 +205,22 @@ for (group in comparator_groups) {
   write.csv(ps_result$matchingVars.final,
             paste0("OutputData/PS_Covariates-", group, ".csv"),
             row.names = FALSE)
+  gc()
   
   weighted.data <- ps_result$weighted.data
   save(weighted.data, file = paste0("OutputData/PS_Weighted_Dataset-", group, ".rds"))
   rm(weighted.data)
+  gc()
   
   matched.data <- ps_result$matched.data
   save(matched.data, file = paste0("OutputData/PS_Matched_Dataset-", group, ".rds"))
   rm(matched.data)
+  gc()
   
   result_file <- paste0("OutputData/propensity_scoring_result-", target_drug, "Vs", group, ".rds")
   save(ps_result, file = result_file)
   rm(ps_result)
+  gc()
   
   message("Rendering report for: ", group)
   render(
@@ -223,7 +233,9 @@ for (group in comparator_groups) {
     ),
     envir = new.env()
   )
+  gc()
 }
+gc()
 
 # -- Render PS covariate summary report ---------------------------------------
 
@@ -238,6 +250,7 @@ render(
   ),
   envir = new.env()
 )
+gc()
 
 # -- Compute outcomes --------------------------------------------------------------
 
@@ -292,6 +305,7 @@ foreach(
 
 stopCluster(cl)
 message("All outcome computations complete.")
+gc()
 
 # -- Join outcome tables and pivot to long format ----------------------------------
 
@@ -324,6 +338,7 @@ all_outcomes <- all_outcomes_wide %>%
   )
 
 save(all_outcomes, file = paste0("OutputData/all_outcomes-", target_drug, ".rds"))
+gc()
 
 # -- Negative Binomial Regression analyses -----------------------------------------
 
@@ -397,6 +412,7 @@ render(
   ),
   envir = new.env()
 )
+gc()
 
 # -- PWP Gap Time Cox Model analyses -----------------------------------------------
 
@@ -482,4 +498,4 @@ render(
   ),
   envir = new.env()
 )
-
+gc()

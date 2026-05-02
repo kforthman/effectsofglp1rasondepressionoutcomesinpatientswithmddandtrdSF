@@ -231,7 +231,7 @@ analysis_Propensity_Scoring <- function(comparator_group,
             pivot_wider(names_from  = !!this_col,
                         values_from = Freq,
                         names_prefix = paste0(this_name, "_")) %>%
-            mutate(across(2:3, .fns = ~ ifelse(.x < 20, "<20", .x)))
+            mutate(across(where(is.numeric), .fns = ~ ifelse(.x < 20, "<20", .x)))
 
         positivity_tables[[this_var]] <- tbl_wide
         if (sum(this_table == 0) > 0) pos_fail_vars <- c(pos_fail_vars, this_var)

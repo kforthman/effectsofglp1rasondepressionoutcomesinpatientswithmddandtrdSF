@@ -16,7 +16,6 @@ params:
   target_drug:                     "Semaglutide"
   diagnosis_timeline_filename:         NULL
   nontreat_data_filename:                NULL
-  diag_table_filename:                      NULL
   nontreatment_group:              "Nontreatment"
 ---
 
@@ -37,7 +36,6 @@ comparator_drugs                <- params$comparator_drugs
 target_drug                     <- params$target_drug
 nontreatment_group              <- params$nontreatment_group
 
-load(params$diag_table_filename)
 load(params$diagnosis_timeline_filename)
 loaded_var <- load(params$nontreat_data_filename) # restores named variable
 nontreat_data <- get(loaded_var[1])
