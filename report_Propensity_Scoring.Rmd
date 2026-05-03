@@ -43,7 +43,23 @@ r$this.data %>%
 r$matchingVars %>% knitr::kable()
 ```
 
-## 2.1 Near Zero Variance
+## 2.1 Zero Variance
+
+**Variables flagged (zero variance):**
+
+```{r zv-flagged}
+if (length(r$zv_vars) == 0) {
+    cat("None\n")
+} else {
+    print(r$zv_vars)
+}
+```
+
+```{r matchingVars2}
+r$matchingVars.1 %>% knitr::kable(caption = "matchingVars after zero-variance check")
+```
+
+## 2.2 Near Zero Variance
 
 ```{r nzv-table}
 r$nzv %>%
@@ -62,23 +78,7 @@ if (length(r$nzv_vars) == 0) {
 ```
 
 ```{r matchingVars1}
-r$matchingVars.1 %>% knitr::kable(caption = "matchingVars after NZV check")
-```
-
-## 2.2 Zero Variance
-
-**Variables flagged (zero variance):**
-
-```{r zv-flagged}
-if (length(r$zv_vars) == 0) {
-    cat("None\n")
-} else {
-    print(r$zv_vars)
-}
-```
-
-```{r matchingVars2}
-r$matchingVars.2 %>% knitr::kable(caption = "matchingVars after zero-variance check")
+r$matchingVars.2 %>% knitr::kable(caption = "matchingVars after NZV check")
 ```
 
 ## 2.3 Linear Combinations

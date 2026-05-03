@@ -80,6 +80,11 @@ get_Outcomes_Visits <- function(visits_file,
         )
       
       time_to_visit_class_agg <- visits_w %>%
+        mutate(PatientClass = case_when(
+          EmergencyVisit ~ "Emergency",
+          InpatientVisit ~ "Inpatient",
+          TRUE ~ NA
+        )) %>%
         distinct(PatientDurableKey, study_cohort, PatientClass, time_from_index_days) %>%
         arrange(PatientDurableKey, study_cohort, PatientClass, time_from_index_days) %>%
         group_by(PatientDurableKey, study_cohort, PatientClass) %>%
@@ -133,12 +138,12 @@ get_Outcomes_Visits <- function(visits_file,
           n_visits                 = replace_na(n_visits,     0L),
           n_emergency_visits       = replace_na(n_emergency_visits, 0L),
           n_inpatient_visits       = replace_na(n_inpatient_visits, 0L),
-          n_observation_visits     = replace_na(n_observation_visits, 0L),
-          n_outpatient_visits      = replace_na(n_outpatient_visits, 0L),
+          #n_observation_visits     = replace_na(n_observation_visits, 0L),
+          #n_outpatient_visits      = replace_na(n_outpatient_visits, 0L),
           n_visit_days             = replace_na(n_visit_days, 0L),
           n_emergency_visit_days   = replace_na(n_emergency_visit_days, 0L),
-          n_inpatient_visit_days   = replace_na(n_inpatient_visit_days, 0L),
-          n_observation_visit_days = replace_na(n_observation_visit_days, 0L)
+          n_inpatient_visit_days   = replace_na(n_inpatient_visit_days, 0L)#,
+          #n_observation_visit_days = replace_na(n_observation_visit_days, 0L)
         )
     }
   }

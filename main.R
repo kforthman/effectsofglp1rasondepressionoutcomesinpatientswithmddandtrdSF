@@ -20,6 +20,7 @@ library(performance)
 library(sjPlot)
 library(jsonlite)
 library(lubridate)
+library(patchwork)
 
 config <- fromJSON("config.json")
 
@@ -294,9 +295,10 @@ foreach(
   .export   = c("matched_data_files", "period_info", "target_drug",
                 "comparator_groups",
                 "get_Outcomes_PsychProc",
-                "get_Outcomes_Visits",
-                "get_Outcomes_MedChanges",
-                "get_Outcomes_HCMedChanges")
+                "get_Outcomes_Visits")#,
+                # "get_Outcomes_MedChanges",
+                # "get_Outcomes_HCMedChanges"
+                # )
 ) %dopar% {
   task$fn(task$src_file, matched_data_files, period_info,
           target_drug, comparator_groups,
@@ -437,12 +439,12 @@ pwp_analyses <- list(
        event_data_file= psych_proc_file,
        event_date_col = "OutcomeDate",
        dedup_by_day   = TRUE,
-       covariates     = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")),
-  list(dep_var        = "med_changes",
-       event_data_file= med_changes_file,
-       event_date_col = "first_record",
-       dedup_by_day   = TRUE,
-       covariates     = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years"))
+       covariates     = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years"))#,
+  # list(dep_var        = "med_changes",
+  #      event_data_file= med_changes_file,
+  #      event_date_col = "first_record",
+  #      dedup_by_day   = TRUE,
+  #      covariates     = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years"))
 )
 
 pwp_result_files <- character(0)

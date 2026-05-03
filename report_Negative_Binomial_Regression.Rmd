@@ -52,7 +52,7 @@ check_poisson(r$m_pois)
 ### Negative Binomial Model
 
 ```{r nb-model}
-check_od(r$m1)
+# check_od(r$m1)
 check_mc(r$m1)
 interpret_nb(r$m1, term = "treatment",
              outcome    = r$dep_var,

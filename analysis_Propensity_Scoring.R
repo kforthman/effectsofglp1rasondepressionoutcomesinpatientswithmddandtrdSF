@@ -147,39 +147,40 @@ analysis_Propensity_Scoring <- function(comparator_group,
 
     # ── 2. Variable selection ────────────────────────────────────────────────
 
-    # 2.1 Near zero variance
-    nzv      <- nearZeroVar(this.data[, matchingVars$var], saveMetrics = TRUE)
+    # 2.1 Zero variance
+    zv_vars <- this.data %>%
+      dplyr::select(all_of(matchingVars$var)) %>%
+      sapply(function(x) length(unique(x))) %>%
+      as.data.frame() %>%
+      rownames_to_column("var") %>%
+      dplyr::rename(n_unique = ".") %>%
+      arrange(n_unique) %>%
+      filter(n_unique < 2) %>%
+      pull(var)
+    
+    matchingVars.1 <- matchingVars %>%
+      mutate(issues = ifelse(var %in% zv_vars,
+                             ifelse(is.na(issues), "zero variance",
+                                    paste0(issues, ", zero variance")),
+                             issues))
+    
+    # 2.2 Near zero variance
+    nzv      <- nearZeroVar(this.data[, matchingVars.1$var], saveMetrics = TRUE)
     nzv_vars <- rownames(nzv)[nzv$nzv]
 
-    matchingVars.1 <- matchingVars %>%
+    matchingVars.2 <- matchingVars.1 %>%
         mutate(issues = ifelse(var %in% nzv_vars,
                                ifelse(is.na(issues), "near zero variance",
                                       paste0(issues, ", near zero variance")),
                                issues))
 
-    # 2.2 Zero variance
-    zv_vars <- this.data %>%
-        dplyr::select(all_of(matchingVars$var)) %>%
-        sapply(function(x) length(unique(x))) %>%
-        as.data.frame() %>%
-        rownames_to_column("var") %>%
-        dplyr::rename(n_unique = ".") %>%
-        arrange(n_unique) %>%
-        filter(n_unique < 2) %>%
-        pull(var)
-
-    matchingVars.2 <- matchingVars.1 %>%
-        mutate(issues = ifelse(var %in% zv_vars,
-                               ifelse(is.na(issues), "zero variance",
-                                      paste0(issues, ", zero variance")),
-                               issues))
-
     # 2.3 Linear combinations
     combos  <- findLinearCombos(this.data %>%
-                    dplyr::select(matchingVars %>%
-                                  filter(var_type %in% c("continuous", "binary")) %>%
+                    dplyr::select(matchingVars.2 %>%
+                                  filter(var_type %in% c("continuous", "binary") &
+                                           is.na(issues)) %>%
                                   pull(var)))
-    lc_vars <- matchingVars$var[combos$remove]
+    lc_vars <- matchingVars.2$var[combos$remove]
 
     matchingVars.3 <- matchingVars.2 %>%
         mutate(issues = ifelse(var %in% lc_vars,
@@ -190,8 +191,9 @@ analysis_Propensity_Scoring <- function(comparator_group,
     # 2.4 High correlation
     cor_mat <- cor(
         this.data %>%
-            dplyr::select(matchingVars %>%
-                          filter(var_type %in% c("continuous", "binary")) %>%
+            dplyr::select(matchingVars.3 %>%
+                          filter(var_type %in% c("continuous", "binary") &
+                                   is.na(issues)) %>%
                           pull(var)),
         use = "pairwise.complete.obs"
     )
@@ -220,18 +222,18 @@ analysis_Propensity_Scoring <- function(comparator_group,
     positivity_tables <- list()
     pos_fail_vars     <- c()
 
-    for (this_var in matchingVars %>% filter(!var_type == "continuous") %>% pull(var)) {
+    for (this_var in matchingVars.4 %>% filter(!var_type == "continuous" & is.na(issues)) %>% pull(var)) {
         this_table <- table(this.data[, c("treatment", this_var)], useNA = "ifany")
         this_name  <- colnames(as.data.frame(this_table))[2]
         this_col   <- sym(this_name)
-
+        
         tbl_wide <- this_table %>%
             as.data.frame() %>%
             mutate(!!this_col := as.character(!!this_col)) %>%
             pivot_wider(names_from  = !!this_col,
                         values_from = Freq,
                         names_prefix = paste0(this_name, "_")) %>%
-            mutate(across(where(is.numeric), .fns = ~ ifelse(.x < 20, "<20", .x)))
+            mutate(across(2:3, .fns = ~ ifelse(.x < 20, "<20", .x)))
 
         positivity_tables[[this_var]] <- tbl_wide
         if (sum(this_table == 0) > 0) pos_fail_vars <- c(pos_fail_vars, this_var)
@@ -244,7 +246,7 @@ analysis_Propensity_Scoring <- function(comparator_group,
                                issues))
 
     # 2.6 Balance: negligible imbalance (SMD < 0.05) and does not predict treatment (p > 0.05)
-    vars_negligible_imbalance <- matchingVars %>%
+    vars_negligible_imbalance <- matchingVars.5 %>%
         rowwise() %>%
         mutate(smd = ifelse(var_type %in% c("continuous", "binary"),
                             round(stat_smd(var, "treatment", this.data), 2),
@@ -258,7 +260,7 @@ analysis_Propensity_Scoring <- function(comparator_group,
                                       paste0(issues, ", negligible imbalance")),
                                issues))
 
-    vars_no_predict <- matchingVars %>%
+    vars_no_predict <- matchingVars.6 %>%
         rowwise() %>%
         mutate(pval = round(stat_pval(var, "treatment", this.data), 2)) %>%
         filter(pval > 0.05) %>%
