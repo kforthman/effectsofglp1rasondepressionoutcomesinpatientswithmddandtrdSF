@@ -341,9 +341,9 @@ psych_proc_file  <- "OutputData/psych_proc.rds"
 
 nb_analyses <- list(
   list(dep_var    = "n_psych_days",
-       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")),
+       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years", "preindex_n_psych_days")),
   list(dep_var    = "n_med_changes",
-       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years"))
+       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years", "preindex_n_psych_days"))
 )
 
 nb_period_name <- "15 days-12 months after index"
@@ -421,12 +421,12 @@ pwp_analyses <- list(
        event_data_file= psych_proc_file,
        event_date_col = "OutcomeDate",
        dedup_by_day   = TRUE,
-       covariates     = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")),
+       covariates     = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years", "preindex_n_psych_days")),
   list(dep_var        = "med_changes",
        event_data_file= med_changes_file,
        event_date_col = "first_record",
        dedup_by_day   = TRUE,
-       covariates     = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years"))
+       covariates     = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years", "preindex_n_psych_days"))
 )
 
 pwp_result_files <- character(0)
@@ -443,6 +443,7 @@ for (group in comparator_groups) {
     
     analysis_PWP_Gap_Time_Cox_Model(
       matched_data_file = matched_data_files[[group]],
+      all_outcomes      = all_outcomes,
       event_data_file   = analysis$event_data_file,
       event_date_col    = analysis$event_date_col,
       dedup_by_day      = analysis$dedup_by_day,

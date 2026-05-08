@@ -6,6 +6,7 @@
 #   matched_data_file — Path to PS_Matched_Dataset-{group}.rds. Must restore
 #                       `matched.data` with columns PatientDurableKey,
 #                       treatment, treatment_name, {target_drug}_Index,
+#   all_outcomes      - The table containing all outcomes.
 #                       {comparator_group}_Index, and covariate columns.
 #   event_data_file   — Path to event data .rds file. The file may restore any
 #                       variable name; the first restored object is used.
@@ -31,6 +32,7 @@
 #   Also saved to output_file as `pwp_result`.
 
 analysis_PWP_Gap_Time_Cox_Model <- function(matched_data_file,
+                                            all_outcomes,
                                              event_data_file,
                                              event_date_col,
                                              dedup_by_day,
@@ -48,6 +50,12 @@ analysis_PWP_Gap_Time_Cox_Model <- function(matched_data_file,
   event_raw  <- get(loaded_var[1])
 
   study_cohort_label <- paste0(target_drug, " vs ", comparator_group)
+  
+  preindex_outcomes <- all_outcomes %>%
+    filter(study_cohort == study_cohort_label) %>%
+    filter(period == "6-0 months before index") %>%
+    dplyr::select(-period) %>%
+    pivot_wider(names_from = "var_name", values_from = "value", names_prefix = "preindex_")
 
   matched.data <- matched.data %>%
     mutate(
@@ -57,7 +65,8 @@ analysis_PWP_Gap_Time_Cox_Model <- function(matched_data_file,
         !!sym(paste0(comparator_group, "_Index"))
       ),
       study_cohort = study_cohort_label
-    )
+    ) %>%
+    left_join(preindex_outcomes, by = c("PatientDurableKey", "study_cohort"))
 
   # Compute time from index for each event record
   event_data <- event_raw %>%

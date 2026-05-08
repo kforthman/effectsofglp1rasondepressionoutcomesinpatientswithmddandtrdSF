@@ -52,14 +52,22 @@ analysis_Negative_Binomial_Regression <- function(matched_data_file,
     )
 
   # Pivot all_outcomes to wide for this comparator, appending period_name suffix
-  outcomes_wide <- all_outcomes %>%
-    filter(study_cohort == study_cohort_label) %>%
+  outcomes <- all_outcomes %>%
+    filter(study_cohort == study_cohort_label)
+    
+  preindex_outcomes <- outcomes %>%
+    filter(period == "6-0 months before index") %>%
+    dplyr::select(-period) %>%
+    pivot_wider(names_from = "var_name", values_from = "value", names_prefix = "preindex_")
+    
+  period_outcomes <- outcomes %>%
     filter(period == period_name) %>%
     dplyr::select(-period) %>%
     pivot_wider(names_from = "var_name", values_from = "value")
 
   analysis_data <- matched.data %>%
-    left_join(outcomes_wide, by = c("PatientDurableKey", "study_cohort"))
+    left_join(preindex_outcomes, by = c("PatientDurableKey", "study_cohort")) %>%
+    left_join(period_outcomes, by = c("PatientDurableKey", "study_cohort"))
 
   # Build formula: {dep_var}_{period_name} ~ treatment + covariate1 + ...
   formula_obj <- as.formula(
