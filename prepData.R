@@ -123,7 +123,7 @@ mdd_data <- read_table(config, col_schema, "mdd_data", conn = conProjects) %>%
   Sex_male = Sex == "Male",
   Age = time_length(interval(BirthDate, data_pull_date), "years")
   ) %>%
-  filter(Sex != "Unknown" & 
+  filter(Sex %in% c("Male", "Female") & 
            !is.na(Sex) & 
            !is.na(Race_Ethnicity) & 
            meets_diagnosis_eligibility_criteria
