@@ -70,92 +70,92 @@ plot_model(r$m1) + theme_minimal(base_size = 20)
 
 ---
 
-## Outcome Distribution
+<!-- ## Outcome Distribution -->
 
-```{r dist-setup}
-ds <- r$dataset %>%
-  mutate(treatment_name = factor(treatment_name,
-                                 levels = c(r$target_drug, r$comparator_group)))
+<!-- ```{r dist-setup} -->
+<!-- ds <- r$dataset %>% -->
+<!--   mutate(treatment_name = factor(treatment_name, -->
+<!--                                  levels = c(r$target_drug, r$comparator_group))) -->
 
-n0 <- ds %>% filter(!!sym(r$dep_var) == 0) %>% nrow()
-nt <- ds %>% nrow()
-subtitle_base <- paste0(r$study_cohort_label, " | ", r$period_name,
-                        " | n0 = ", comma(n0), "/", comma(nt),
-                        " (", percent(n0 / nt), ")")
+<!-- n0 <- ds %>% filter(!!sym(r$dep_var) == 0) %>% nrow() -->
+<!-- nt <- ds %>% nrow() -->
+<!-- subtitle_base <- paste0(r$study_cohort_label, " | ", r$period_name, -->
+<!--                         " | n0 = ", comma(n0), "/", comma(nt), -->
+<!--                         " (", percent(n0 / nt), ")") -->
 
-my_range <- if (startsWith(r$dep_var, "n_med")) 1 else 10
-my_min   <- 1
+<!-- my_range <- if (startsWith(r$dep_var, "n_med")) 1 else 10 -->
+<!-- my_min   <- 1 -->
 
-ds_cut <- ds %>%
-  rowwise() %>%
-  mutate(value_cut = my_cut(!!sym(r$dep_var), my_range, my_min)) %>%
-  ungroup()
+<!-- ds_cut <- ds %>% -->
+<!--   rowwise() %>% -->
+<!--   mutate(value_cut = my_cut(!!sym(r$dep_var), my_range, my_min)) %>% -->
+<!--   ungroup() -->
 
-cut_levels <- ds_cut %>%
-  arrange(!!sym(r$dep_var)) %>%
-  pull(value_cut) %>%
-  unique()
+<!-- cut_levels <- ds_cut %>% -->
+<!--   arrange(!!sym(r$dep_var)) %>% -->
+<!--   pull(value_cut) %>% -->
+<!--   unique() -->
 
-ds_cut <- ds_cut %>%
-  mutate(value_cut = factor(value_cut, levels = cut_levels))
-```
+<!-- ds_cut <- ds_cut %>% -->
+<!--   mutate(value_cut = factor(value_cut, levels = cut_levels)) -->
+<!-- ``` -->
 
-### Count Distribution
+<!-- ### Count Distribution -->
 
-```{r dist-count, fig.width=20, fig.height=8}
-ds_count <- ds_cut %>%
-  count(value_cut, treatment_name)
+<!-- ```{r dist-count, fig.width=20, fig.height=8} -->
+<!-- ds_count <- ds_cut %>% -->
+<!--   count(value_cut, treatment_name) -->
 
-y_max <- max(ds_count$n, na.rm = TRUE) * 1.1
+<!-- y_max <- max(ds_count$n, na.rm = TRUE) * 1.1 -->
 
-ggplot(ds_count, aes(x = value_cut, y = n,
-                     fill = treatment_name, color = treatment_name)) +
-  geom_bar(position = "dodge", stat = "identity") +
-  geom_text(aes(label = comma(n)),
-            position = position_dodge(width = 0.9),
-            vjust = -0.5, colour = "black", size = 5) +
-  labs(title    = r$study_cohort_label,
-       subtitle = subtitle_base,
-       x        = r$dep_var,
-       y        = "Count") +
-  ylim(0, y_max) +
-  theme_minimal(base_size = 20)
-```
+<!-- ggplot(ds_count, aes(x = value_cut, y = n, -->
+<!--                      fill = treatment_name, color = treatment_name)) + -->
+<!--   geom_bar(position = "dodge", stat = "identity") + -->
+<!--   geom_text(aes(label = comma(n)), -->
+<!--             position = position_dodge(width = 0.9), -->
+<!--             vjust = -0.5, colour = "black", size = 5) + -->
+<!--   labs(title    = r$study_cohort_label, -->
+<!--        subtitle = subtitle_base, -->
+<!--        x        = r$dep_var, -->
+<!--        y        = "Count") + -->
+<!--   ylim(0, y_max) + -->
+<!--   theme_minimal(base_size = 20) -->
+<!-- ``` -->
 
-### Percentage Distribution
+<!-- ### Percentage Distribution -->
 
-```{r dist-percent, fig.width=20, fig.height=8}
-ds_pct <- ds_cut %>%
-  count(value_cut, treatment_name) %>%
-  group_by(treatment_name) %>%
-  mutate(pct = n / sum(n)) %>%
-  ungroup()
+<!-- ```{r dist-percent, fig.width=20, fig.height=8} -->
+<!-- ds_pct <- ds_cut %>% -->
+<!--   count(value_cut, treatment_name) %>% -->
+<!--   group_by(treatment_name) %>% -->
+<!--   mutate(pct = n / sum(n)) %>% -->
+<!--   ungroup() -->
 
-y_max_pct <- max(ds_pct$pct, na.rm = TRUE) * 1.1
+<!-- y_max_pct <- max(ds_pct$pct, na.rm = TRUE) * 1.1 -->
 
-ggplot(ds_pct, aes(x = value_cut, y = pct,
-                   fill = treatment_name, color = treatment_name)) +
-  geom_bar(position = "dodge", stat = "identity") +
-  geom_text(aes(label = percent(pct)),
-            position = position_dodge(width = 0.9),
-            vjust = -0.5, colour = "black", size = 5) +
-  labs(title    = r$study_cohort_label,
-       subtitle = subtitle_base,
-       x        = r$dep_var,
-       y        = "Proportion") +
-  ylim(0, y_max_pct) +
-  theme_minimal(base_size = 20)
-```
+<!-- ggplot(ds_pct, aes(x = value_cut, y = pct, -->
+<!--                    fill = treatment_name, color = treatment_name)) + -->
+<!--   geom_bar(position = "dodge", stat = "identity") + -->
+<!--   geom_text(aes(label = percent(pct)), -->
+<!--             position = position_dodge(width = 0.9), -->
+<!--             vjust = -0.5, colour = "black", size = 5) + -->
+<!--   labs(title    = r$study_cohort_label, -->
+<!--        subtitle = subtitle_base, -->
+<!--        x        = r$dep_var, -->
+<!--        y        = "Proportion") + -->
+<!--   ylim(0, y_max_pct) + -->
+<!--   theme_minimal(base_size = 20) -->
+<!-- ``` -->
 
-### Density Plot
+<!-- ### Density Plot -->
 
-```{r dist-density, fig.width=20, fig.height=8}
-ggplot(ds, aes(x = !!sym(r$dep_var),
-               fill = treatment_name, color = treatment_name)) +
-  geom_density(alpha = 0.5) +
-  labs(title    = r$study_cohort_label,
-       subtitle = subtitle_base,
-       x        = r$dep_var,
-       y        = "Density") +
-  theme_minimal(base_size = 20)
-```
+<!-- ```{r dist-density, fig.width=20, fig.height=8} -->
+<!-- ggplot(ds, aes(x = !!sym(r$dep_var), -->
+<!--                fill = treatment_name, color = treatment_name)) + -->
+<!--   geom_density(alpha = 0.5) + -->
+<!--   labs(title    = r$study_cohort_label, -->
+<!--        subtitle = subtitle_base, -->
+<!--        x        = r$dep_var, -->
+<!--        y        = "Density") + -->
+<!--   theme_minimal(base_size = 20) -->
+<!-- ``` -->

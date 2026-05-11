@@ -109,27 +109,27 @@ ggplot(km_df, aes(x = time, y = estimate,
   theme_minimal(base_size = 16)
 ```
 
-## Events by Recurrence Number
+<!-- ## Events by Recurrence Number -->
 
-```{r events-by-num, fig.width=10, fig.height=5}
-r$out %>%
-  filter(status == 1L) %>%
-  count(event_num, treatment_name) %>%
-  group_by(treatment_name) %>%
-  mutate(pct = n / sum(n)) %>%
-  ungroup() %>%
-  ggplot(aes(x = factor(event_num), y = n,
-             fill = treatment_name, color = treatment_name)) +
-  geom_bar(position = "dodge", stat = "identity") +
-  geom_text(aes(label = comma(n)),
-            position = position_dodge(width = 0.9),
-            vjust = -0.5, colour = "black", size = 4) +
-  labs(
-    title = r$study_cohort_label,
-    x     = "Event Number",
-    y     = "Count",
-    fill  = "Group",
-    color = "Group"
-  ) +
-  theme_minimal(base_size = 16)
-```
+<!-- ```{r events-by-num, fig.width=10, fig.height=5} -->
+<!-- r$out %>% -->
+<!--   filter(status == 1L) %>% -->
+<!--   count(event_num, treatment_name) %>% -->
+<!--   group_by(treatment_name) %>% -->
+<!--   mutate(pct = n / sum(n)) %>% -->
+<!--   ungroup() %>% -->
+<!--   ggplot(aes(x = factor(event_num), y = n, -->
+<!--              fill = treatment_name, color = treatment_name)) + -->
+<!--   geom_bar(position = "dodge", stat = "identity") + -->
+<!--   geom_text(aes(label = comma(n)), -->
+<!--             position = position_dodge(width = 0.9), -->
+<!--             vjust = -0.5, colour = "black", size = 4) + -->
+<!--   labs( -->
+<!--     title = r$study_cohort_label, -->
+<!--     x     = "Event Number", -->
+<!--     y     = "Count", -->
+<!--     fill  = "Group", -->
+<!--     color = "Group" -->
+<!--   ) + -->
+<!--   theme_minimal(base_size = 16) -->
+<!-- ``` -->
