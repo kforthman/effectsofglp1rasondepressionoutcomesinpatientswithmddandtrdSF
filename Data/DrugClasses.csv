@@ -1,4 +1,4 @@
-﻿Name ,Type
+Name ,Type
 5-hydroxytryptophan,Other
 5-hydroxytryptophan / magnesium / melatonin / tryptophan / vitamin b6,Other
 alanine / arginine / aspartate / glutamate / glycine / histidine / isoleucine / leucine / lysine / methionine / phenylalanine / proline / serine / threonine / tryptophan / tyrosine / valine,Other
@@ -41,3 +41,9 @@ venlafaxine,SNRI
 vilazodone,SSRI
 viloxazine,Other
 vortioxetine,SSRI
+agomelatine,Atypical
+brexanolone,Other
+gepirone,Other
+levomilnacipran,SNRI
+moclobemide,MAOI
+zuranolone,Other

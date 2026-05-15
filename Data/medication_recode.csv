@@ -1,25 +1,40 @@
 table,raw_name,canonical_name,subclass
 antidepressant,Acamprosate Calcium,remove,
 antidepressant,Acetylcarnitine HCl,remove,
+antidepressant,agomelatine,agomelatine,
 antidepressant,Amitriptyline HCl,amitriptyline,
+antidepressant,amitriptyline HCl,amitriptyline,
 antidepressant,Amoxapine,amoxapine,
+antidepressant,amoxapine,amoxapine,
 antidepressant,Benzgalantamine Gluconate,remove,
 antidepressant,Bremelanotide Acetate,remove,
+antidepressant,brexanolone,brexanolone,
 antidepressant,buPROPion HBr,bupropion,
+antidepressant,bupropion HBr,bupropion,
 antidepressant,buPROPion HCl,bupropion,
+antidepressant,bupropion HCl,bupropion,
 antidepressant,buPROPion HCl (Smoking Deter),bupropion,
+antidepressant,bupropion/dietary supp. no.15,bupropion,
+antidepressant,bupropion/dietary supp. no.16,bupropion,
 antidepressant,"Ca, Mg, K, and Na Oxybates",remove,
 antidepressant,chlordiazePOXIDE-Amitriptyline,amitriptyline,
 antidepressant,Citalopram Hydrobromide,citalopram,
+antidepressant,citalopram hydrobromide,citalopram,
 antidepressant,Cladribine,remove,
 antidepressant,clomiPRAMINE HCl,clomipramine,
+antidepressant,clomipramine HCl,clomipramine,
 antidepressant,Cyclobenzaprine HCl (Fibromy),remove,
 antidepressant,Dalfampridine,remove,
 antidepressant,Desipramine HCl,desipramine,
+antidepressant,desipramine HCl,desipramine,
 antidepressant,Desvenlafaxine,desvenlafaxine,
+antidepressant,desvenlafaxine,desvenlafaxine,
 antidepressant,Desvenlafaxine Fumarate,desvenlafaxine,
+antidepressant,desvenlafaxine fumarate,desvenlafaxine,
 antidepressant,Desvenlafaxine Succinate,desvenlafaxine,
+antidepressant,desvenlafaxine succinate,desvenlafaxine,
 antidepressant,Deutetrabenazine,remove,
+antidepressant,dextromethorphan HBr/bupropion,bupropion,
 antidepressant,Dextromethorphan-Bupropion,bupropion,
 antidepressant,Dextromethorphan-quiNIDine,remove,
 antidepressant,Dimethyl Fumarate,remove,
@@ -28,37 +43,59 @@ antidepressant,Disulfiram,remove,
 antidepressant,Donanemab-azbt,remove,
 antidepressant,Donepezil HCl,remove,
 antidepressant,Doxepin HCl,doxepin,
+antidepressant,doxepin HCl,doxepin,
 antidepressant,DULoxetine HCl,duloxetine,
+antidepressant,duloxetine HCl,duloxetine,
+antidepressant,duloxetine HCl/lidocaine HCl,duloxetine,
 antidepressant,Eplontersen Sodium,remove,
 antidepressant,Ergoloid Mesylates,remove,
+antidepressant,escitalopram,escitalopram,
 antidepressant,Escitalopram Oxalate,escitalopram,
+antidepressant,escitalopram oxalate,escitalopram,
 antidepressant,Esketamine HCl,esketamine,
+antidepressant,esketamine HCl,esketamine,
 antidepressant,Fingolimod HCl,remove,
 antidepressant,Flibanserin,remove,
+antidepressant,fluoxetine,fluoxetine,
 antidepressant,FLUoxetine HCl,fluoxetine,
+antidepressant,fluoxetine HCl,fluoxetine,
 antidepressant,FLUoxetine HCl (PMDD),fluoxetine,
+antidepressant,fluoxetine/dietary supp no.17,fluoxetine,
+antidepressant,fluoxetine/dietary supp. no.8,fluoxetine,
 antidepressant,fluvoxaMINE Maleate,fluvoxamine,
+antidepressant,fluvoxamine maleate,fluvoxamine,
 antidepressant,Gabapentin (Once-Daily),remove,
 antidepressant,Gabapentin Enacarbil,remove,
 antidepressant,Galantamine Hydrobromide,remove,
+antidepressant,gepirone HCl,gepirone,
 antidepressant,Glatiramer Acetate,remove,
 antidepressant,Imipramine HCl,imipramine,
+antidepressant,imipramine HCl,imipramine,
 antidepressant,Imipramine Pamoate,imipramine,
+antidepressant,imipramine pamoate,imipramine,
 antidepressant,Interferon Beta-1a,remove,
 antidepressant,Interferon Beta-1b,remove,
+antidepressant,isocarboxazid,isocarboxazid,
 antidepressant,Lecanemab-irmb,remove,
 antidepressant,Levomilnacipran HCl,levomilnacipran,
+antidepressant,levomilnacipran HCl,levomilnacipran,
 antidepressant,Lofexidine HCl,remove,
 antidepressant,Maprotiline HCl,maprotiline,
+antidepressant,maprotiline HCl,maprotiline,
 antidepressant,Memantine HCl,remove,
 antidepressant,Memantine HCl-Donepezil HCl,remove,
 antidepressant,Milnacipran HCl,milnacipran,
+antidepressant,milnacipran HCl,milnacipran,
 antidepressant,Mirtazapine,mirtazapine,
+antidepressant,mirtazapine,mirtazapine,
+antidepressant,moclobemide,moclobemide,
 antidepressant,Natalizumab,remove,
 antidepressant,Nefazodone HCl,nefazodone,
+antidepressant,nefazodone HCl,nefazodone,
 antidepressant,Nicotine,remove,
 antidepressant,Nicotine Polacrilex,remove,
 antidepressant,Nortriptyline HCl,nortriptyline,
+antidepressant,nortriptyline HCl,nortriptyline,
 antidepressant,Ocrelizumab,remove,
 antidepressant,Ocrelizumab-Hyaluronidase-ocsq,remove,
 antidepressant,Ofatumumab,remove,
@@ -66,49 +103,77 @@ antidepressant,OLANZapine-FLUoxetine HCl,fluoxetine,
 antidepressant,OLANZapine-Samidorphan,remove,
 antidepressant,Ozanimod HCl,remove,
 antidepressant,PARoxetine HCl,paroxetine,
+antidepressant,paroxetine HCl,paroxetine,
 antidepressant,PARoxetine Mesylate,paroxetine,
+antidepressant,paroxetine mesylate,paroxetine,
 antidepressant,Peginterferon Beta-1a,remove,
 antidepressant,Perphenazine-Amitriptyline,amitriptyline,
 antidepressant,Phenelzine Sulfate,phenelzine,
+antidepressant,phenelzine sulfate,phenelzine,
 antidepressant,Pimozide,remove,
 antidepressant,Pregabalin,remove,
 antidepressant,Protriptyline HCl,protriptyline,
+antidepressant,protriptyline HCl,protriptyline,
 antidepressant,Rivastigmine,remove,
 antidepressant,Rivastigmine Tartrate,remove,
 antidepressant,Selegiline,selegiline,
 antidepressant,Sertraline HCl,sertraline,
+antidepressant,sertraline HCl,sertraline,
 antidepressant,Siponimod Fumarate,remove,
 antidepressant,Sodium Oxybate,remove,
+antidepressant,St. John's wort,remove,
 antidepressant,Teriflunomide,remove,
 antidepressant,Tetrabenazine,remove,
 antidepressant,Tranylcypromine Sulfate,tranylcypromine,
+antidepressant,tranylcypromine sulfate,tranylcypromine,
 antidepressant,TraZODone & Diet Manage Prod,trazodone,
 antidepressant,traZODone HCl,trazodone,
+antidepressant,trazodone HCl,trazodone,
+antidepressant,trazodone/dietary supp. no.8,trazodone,
 antidepressant,Trimipramine Maleate,trimipramine,
+antidepressant,trimipramine maleate,trimipramine,
+antidepressant,tryptophan,tryptophan,
 antidepressant,Valbenazine Tosylate,remove,
 antidepressant,Varenicline Tartrate,remove,
+antidepressant,venlafaxine besylate,venlafaxine,
 antidepressant,Venlafaxine HCl,venlafaxine,
+antidepressant,venlafaxine HCl,venlafaxine,
 antidepressant,Vilazodone HCl,vilazodone,
+antidepressant,vilazodone HCl,vilazodone,
+antidepressant,viloxazine HCl,viloxazine,
 antidepressant,Vortioxetine HBr,vortioxetine,
+antidepressant,vortioxetine hydrobromide,vortioxetine,
 antidepressant,Vutrisiran Sodium,remove,
 antidepressant,Zuranolone,zuranolone,
+antidepressant,zuranolone,zuranolone,
 antipsychotics,Acamprosate Calcium,remove,
+antipsychotics,acepromazine maleate,acepromazine,
 antipsychotics,Acetylcarnitine HCl,remove,
+antipsychotics,amisulpride,amisulpride,
 antipsychotics,ARIPiprazole,aripiprazole,
+antipsychotics,aripiprazole,aripiprazole,
 antipsychotics,ARIPiprazole (sensor),aripiprazole,
 antipsychotics,ARIPiprazole Lauroxil,aripiprazole,
+antipsychotics,aripiprazole lauroxil,aripiprazole,
+antipsychotics,"aripiprazole lauroxil,submicr.",aripiprazole,
+antipsychotics,asenapine,asenapine,
 antipsychotics,Asenapine Maleate,asenapine,
+antipsychotics,asenapine maleate,asenapine,
 antipsychotics,Benzgalantamine Gluconate,remove,
 antipsychotics,Bremelanotide Acetate,remove,
 antipsychotics,Brexpiprazole,brexpiprazole,
+antipsychotics,brexpiprazole,brexpiprazole,
 antipsychotics,buPROPion HCl (Smoking Deter),remove,
 antipsychotics,"Ca, Mg, K, and Na Oxybates",remove,
 antipsychotics,carBAMazepine (Antipsychotic),carbamazepine,
 antipsychotics,Cariprazine HCl,cariprazine,
+antipsychotics,cariprazine HCl,cariprazine,
 antipsychotics,chlordiazePOXIDE-Amitriptyline,remove,
 antipsychotics,chlorproMAZINE HCl,chlorpromazine,
+antipsychotics,chlorpromazine HCl,chlorpromazine,
 antipsychotics,Cladribine,remove,
 antipsychotics,cloZAPine,clozapine,
+antipsychotics,clozapine,clozapine,
 antipsychotics,Cyclobenzaprine HCl (Fibromy),remove,
 antipsychotics,Dalfampridine,remove,
 antipsychotics,Deutetrabenazine,remove,
@@ -118,34 +183,57 @@ antipsychotics,Diroximel Fumarate,remove,
 antipsychotics,Disulfiram,remove,
 antipsychotics,Donanemab-azbt,remove,
 antipsychotics,Donepezil HCl,remove,
+antipsychotics,droperidol,droperidol,
 antipsychotics,Eplontersen Sodium,remove,
 antipsychotics,Ergoloid Mesylates,remove,
 antipsychotics,Fingolimod HCl,remove,
 antipsychotics,Flibanserin,remove,
 antipsychotics,FLUoxetine HCl (PMDD),remove,
+antipsychotics,flupentixol decanoate,flupentixol,
+antipsychotics,flupentixol di-HCl,flupentixol,
 antipsychotics,fluPHENAZine Decanoate,fluphenazine,
+antipsychotics,fluphenazine decanoate,fluphenazine,
+antipsychotics,fluphenazine enanthate,fluphenazine,
 antipsychotics,fluPHENAZine HCl,fluphenazine,
+antipsychotics,fluphenazine HCl,fluphenazine,
 antipsychotics,Gabapentin (Once-Daily),remove,
 antipsychotics,Gabapentin Enacarbil,remove,
 antipsychotics,Galantamine Hydrobromide,remove,
 antipsychotics,Glatiramer Acetate,remove,
 antipsychotics,Haloperidol,haloperidol,
+antipsychotics,haloperidol,haloperidol,
 antipsychotics,Haloperidol Decanoate,haloperidol,
+antipsychotics,haloperidol decanoate,haloperidol,
 antipsychotics,Haloperidol Lactate,haloperidol,
+antipsychotics,haloperidol lactate,haloperidol,
 antipsychotics,Iloperidone,iloperidone,
+antipsychotics,iloperidone,iloperidone,
 antipsychotics,Interferon Beta-1a,remove,
 antipsychotics,Interferon Beta-1b,remove,
 antipsychotics,Lecanemab-irmb,remove,
+antipsychotics,levomepromazine HCl,levomepromazine,
+antipsychotics,levomepromazine maleate,levomepromazine,
+antipsychotics,levosulpiride,levosulpiride,
 antipsychotics,Lithium,lithium,
 antipsychotics,Lithium Carbonate,lithium,
+antipsychotics,lithium carbonate,lithium,
+antipsychotics,lithium citrate,lithium,
+antipsychotics,lithium citrate tetrahydrate,lithium,
 antipsychotics,Lofexidine HCl,remove,
+antipsychotics,loxapine,loxapine,
+antipsychotics,loxapine HCl,loxapine,
 antipsychotics,Loxapine Succinate,loxapine,
+antipsychotics,loxapine succinate,loxapine,
 antipsychotics,Lumateperone Tosylate,lumateperone,
+antipsychotics,lumateperone tosylate,lumateperone,
 antipsychotics,Lurasidone HCl,lurasidone,
+antipsychotics,lurasidone HCl,lurasidone,
 antipsychotics,Memantine HCl,remove,
 antipsychotics,Memantine HCl-Donepezil HCl,remove,
+antipsychotics,mesoridazine besylate,mesoridazine,
 antipsychotics,Milnacipran HCl,remove,
 antipsychotics,Molindone HCl,molindone,
+antipsychotics,molindone HCl,molindone,
 antipsychotics,Natalizumab,remove,
 antipsychotics,Nicotine,remove,
 antipsychotics,Nicotine Polacrilex,remove,
@@ -153,38 +241,67 @@ antipsychotics,Ocrelizumab,remove,
 antipsychotics,Ocrelizumab-Hyaluronidase-ocsq,remove,
 antipsychotics,Ofatumumab,remove,
 antipsychotics,OLANZapine,olanzapine,
+antipsychotics,olanzapine,olanzapine,
+antipsychotics,olanzapine pamoate,olanzapine,
+antipsychotics,olanzapine/samidorphan malate,olanzapine and samidorphan,
 antipsychotics,OLANZapine-FLUoxetine HCl,olanzapine,
 antipsychotics,OLANZapine-Samidorphan,olanzapine,
 antipsychotics,Ozanimod HCl,remove,
 antipsychotics,Paliperidone,paliperidone,
+antipsychotics,paliperidone,paliperidone,
 antipsychotics,Paliperidone Palmitate,paliperidone,
+antipsychotics,paliperidone palmitate,paliperidone,
 antipsychotics,PARoxetine Mesylate,remove,
 antipsychotics,Peginterferon Beta-1a,remove,
 antipsychotics,Perphenazine,perphenazine,
+antipsychotics,perphenazine,perphenazine,
 antipsychotics,Perphenazine-Amitriptyline,perphenazine,
 antipsychotics,Pimavanserin Tartrate,pimavanserin,
+antipsychotics,pimavanserin tartrate,pimavanserin,
 antipsychotics,Pimozide,pimozide,
+antipsychotics,pimozide,pimozide,
 antipsychotics,Pregabalin,remove,
 antipsychotics,Prochlorperazine,prochlorperazine,
+antipsychotics,prochlorperazine,prochlorperazine,
 antipsychotics,Prochlorperazine Edisylate,prochlorperazine,
+antipsychotics,prochlorperazine edisylate,prochlorperazine,
 antipsychotics,Prochlorperazine Maleate,prochlorperazine,
+antipsychotics,prochlorperazine maleate,prochlorperazine,
+antipsychotics,prochlorperazine mesylate,prochlorperazine,
+antipsychotics,promazine HCl,promazine,
 antipsychotics,QUEtiapine Fumarate,quetiapine,
+antipsychotics,quetiapine fumarate,quetiapine,
 antipsychotics,risperiDONE,risperidone,
+antipsychotics,risperidone,risperidone,
 antipsychotics,risperiDONE Microspheres,risperidone,
+antipsychotics,risperidone microspheres,risperidone,
 antipsychotics,Rivastigmine,remove,
 antipsychotics,Rivastigmine Tartrate,remove,
 antipsychotics,Siponimod Fumarate,remove,
 antipsychotics,Sodium Oxybate,remove,
+antipsychotics,sulpiride,sulpiride,
 antipsychotics,Teriflunomide,remove,
 antipsychotics,Tetrabenazine,remove,
 antipsychotics,Thioridazine HCl,thioridazine,
+antipsychotics,thioridazine HCl,thioridazine,
 antipsychotics,Thiothixene,tiotixene,
+antipsychotics,thiothixene,tiotixene,
+antipsychotics,thiothixene HCl,tiotixene,
+antipsychotics,tiapride HCl,tiapride,
 antipsychotics,Trifluoperazine HCl,trifluoperazine,
+antipsychotics,trifluoperazine HCl,trifluoperazine,
+antipsychotics,triflupromazine HCl,trifluoperazine,
 antipsychotics,Valbenazine Tosylate,remove,
 antipsychotics,Varenicline Tartrate,remove,
 antipsychotics,Vutrisiran Sodium,remove,
+antipsychotics,xanomeline tart/trospium chlor,xanomeline and trospium,
 antipsychotics,Ziprasidone HCl,ziprasidone,
+antipsychotics,ziprasidone HCl,ziprasidone,
 antipsychotics,Ziprasidone Mesylate,ziprasidone,
+antipsychotics,ziprasidone mesylate,ziprasidone,
+antipsychotics,zuclopenthixol acetate,zuclopenthixol,
+antipsychotics,zuclopenthixol decanoate,zuclopenthixol,
+antipsychotics,zuclopenthixol HCl,zuclopenthixol,
 hydrochlorothiazide,Aliskiren-hydroCHLOROthiazide,hydrochlorothiazide,
 hydrochlorothiazide,aMILoride-hydroCHLOROthiazide,hydrochlorothiazide,
 hydrochlorothiazide,amLODIPine-Valsartan-HCTZ,hydrochlorothiazide,
@@ -211,65 +328,144 @@ hydrochlorothiazide,Telmisartan-HCTZ,hydrochlorothiazide,
 hydrochlorothiazide,Triamterene-HCTZ,hydrochlorothiazide,
 hydrochlorothiazide,Valsartan-hydroCHLOROthiazide,hydrochlorothiazide,
 treatments,Acarbose,acarbose,TZD
+treatments,acetohexamide,acetohexamide,SU
 treatments,Alogliptin Benzoate,alogliptin,DPP4i
+treatments,alogliptin benzoate,alogliptin,DPP4i
 treatments,Alogliptin-metFORMIN HCl,alogliptin/metformin,
 treatments,Alogliptin-Pioglitazone,alogliptin/pioglitazone,
 treatments,Bexagliflozin,bexagliflozin,SGLT2i
+treatments,bexagliflozin,bexagliflozin,SGLT2i
 treatments,Canagliflozin,canagliflozin,SGLT2i
+treatments,canagliflozin,canagliflozin,SGLT2i
 treatments,Canagliflozin-metFORMIN HCl,canagliflozin/metformin,
 treatments,ChlorproPAMIDE,chlorpropamide,SU
-treatments,Dapagliflozin Prop-metFORMIN,dapagliflozin/metformin,
+treatments,chlorpropamide,chlorpropamide,SU
+treatments,dapagliflozin,dapagliflozin,SGLT2i
 treatments,Dapagliflozin Propanediol,dapagliflozin,SGLT2i
+treatments,dapagliflozin propanediol,dapagliflozin,SGLT2i
+treatments,Dapagliflozin Prop-metFORMIN,dapagliflozin/metformin,
 treatments,Dapagliflozin-sAXagliptin,dapagliflozin/saxagliptin,
 treatments,Dulaglutide,dulaglutide,GLP1RA
+treatments,dulaglutide,dulaglutide,GLP1RA
 treatments,Empagliflozin,empagliflozin,SGLT2i
+treatments,empagliflozin,empagliflozin,SGLT2i
 treatments,Empagliflozin-Linaglip-Metform,empagliflozin/linagliptin/metformin,
 treatments,Empagliflozin-linaGLIPtin,empagliflozin/linagliptin,
 treatments,Empagliflozin-metFORMIN HCl,empagliflozin/metformin,
 treatments,Ertugliflozin L-PyroglutamicAc,ertugliflozin,SGLT2i
+treatments,ertugliflozin pidolate,ertugliflozin,SGLT2i
 treatments,Ertugliflozin-metFORMIN HCl,ertugliflozin/metformin,
 treatments,Ertugliflozin-SITagliptin,ertugliflozin/sitagliptin,
 treatments,Exenatide,exenatide,GLP1RA
+treatments,exenatide,exenatide,GLP1RA
+treatments,exenatide microspheres,exenatide,GLP1RA
+treatments,gliclazide,gliclazide,SU
 treatments,Glimepiride,glimepiride,SU
+treatments,glimepiride,glimepiride,SU
 treatments,glipiZIDE,glipizide,SU
+treatments,glipizide,glipizide,SU
 treatments,glipiZIDE-metFORMIN HCl,glipizide/metformin,
+treatments,gliquidone,gliquidone,SU
 treatments,glyBURIDE,glibenclamide,SU
+treatments,glyburide,glibenclamide,SU
 treatments,glyBURIDE Micronized,glibenclamide,SU
+treatments,"glyburide,micronized",glibenclamide,SU
 treatments,glyBURIDE-metFORMIN,glibenclamide/metformin,
 treatments,Insulin Aspart,insulin,Insulins
+treatments,insulin aspart,insulin,Insulins
+treatments,insulin aspart (niacinamide),insulin,Insulins
 treatments,Insulin Aspart (w/Niacinamide),insulin,Insulins
 treatments,Insulin Aspart Prot & Aspart,insulin,Insulins
+treatments,insulin aspart prot/insuln asp,insulin,Insulins
+treatments,insulin aspart/B3/pump cart,insulin,Insulins
+treatments,insulin aspart-szjj,insulin,Insulins
+treatments,insulin aspart-xjhz,insulin,Insulins
 treatments,Insulin Degludec,insulin,Insulins
+treatments,insulin degludec,insulin,Insulins
+treatments,insulin degludec/liraglutide,insulin/liraglutide,
 treatments,Insulin Degludec-Liraglutide,insulin/liraglutide,
 treatments,Insulin Detemir,insulin,Insulins
+treatments,insulin detemir,insulin,Insulins
 treatments,Insulin Glargine,insulin,Insulins
+treatments,"insulin glargine,hum.rec.anlog",insulin,Insulins
+treatments,insulin glargine/lixisenatide,insulin/lixisenatide,
 treatments,Insulin Glargine-aglr,insulin,Insulins
+treatments,insulin glargine-aglr,insulin,Insulins
 treatments,Insulin Glargine-Lixisenatide,insulin/lixisenatide,
 treatments,Insulin Glargine-yfgn,insulin,Insulins
+treatments,insulin glargine-yfgn,insulin,Insulins
 treatments,Insulin Glulisine,insulin,Insulins
+treatments,insulin glulisine,insulin,Insulins
+treatments,insulin icodec,insulin,Insulins
+treatments,"insulin isophane NPH,bf-pk",insulin,Insulins
+treatments,"insulin isophane,beef",insulin,Insulins
+treatments,"insulin isophane,beef pure",insulin,Insulins
+treatments,"insulin isophane,pork pure",insulin,Insulins
 treatments,Insulin Lispro,insulin,Insulins
+treatments,insulin lispro,insulin,Insulins
 treatments,Insulin Lispro Prot & Lispro,insulin,Insulins
+treatments,insulin lispro protamin/lispro,insulin,Insulins
 treatments,Insulin Lispro-aabc,insulin,Insulins
+treatments,insulin lispro-aabc,insulin,Insulins
+treatments,insulin NPH hum/reg insulin hm,insulin,Insulins
 treatments,Insulin NPH Human (Isophane),insulin,Insulins
+treatments,insulin NPH human isophane,insulin,Insulins
+treatments,insulin NPH human semi-syn,insulin,Insulins
+treatments,insulin NPH/regular insuln s-s,insulin,Insulins
+treatments,"insulin protamine zinc,beef",insulin,Insulins
+treatments,insulin reg human semi-syn,insulin,Insulins
 treatments,Insulin Regular Human,insulin,Insulins
+treatments,insulin regular in 0.9 % NaCl,insulin,Insulins
 treatments,Insulin Regular(Human) in NaCl,insulin,Insulins
+treatments,"insulin regular, human",insulin,Insulins
+treatments,"insulin regular,beef-pork",insulin,Insulins
+treatments,"insulin regular,human buffered",insulin,Insulins
+treatments,insulin zinc beef,insulin,Insulins
+treatments,insulin zinc extend human rec,insulin,Insulins
+treatments,insulin zinc human recombinant,insulin,Insulins
+treatments,"insulin zinc,beef-pork",insulin,Insulins
+treatments,"insulin zinc,pork purified",insulin,Insulins
+treatments,"insulin,beef",insulin,Insulins
+treatments,"insulin,pork",insulin,Insulins
+treatments,"insulin,pork reg. concentrate",insulin,Insulins
 treatments,linaGLIPtin,linagliptin,DPP4i
+treatments,linagliptin,linagliptin,DPP4i
 treatments,linaGLIPtin-metFORMIN HCl,linagliptin/metformin,
 treatments,Liraglutide,liraglutide,GLP1RA
+treatments,liraglutide,liraglutide,GLP1RA
 treatments,Liraglutide -Weight Management,liraglutide,GLP1RA
 treatments,Lixisenatide,lixisenatide,GLP1RA
+treatments,lixisenatide,metformin,Metformin
 treatments,metFORMIN HCl,metformin,Metformin
+treatments,metformin HCl,metformin,Metformin
+treatments,metformin/AA 7/herb125/choline,metformin,Metformin
+treatments,metformin/blood sugar diagnost,metformin,Metformin
+treatments,metformin/caff/AA7/hrb125/chol,metformin,Metformin
 treatments,Miglitol,miglitol,TZD
+treatments,miglitol,miglitol,TZD
 treatments,pioglitazone,pioglitazone,Other
 treatments,Pioglitazone HCl-Glimepiride,pioglitazone/glimepiride,
 treatments,Pioglitazone HCl-metFORMIN HCl,pioglitazone/metformin,
 treatments,sAXagliptin HCl,saxagliptin,DPP4i
+treatments,saxagliptin HCl,saxagliptin,DPP4i
 treatments,sAXagliptin-metFORMIN,saxagliptin/metformin,
 treatments,Semaglutide,semaglutide,Semaglutide
+treatments,semaglutide,semaglutide,Semaglutide
 treatments,Semaglutide-Weight Management,semaglutide,Semaglutide
 treatments,Sitagliptin,sitagliptin,DPP4i
+treatments,sitagliptin,sitagliptin,DPP4i
 treatments,Sitagliptin Base-Metformin HCl,sitagliptin/metformin,
+treatments,sitagliptin fumarate,sitagliptin,DPP4i
+treatments,sitagliptin HCl,sitagliptin,DPP4i
+treatments,sitagliptin malate,sitagliptin,DPP4i
+treatments,sitagliptin phos/simvastatin,sitagliptin,DPP4i
 treatments,SITagliptin Phos-metFORMIN HCl,sitagliptin/metformin,
 treatments,SITagliptin Phosphate,sitagliptin,DPP4i
+treatments,sitagliptin phosphate,sitagliptin,DPP4i
 treatments,Sotagliflozin,sotagliflozin,SGLT2i
+treatments,sotagliflozin,sotagliflozin,SGLT2i
+treatments,tolazamide,tolazamide,SU
 treatments,TOLBUTamide,tolbutamide,SU
+treatments,tolbutamide,tolbutamide,SU
+treatments,troglitazone,troglitazone,TZD
+treatments,vildagliptin,vildagliptin,DPP4i

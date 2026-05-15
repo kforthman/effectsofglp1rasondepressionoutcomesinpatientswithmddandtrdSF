@@ -47,9 +47,8 @@ IDs*.txt
 # Track README
 !README.md
 
-# Track JSON config files (but not the local config itself)
-!*.json
-config.json
+# Track example config JSON
+!config-example.json
 
 # ignore error demos
 errorDemos/

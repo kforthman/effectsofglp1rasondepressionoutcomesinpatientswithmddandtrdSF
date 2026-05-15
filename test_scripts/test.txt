@@ -1,0 +1,9 @@
+antidepressant_table_test <- antidepressant_table[1:100000,]
+gc()
+check_recode(antidepressant_table %>% filter(ExposureLabel %in% c("Antidepressant", "Misc. Psychotherapeutic")),
+             med_recode, "antidepressant")
+antidepressant_table <- antidepressant_table %>%
+  filter(ExposureLabel %in% c("Antidepressant", "Misc. Psychotherapeutic")) %>%
+  apply_recode(med_recode, "antidepressant") %>%
+  left_join(atc_drugs, by = join_by("SimpleGenericName" == "Name")) %>%
+  filter(substr(ATC_code, 1, 4) == "N06A")
