@@ -35,6 +35,7 @@
     "period_info":        "Data/period_info.csv",
     "med_table_ad":       "Z:/Project D91201F/PatientMedications_Antidepressants.csv",
     "med_table_ap":       "Z:/Project D91201F/PatientMedications_Antipsychotics.csv",
+    "med_table_hctz":     "Z:/Project D91201F/PatientMedications_Hydrochlorothiazide.csv",
     "med_table_treat":    "Z:/Project D91201F/PatientMedications_Antidiabetics.csv",
     "med_index_table":    "Z:/Project D91201F/PatientMedications_Indices_clean.csv",
     "diag_table":         "dbo.FirstDiagnosisRecords",

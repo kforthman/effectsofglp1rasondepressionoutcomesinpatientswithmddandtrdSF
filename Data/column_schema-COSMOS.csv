@@ -188,9 +188,9 @@ nonswitch_periods,StartDate,date,%Y-%m-%d
 nonswitch_periods,EndConcept,character,
 nonswitch_periods,EndDate,date,%Y-%m-%d
 psych_proc,PatientDurableKey,integer,
-psych_proc,OutcomeDate,date,%Y-%m-%d
 psych_proc,OutcomeName,character,
 psych_proc,CPTCode,integer,
+psych_proc,OutcomeDate,date,%Y-%m-%d
 med_table_ad,PatientDurableKey,integer,
 med_table_ad,MedicationStartDate,date,%Y-%m-%d
 med_table_ad,MedicationEndDate,date,%Y-%m-%d
@@ -205,6 +205,13 @@ med_table_ap,ExposureLabel,factor,
 med_table_ap,SimpleGenericName,factor,
 med_table_ap,Quantity,double,
 med_table_ap,DailyDose,double,
+med_table_hctz,PatientDurableKey,integer,
+med_table_hctz,MedicationStartDate,date,%Y-%m-%d
+med_table_hctz,MedicationEndDate,date,%Y-%m-%d
+med_table_hctz,ExposureLabel,factor,
+med_table_hctz,SimpleGenericName,factor,
+med_table_hctz,Quantity,double,
+med_table_hctz,DailyDose,double,
 med_table_treat,PatientDurableKey,integer,
 med_table_treat,MedicationStartDate,date,%Y-%m-%d
 med_table_treat,MedicationEndDate,date,%Y-%m-%d
