@@ -1,6 +1,7 @@
 {
   "data_pull_date": "YYYY-MM-DD",
   "data_sample_size": 1,
+  "overwrite": "TRUE",
   "target_drug": "Semaglutide",
   "comparator_drugs": ["DPP4i", "GLP1RA", "Insulins", "Metformin", "SGLT2i", "SU", "TZD"],
   "nontreatment_group": "Nontreatment",
@@ -19,6 +20,8 @@
     "Thyroid_Cancer",
     "Gastroparesis"
   ],
+  "null_values": ["", "NA", "NULL", "null", "*Unspecified"],
+  "n_patient_partitions": 100,
   "database": {
     "driver":             "ODBC Driver 17 for SQL Server",
     "server":             "tcp:YOUR_SERVER",

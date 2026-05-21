@@ -3,6 +3,31 @@
 
 # -- Data loading helpers ------------------------------------------------------
 
+# Map a column_schema.csv "type" value to an Arrow data type.
+schema_type_to_arrow <- function(type) {
+  switch(type,
+         character = utf8(),
+         date      = date32(),
+         logical   = boolean(),
+         integer   = int32(),
+         double    = float64(),
+         factor    = utf8(),
+         stop(sprintf("Unknown schema type: %s", type))
+  )
+}
+
+# Build an Arrow Schema for one source table from the row-per-column schema
+# data frame (Data/column_schema.csv). Returns NULL if the table is not in
+# the schema (e.g. reference CSVs under Data/).
+make_arrow_schema_csv <- function(col_schema, table_name) {
+  specs <- col_schema[col_schema$table == table_name, ]
+  if (nrow(specs) == 0) return(NULL)
+  fields <- lapply(seq_len(nrow(specs)), function(i) {
+    field(specs$column[i], schema_type_to_arrow(specs$type[i]))
+  })
+  do.call(arrow::schema, fields)
+}
+
 # Verify that a file's columns match the schema exactly.
 # Stops if any mismatch is found; otherwise prints an OK message.
 check_schema <- function(schema, table_name, file_path, na = c("", "NA", "NULL", "null")) {
@@ -171,8 +196,7 @@ apply_recode <- function(data, mapping, table_name) {
 
 # Warn if any SimpleGenericName in data has no entry in mapping for table_name.
 # Returns a data frame with columns (table, name) listing every missing name.
-check_recode <- function(data, mapping, table_name) {
-  data_names <- data %>% distinct(SimpleGenericName) %>% pull(SimpleGenericName)
+check_recode <- function(data_names, mapping, table_name) {
   map_names  <- mapping %>% filter(table == table_name) %>% pull(raw_name)
   missing    <- sort(setdiff(data_names, map_names))
   if(length(missing) > 0){
