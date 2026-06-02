@@ -1,0 +1,773 @@
+library(rmarkdown)
+library(tidyverse)
+library(doParallel)
+library(corrplot)
+source("../libr.R")
+library(plotrix)
+library(tableone)
+library(kableExtra)
+library(viridis)
+library(caret)
+library(twang)
+library(MatchIt)
+library(ggplot2)
+library(ggcorrplot)
+library(survey)
+library(scales)
+library(MASS)
+library(performance)
+# library(DHARMa)
+library(sjPlot)
+library(jsonlite)
+library(lubridate)
+library(patchwork)
+library(arrow)
+library(dplyr)
+
+config <- fromJSON("config-FullSample.json")
+
+data_pull_date                  <- as.Date(config$data_pull_date)
+target_drug                     <- config$target_drug
+comparator_drugs                <- config$comparator_drugs
+nontreatment_group              <- config$nontreatment_group
+eligibility_inclusion_diagnoses <- config$eligibility_inclusion_diagnoses
+
+all_drugs         <- c(target_drug, comparator_drugs)
+comparator_groups <- c(nontreatment_group, comparator_drugs)
+all_groups        <- c(target_drug, comparator_groups)
+
+var_name_to_pretty <- read.csv(config$files$var_name_to_pretty)
+ps_covariates      <- read.csv(config$files$ps_covariates)
+
+atc_drugs <- read_csv(config$files$atc_drugs, 
+                      col_types = cols(
+                        ATC_code         = readr::col_factor(),
+                        Name             = readr::col_character(),
+                        Category_Level_4 = readr::col_factor(),
+                        Category_Level_3 = readr::col_factor(),
+                        Category_Level_2 = readr::col_factor(),
+                        Category_Level_1 = readr::col_factor()
+                      )) %>%
+  mutate(length = nchar(Name)) %>%
+  arrange(Name) %>%
+  mutate(Name = as.factor(Name))
+
+drug_class           <- read.csv(config$files$drug_class)
+cpt_acuity           <- read.csv(config$files$cpt_acuity)
+period_info          <- read.csv(config$files$period_info)
+n_patient_partitions <- config$n_patient_partitions
+overwrite            <- as.logical(config$overwrite)
+
+if(!dir.exists("OutputData")){
+  dir.create("OutputData")
+}
+if(!dir.exists("Parquet_batched_OutputData")){
+  dir.create("Parquet_batched_OutputData")
+}
+if(!dir.exists("Reports")){
+  dir.create("Reports")
+}
+if(!dir.exists("html_tables")){
+  dir.create("html_tables")
+}
+
+# -- Prep Data ---------------------------------------------------------
+# source("prepData-parquet.R")
+
+# -- Identify TRD patients ---------------------------------------------------------
+
+source("get_TRD.R")
+
+message("Identifying TRD patients")
+for(batch_num in 1:n_patient_partitions){
+  
+  message("Processing batch ", batch_num, "...")
+  
+  mdd_data <- open_dataset("Parquet_batched_prepped/mdd_data") %>%
+    filter(batch_number == batch_num) %>%
+    collect()
+  
+  med_table_ad <- open_dataset("Parquet_batched_prepped/med_table_ad") %>%
+    filter(batch_number == batch_num) %>%
+    collect()
+  
+  this_result <- get_TRD(
+    mdd_data                  = mdd_data,
+    antidepressant_table      = med_table_ad
+  )
+  
+  write_dataset(
+    this_result$consecutive_instance_tab %>%
+      mutate(batch_number = batch_num),
+    path = "Parquet_batched_OutputData/antidepressant_consecutive_instance",
+    format = "parquet",
+    partitioning = "batch_number"
+  )
+  
+  write_dataset(
+    this_result$consecutive_period_tab %>%
+      mutate(batch_number = batch_num),
+    path = "Parquet_batched_OutputData/antidepressant_consecutive_period",
+    format = "parquet",
+    partitioning = "batch_number"
+  )
+  
+  write_dataset(
+    this_result$consecutive_period_tab_summ %>%
+      mutate(batch_number = batch_num),
+    path = "Parquet_batched_OutputData/antidepressant_consecutive_period_tab_summ",
+    format = "parquet",
+    partitioning = "batch_number"
+  )
+  
+  write_dataset(
+    this_result$consecutive_period_maxDrugs %>%
+      mutate(batch_number = batch_num),
+    path = "Parquet_batched_OutputData/antidepressant_consecutive_period_maxDrugs",
+    format = "parquet",
+    partitioning = "batch_number"
+  )
+  
+  write_dataset(
+    this_result$TRD_list_df %>%
+      mutate(batch_number = batch_num),
+    path = "Parquet_batched_OutputData/IDs-TRD",
+    format = "parquet",
+    partitioning = "batch_number"
+  )
+  
+}
+
+# -- Build antidepressant/antipsychotic treatment timelines ------------------------
+
+source("get_Antidepressant_Treatment_Timeline.R")
+
+message("Building antidepressant/antipsychotic treatment timelines")
+
+for(batch_num in 1:n_patient_partitions){
+  
+  message("Processing batch ", batch_num, "...")
+  
+  antidepressant_table <- open_dataset("Parquet_batched_prepped/med_table_ad") %>%
+    filter(batch_number == batch_num) %>%
+    collect()
+  
+  antipsychotics_table <- open_dataset("Parquet_batched_prepped/med_table_ap") %>%
+    filter(batch_number == batch_num) %>%
+    collect()
+  
+  this_result <- get_Antidepressant_Treatment_Timeline(
+    drug_class           = drug_class,
+    antidepressant_table = antidepressant_table,
+    antipsychotics_table = antipsychotics_table
+  )
+  
+  write_dataset(
+    this_result$antidepressant_antipsychotic_consecutive_instance %>%
+      mutate(batch_number = batch_num),
+    path = "Parquet_batched_OutputData/antidepressant_antipsychotic_consecutive_instance",
+    format = "parquet",
+    partitioning = "batch_number"
+  )
+  
+  write_dataset(
+    this_result$antidepressant_antipsychotic_consecutive_period %>%
+      mutate(batch_number = batch_num),
+    path = "Parquet_batched_OutputData/antidepressant_antipsychotic_consecutive_period",
+    format = "parquet",
+    partitioning = "batch_number"
+  )
+}
+
+# -- Build hydrochlorothiazide treatment timelines ---------------------------------
+
+source("get_Hydrochlorothiazide_Treatment_Timeline.R")
+
+message("Building hydrochlorothiazide treatment timelines")
+
+for(batch_num in 1:n_patient_partitions){
+  
+  message("Processing batch ", batch_num, "...")
+  
+  hydrochlorothiazide_table <- open_dataset("Parquet_batched_prepped/med_table_hctz") %>%
+    filter(batch_number == batch_num) %>%
+    collect()
+  
+  this_result <- get_Hydrochlorothiazide_Treatment_Timeline(
+    hydrochlorothiazide_table = hydrochlorothiazide_table
+  )
+  
+  write_dataset(
+    this_result$hydrochlorothiazide_consecutive_instance %>%
+      mutate(batch_number = batch_num),
+    path = "Parquet_batched_OutputData/hydrochlorothiazide_consecutive_instance",
+    format = "parquet",
+    partitioning = "batch_number"
+  )
+  
+}
+
+# -- Build nontreatment cohort -----------------------------------------------------
+
+source("get_Nontreatment_Timelines.R")
+
+message("Building nontreatment cohort for: ", target_drug)
+
+col_TimelineCriteria <- paste0(target_drug,        "_meets_timeline_criteria")
+col_mdd_to_index     <- paste0(target_drug,        "_mdd_to_index_days")
+
+tfe_dist <- open_dataset("Parquet_batched_prepped/dte_cohort_data") %>%
+  filter(!!sym(col_TimelineCriteria) == 1) %>%
+  count(!!sym(col_mdd_to_index)) %>%
+  collect() %>%
+  rename(tfe_at_index_days = !!sym(col_mdd_to_index)) %>%
+  mutate(freq = n / sum(n))
+
+for(batch_num in 1:n_patient_partitions){
+  
+  message("Processing batch ", batch_num, "...")
+  
+  dte_cohort_data <- open_dataset("Parquet_batched_prepped/dte_cohort_data") %>%
+    filter(batch_number == batch_num) %>%
+    collect()
+  
+  nonswitch_periods <- open_dataset("Parquet_batched_prepped/nonswitch_periods") %>%
+    filter(batch_number == batch_num) %>%
+    collect()
+  
+  mdd_data <- open_dataset("Parquet_batched_prepped/mdd_data") %>%
+    filter(batch_number == batch_num) %>%
+    collect()
+  
+  this_result <- get_Nontreatment_Timelines(
+    dte_cohort_data        = dte_cohort_data,
+    nonswitch_periods      = nonswitch_periods,
+    target_drug            = target_drug,
+    nontreatment_group     = nontreatment_group,
+    mdd_data               = mdd_data,
+    tfe_dist               = tfe_dist
+  )
+  
+  write_dataset(
+    this_result$dte_cohort_data2 %>%
+      mutate(batch_number = batch_num),
+    path = "Parquet_batched_OutputData/dte_cohort_wNontreat_data",
+    format = "parquet",
+    partitioning = "batch_number"
+  )
+  
+  write_dataset(
+    this_result$dte_cohort_data3 %>%
+      mutate(batch_number = batch_num),
+    path = "Parquet_batched_OutputData/dte_cohort_wNontreat_data_reporting",
+    format = "parquet",
+    partitioning = "batch_number"
+  )
+  
+}
+
+# # -- Render nontreatment timelines report ------------------------------------------
+# 
+# render(
+#   input       = "report_Nontreatment_Timelines.Rmd",
+#   output_file = paste0("Reports/report_Nontreatment_Timelines-", target_drug, ".html"),
+#   params      = list(
+#     target_drug        = target_drug,
+#     nontreatment_group = nontreatment_group,
+#     result_file        = paste0("OutputData/nontreatment_timelines_result-", target_drug, ".rds")
+#   ),
+#   envir = new.env()
+# )
+# gc()
+# 
+# # -- Render treatment overlap report -------------------------------------------
+# 
+# render(
+#   input       = "report_Treatment_Overlap.Rmd",
+#   output_file = paste0("Reports/report_Treatment_Overlap.html"),
+#   params      = list(
+#     nontreat_data_filename = "OutputData/dte_cohort_wNontreat_data.rds",
+#     all_groups         = all_groups,
+#     nontreatment_group = nontreatment_group
+#   ),
+#   envir = new.env()
+# )
+# gc()
+
+# -- Build diagnosis timeline variables --------------------------------------------
+
+source("get_Diagnosis_Timeline.R")
+
+message("Building diagnosis timeline variables")
+
+for(batch_num in 1:n_patient_partitions){
+  
+  message("Processing batch ", batch_num, "...")
+  
+  nontreat_data <- open_dataset("Parquet_batched_OutputData/dte_cohort_wNontreat_data") %>%
+    filter(batch_number == batch_num) %>%
+    collect()
+  
+  this_result <- get_Diagnosis_Timeline(
+    all_groups       = all_groups,
+    all_diagnoses    = eligibility_inclusion_diagnoses,
+    index_dataset    = nontreat_data
+  )
+  
+  write_dataset(
+    this_result$diagnosis_timeline_data %>%
+      mutate(batch_number = batch_num),
+    path = "Parquet_batched_OutputData/data_DTE_DiagnosisTimelineVars",
+    format = "parquet",
+    partitioning = "batch_number"
+  )
+  
+  gc()
+}
+
+# # -- Render eligibility criteria report -------------------------------------------
+# 
+# render(
+#   input       = "report_Eligibility_Criteria.Rmd",
+#   output_file = paste0("Reports/report_Eligibility_Criteria-", target_drug, ".html"),
+#   params      = list(
+#     eligibility_inclusion_diagnoses = eligibility_inclusion_diagnoses,
+#     all_drugs                       = all_drugs,
+#     comparator_groups               = comparator_groups,
+#     var_name_to_pretty              = var_name_to_pretty,
+#     comparator_drugs                = comparator_drugs,
+#     target_drug                     = target_drug,
+#     diagnosis_timeline_filename     = "OutputData/data_DTE_DiagnosisTimelineVars.rds",
+#     nontreat_data_filename          = "OutputData/dte_cohort_wNontreat_data.rds",
+#     nontreatment_group              = nontreatment_group
+#   ),
+#   envir = new.env()
+# )
+# gc()
+# 
+# # -- Render propensity covariates report ------------------------------------------
+# 
+# render(
+#   input       = "report_Propensity_Covariates.Rmd",
+#   output_file = paste0("Reports/report_Propensity_Covariates-", target_drug, ".html"),
+#   params      = list(
+#     nontreat_data_filename   = "OutputData/dte_cohort_wNontreat_data.rds",
+#     all_groups         = all_groups,
+#     target_drug        = target_drug,
+#     ps_covariates      = ps_covariates,
+#     var_name_to_pretty = var_name_to_pretty
+#   ),
+#   envir = new.env()
+# )
+# gc()
+# 
+# # -- Run propensity scoring and render reports -------------------------------------
+# 
+# source("analysis_Propensity_Scoring.R")
+# 
+# for (group in comparator_groups) {
+#   message("Running propensity scoring for: ", group)
+#   ps_result <- analysis_Propensity_Scoring(comparator_group = group, 
+#                                            target_drug = target_drug,
+#                                            cohort_file = "OutputData/dte_cohort_wNontreat_data.rds",
+#                                            covariates_file = "Data/ps_covariates.csv")
+#   
+#   write.csv(ps_result$matchingVars.final,
+#             paste0("OutputData/PS_Covariates-", group, ".csv"),
+#             row.names = FALSE)
+#   gc()
+#   
+#   weighted.data <- ps_result$weighted.data
+#   save(weighted.data, file = paste0("OutputData/PS_Weighted_Dataset-", group, ".rds"))
+#   rm(weighted.data)
+#   gc()
+#   
+#   matched.data <- ps_result$matched.data
+#   save(matched.data, file = paste0("OutputData/PS_Matched_Dataset-", group, ".rds"))
+#   rm(matched.data)
+#   gc()
+#   
+#   result_file <- paste0("OutputData/propensity_scoring_result-", target_drug, "Vs", group, ".rds")
+#   save(ps_result, file = result_file)
+#   rm(ps_result)
+#   gc()
+#   
+#   message("Rendering report for: ", group)
+#   render(
+#     input       = "report_Propensity_Scoring.Rmd",
+#     output_file = paste0("Reports/report_Propensity_Scoring-", target_drug, "Vs", group, ".html"),
+#     params      = list(
+#       target_drug     = target_drug,
+#       comparator_group = group,
+#       result_file     = result_file
+#     ),
+#     envir = new.env()
+#   )
+#   gc()
+# }
+# gc()
+# 
+# # -- Render PS covariate summary report ---------------------------------------
+# 
+# render(
+#   input       = "report_PS_Covariate_Summary.Rmd",
+#   output_file = paste0("Reports/report_PS_Covariate_Summary-", target_drug, ".html"),
+#   params      = list(
+#     comparator_groups = comparator_groups,
+#     ps_covariates     = ps_covariates,
+#     target_drug       = target_drug,
+#     output_filename   = paste0("OutputData/PS_Covariates-Summary-", target_drug, ".csv")
+#   ),
+#   envir = new.env()
+# )
+# gc()
+
+# -- Create un-matched dataset -----------------------------------------------------
+
+message("Building unmatched datasets")
+
+for(batch_num in 1:n_patient_partitions){
+  
+  message("Processing batch ", batch_num, "...")
+  
+  for(this_comparator in comparator_groups){
+    
+    target_pop_colname     <- paste0(target_drug, "_Population_for_", target_drug, "_vs_", this_comparator)
+    comparator_pop_colname <- paste0(this_comparator, "_Population_for_", target_drug, "_vs_", this_comparator)
+    
+    varname_target_age_at_index_years     <- paste0(target_drug, "_age_at_index_years")
+    varname_comparator_age_at_index_years <- paste0(this_comparator, "_age_at_index_years")
+    
+    varname_target_mdd_to_index_days     <- paste0(target_drug, "_mdd_to_index_days")
+    varname_comparator_mdd_to_index_days <- paste0(this_comparator, "_mdd_to_index_days")
+    
+    varname_target_index     <- paste0(target_drug, "_Index")
+    varname_comparator_index <- paste0(this_comparator, "_Index")
+    
+    this_ds <- open_dataset("Parquet_batched_OutputData/dte_cohort_wNontreat_data") %>%
+      filter(batch_number == batch_num) %>%
+      filter(!!sym(target_pop_colname) |
+               !!sym(comparator_pop_colname))
+    nontreat_data <-  this_ds %>% collect() %>%
+      mutate(treatment = ifelse(!!sym(target_pop_colname) == TRUE, 1, 0)) %>%
+      mutate(treatment_name = ifelse(!!sym(target_pop_colname) == TRUE, target_drug, this_comparator)) %>%
+      mutate(age_at_index_years = ifelse(treatment,
+                                         !!sym(varname_target_age_at_index_years),
+                                         !!sym(varname_comparator_age_at_index_years))) %>%
+      mutate(mdd_to_index_days = ifelse(treatment,
+                                        !!sym(varname_target_mdd_to_index_days),
+                                        !!sym(varname_comparator_mdd_to_index_days))) %>%
+      mutate(index = as.Date(ifelse(treatment,
+                                    !!sym(varname_target_index),
+                                    !!sym(varname_comparator_index))),
+             index_year = year(index)) %>% 
+      as.data.frame()
+    
+    write_dataset(
+      nontreat_data[seq_len(nrow(nontreat_data)), ] %>% # I have no idea why it has to be subsetted like this.
+        mutate(batch_number = batch_num),
+      path = paste0("Parquet_batched_OutputData/Unmatched_Dataset_", this_comparator),
+      format = "parquet",
+      partitioning = "batch_number"
+    )
+  }
+}
+
+
+# -- Compute outcomes --------------------------------------------------------------
+
+matched_data_files <- setNames(
+  paste0("Parquet_batched_OutputData/Unmatched_Dataset_", comparator_groups),
+  comparator_groups
+)
+
+visits_file      <- "Parquet_batched_prepped/encounter_table"
+med_changes_file <- "Parquet_batched_OutputData/antidepressant_antipsychotic_consecutive_period"
+hc_med_file      <- "Parquet_batched_OutputData/hydrochlorothiazide_consecutive_instance"
+psych_proc_file  <- "Parquet_batched_prepped/psych_proc"
+
+outcomes_files <- list(
+  psych   = paste0("Parquet_batched_OutputData/outcomes_psych-",         target_drug),
+  visits  = paste0("Parquet_batched_OutputData/outcomes_visits-",        target_drug),
+  med     = paste0("Parquet_batched_OutputData/outcomes_med_changes-",   target_drug),
+  hc_med  = paste0("Parquet_batched_OutputData/outcomes_hc_med_changes-",target_drug)
+)
+
+source("get_Outcomes_PsychProc.R")
+source("get_Outcomes_Visits.R")
+source("get_Outcomes_MedChanges.R")
+source("get_Outcomes_HCMedChanges.R")
+
+outcome_tasks <- list(
+  list(fn = get_Outcomes_PsychProc,   src_file = psych_proc_file,   out_file = outcomes_files$psych),
+  list(fn = get_Outcomes_Visits,      src_file = visits_file,       out_file = outcomes_files$visits),
+  list(fn = get_Outcomes_MedChanges,  src_file = med_changes_file,  out_file = outcomes_files$med),
+  list(fn = get_Outcomes_HCMedChanges,src_file = hc_med_file,       out_file = outcomes_files$hc_med)
+)
+
+n_workers <- min(length(outcome_tasks), max(1L, detectCores(logical = TRUE) - 1L))
+cl <- makeCluster(n_workers)
+registerDoParallel(cl)
+
+for(batch_num in 1:n_patient_partitions){
+  
+  message("Processing batch ", batch_num, "...")
+  
+  message("Running outcome computations in parallel (", n_workers, " workers)...")
+  foreach(
+    task      = outcome_tasks,
+    .packages = c("dplyr", "tidyr", "lubridate", "readr", "arrow"),
+    .export   = c("matched_data_files", "period_info", "target_drug", 
+                  "comparator_groups", "batch_num",
+                  "get_Outcomes_PsychProc",
+                  "get_Outcomes_Visits",
+                  "get_Outcomes_MedChanges",
+                  "get_Outcomes_HCMedChanges"
+    )
+  ) %dopar% {
+    task$fn(task$src_file, matched_data_files, period_info,
+            target_drug, comparator_groups, batch_num,
+            task$out_file)
+  }
+}
+
+stopCluster(cl)
+message("All outcome computations complete.")
+gc()
+
+# -- Join outcome tables and pivot to long format ----------------------------------
+
+for(batch_num in 1:n_patient_partitions){
+  
+  message("Processing batch ", batch_num, "...")
+  
+  outcomes_psych <- open_dataset(outcomes_files$psych) %>%
+    filter(batch_number == batch_num) %>%
+    collect()
+  
+  outcomes_visits <- open_dataset(outcomes_files$visits) %>%
+    filter(batch_number == batch_num) %>%
+    collect()
+  
+  outcomes_med_changes <- open_dataset(outcomes_files$med) %>%
+    filter(batch_number == batch_num) %>%
+    collect()
+  
+  outcomes_hc_med_changes <- open_dataset(outcomes_files$hc_med) %>%
+    filter(batch_number == batch_num) %>%
+    collect()
+  
+  all_outcomes_wide <- outcomes_psych %>%
+    left_join(outcomes_visits,
+              by = c("PatientDurableKey", "study_cohort", "period")) %>%
+  left_join(outcomes_med_changes,
+            by = c("PatientDurableKey", "study_cohort", "period")) %>%
+    left_join(outcomes_hc_med_changes,
+              by = c("PatientDurableKey", "study_cohort", "period"))
+  
+  all_outcomes <- all_outcomes_wide %>%
+    pivot_longer(4:ncol(.), names_to = "var_name", values_to = "value") %>%
+    mutate(
+      period       = factor(period,       levels = period_info$period),
+      study_cohort = factor(study_cohort, levels = paste0(target_drug, " vs ", comparator_groups)),
+      var_name     = factor(var_name)
+    )
+  
+  write_dataset(
+    all_outcomes %>%
+      mutate(batch_number = batch_num),
+    path = paste0("Parquet_batched_OutputData/all_outcomes-", target_drug),
+    format = "parquet",
+    partitioning = c("study_cohort", "var_name", "period", "batch_number")
+  )
+  gc()
+}
+
+rm(all_outcomes, 
+   all_outcomes_wide, 
+   outcomes_psych, 
+   outcomes_visits, 
+   outcomes_med_changes, 
+   outcomes_hc_med_changes)
+gc()
+
+# -- Negative Binomial Regression analyses -----------------------------------------
+
+source("analysis_Negative_Binomial_Regression.R")
+
+
+matched_data_files <- setNames(
+  paste0("Parquet_batched_OutputData/Unmatched_Dataset_", comparator_groups),
+  comparator_groups
+)
+
+nb_analyses <- list(
+  list(dep_var    = "n_psych_days",
+       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")),
+  list(dep_var    = "n_med_changes",
+       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years"))
+)
+
+nb_period_name <- "15 days-12 months after index"
+
+nb_result_files <- character(0)
+
+for (group in comparator_groups) {
+  for (analysis in nb_analyses) {
+    result_file <- paste0(
+      "OutputData/nb_result-", target_drug, "Vs", group,
+      "-", analysis$dep_var, "-period", nb_period_name, ".rds"
+    )
+
+    message("Fitting NB model: ", target_drug, " vs ", group,
+            " | ", analysis$dep_var, " | period ", nb_period_name)
+    
+    study_cohort_label <- paste0(target_drug, " vs ", group)
+    
+    ds_connect <- open_dataset(paste0("Parquet_batched_OutputData/all_outcomes-", target_drug))
+    this_outcome <- ds_connect %>%
+      filter(study_cohort == study_cohort_label,
+             period == nb_period_name,
+             var_name == analysis$dep_var) %>%
+      dplyr::select(c("PatientDurableKey", "var_name", "value")) %>% 
+      collect() %>%
+      pivot_wider(names_from = "var_name", values_from = "value")
+    
+    ds_connect <- open_dataset(matched_data_files[[group]])
+    matched_data <- ds_connect %>% 
+      dplyr::select(c("PatientDurableKey", "treatment", "treatment_name", analysis$covariates)) %>% 
+      collect()
+    
+    analysis_data <- matched_data %>%
+      left_join(this_outcome, by = c("PatientDurableKey"))
+    
+    rm(this_outcome)
+    rm(matched_data)
+    gc()
+    
+    analysis_Negative_Binomial_Regression(
+      analysis_data     = analysis_data,
+      comparator_group  = group,
+      target_drug       = target_drug,
+      period_name       = nb_period_name,
+      dep_var           = analysis$dep_var,
+      covariates        = analysis$covariates,
+      output_file       = result_file
+    )
+    
+    rm(analysis_data)
+    gc()
+
+    nb_result_files <- c(nb_result_files, result_file)
+
+    render(
+      input       = "report_Negative_Binomial_Regression.Rmd",
+      output_file = paste0("Reports/report_NB-", target_drug, "Vs", group,
+                           "-", analysis$dep_var, ".html"),
+      params = list(
+        result_file      = result_file,
+        target_drug      = target_drug,
+        comparator_group = group,
+        dep_var          = analysis$dep_var
+      ),
+      envir = new.env()
+    )
+  }
+}
+
+render(
+  input       = "report_NB_Summary.Rmd",
+  output_file = paste0("Reports/report_NB_Summary-", target_drug, ".html"),
+  params = list(
+    result_files = nb_result_files,
+    target_drug  = target_drug
+  ),
+  envir = new.env()
+)
+gc()
+
+# -- PWP Gap Time Cox Model analyses -----------------------------------------------
+
+source("analysis_PWP_Gap_Time_Cox_Model.R")
+
+matched_data_files <- setNames(
+  paste0("OutputData/PS_Matched_Dataset-", comparator_groups, ".rds"),
+  comparator_groups
+)
+
+med_changes_file <- "OutputData/antidepressant_antipsychotic_consecutive_period.rds"
+hc_med_file      <- "OutputData/hydrochlorothiazide_consecutive_instance.rds"
+psych_proc_file  <- "OutputData/psych_proc.rds"
+
+pwp_period_name <- "15 days-12 months after index"
+pwp_period_row  <- period_info[period_info$period == pwp_period_name, ]
+pwp_bgn_win     <- pwp_period_row$bgn_win
+pwp_end_win     <- pwp_period_row$end_win
+
+pwp_analyses <- list(
+  list(dep_var        = "psych_visits",
+       event_data_file= psych_proc_file,
+       event_date_col = "OutcomeDate",
+       dedup_by_day   = TRUE,
+       covariates     = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")),
+  list(dep_var        = "med_changes",
+       event_data_file= med_changes_file,
+       event_date_col = "first_record",
+       dedup_by_day   = TRUE,
+       covariates     = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years"))
+)
+
+pwp_result_files <- character(0)
+
+for (group in comparator_groups) {
+  for (analysis in pwp_analyses) {
+    result_file <- paste0(
+      "OutputData/pwp_result-", target_drug, "Vs", group,
+      "-", analysis$dep_var, "-period", pwp_period_name, ".rds"
+    )
+
+    message("Fitting PWP model: ", target_drug, " vs ", group,
+            " | ", analysis$dep_var, " | period ", pwp_period_name)
+
+    analysis_PWP_Gap_Time_Cox_Model(
+      matched_data_file = matched_data_files[[group]],
+      event_data_file   = analysis$event_data_file,
+      event_date_col    = analysis$event_date_col,
+      dedup_by_day      = analysis$dedup_by_day,
+      comparator_group  = group,
+      target_drug       = target_drug,
+      period_name       = pwp_period_name,
+      bgn_win           = pwp_bgn_win,
+      end_win           = pwp_end_win,
+      dep_var           = analysis$dep_var,
+      covariates        = analysis$covariates,
+      output_file       = result_file
+    )
+
+    pwp_result_files <- c(pwp_result_files, result_file)
+
+    render(
+      input       = "report_PWP_Gap_Time_Cox_Model.Rmd",
+      output_file = paste0("Reports/report_PWP-", target_drug, "Vs", group,
+                           "-", analysis$dep_var, ".html"),
+      params = list(
+        result_file      = result_file,
+        target_drug      = target_drug,
+        comparator_group = group,
+        dep_var          = analysis$dep_var
+      ),
+      envir = new.env()
+    )
+  }
+}
+
+render(
+  input       = "report_PWP_Summary.Rmd",
+  output_file = paste0("Reports/report_PWP_Summary-", target_drug, ".html"),
+  params = list(
+    result_files = pwp_result_files,
+    target_drug  = target_drug
+  ),
+  envir = new.env()
+)
+gc()

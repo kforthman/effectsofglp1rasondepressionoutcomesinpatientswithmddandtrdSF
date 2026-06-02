@@ -33,12 +33,8 @@ define_before_diagnosis_ids <- function(index_drug_record, diagnosis_timeline){
 get_Diagnosis_Timeline <- function(
     all_groups,
     all_diagnoses,
-    nontreat_data_filename,
-    output_filename
+    index_dataset
 ) {
-  
-  loaded_var <- load(nontreat_data_filename) # restores named variable
-  index_dataset <- get(loaded_var[1])
   
   all.data <- index_dataset %>% dplyr::select(PatientDurableKey) %>% distinct()
   for(i in 1:length(all_diagnoses)){
@@ -58,6 +54,9 @@ get_Diagnosis_Timeline <- function(
     }
   }
   
-  diagnosis_timeline_data <- all.data
-  save(diagnosis_timeline_data, file = output_filename)
+  return(
+    list(
+      diagnosis_timeline_data = all.data
+      )
+    )
 }

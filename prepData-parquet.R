@@ -272,18 +272,18 @@ for(batch_num in 1:n_patient_partitions){
     filter(batch_number == batch_num) %>%
     collect() %>%
     mutate(batch_number = batch_num)
-  
+
   if(nrow(med_index_table) == 0){
     warning(str_glue("Table med_index_table is empty for batch {batch_num}"))
     }
-  
+
   write_dataset(
     med_index_table,
     path = "Parquet_batched_prepped/med_index_table",
     format = "parquet",
     partitioning = "batch_number"
   )
-  
+
   # diagnosis table
   diag_table <- open_dataset("Parquet_batched/diag_table") %>%
     filter(batch_number == batch_num) %>%
@@ -298,18 +298,18 @@ for(batch_num in 1:n_patient_partitions){
                               pull(column)
                     ))) %>%
     mutate(batch_number = batch_num)
-  
+
   if(nrow(diag_table) == 0){
     warning(str_glue("Table diag_table is empty for batch {batch_num}"))
   }
-  
+
   write_dataset(
     diag_table,
     path = "Parquet_batched_prepped/diag_table",
     format = "parquet",
     partitioning = "batch_number"
   )
-  
+
   # Patients with MDD, no Bipolar Disorder, no Schizophrenia
   mdd_data <- open_dataset("Parquet_batched/mdd_data") %>%
     filter(batch_number == batch_num) %>%
@@ -331,9 +331,9 @@ for(batch_num in 1:n_patient_partitions){
     Sex_male = Sex == "Male",
     Age = time_length(interval(BirthDate, data_pull_date), "years")
     ) %>%
-    filter(Sex %in% c("Male", "Female") & 
-             !is.na(Sex) & 
-             !is.na(Race_Ethnicity) & 
+    filter(Sex %in% c("Male", "Female") &
+             !is.na(Sex) &
+             !is.na(Race_Ethnicity) &
              meets_diagnosis_eligibility_criteria
     ) %>%
     left_join(diag_table,
@@ -356,22 +356,22 @@ for(batch_num in 1:n_patient_partitions){
                   ~ if_else(is.na(.), FALSE, TRUE),
                   .names = "{sub('_Index$', '_Use', .col)}")) %>%
     mutate(batch_number = batch_num)
-  
+
   if(nrow(mdd_data) == 0){
     warning(str_glue("Table mdd_data is empty for batch {batch_num}"))
   }
-  
+
   write_dataset(
     mdd_data,
     path = "Parquet_batched_prepped/mdd_data",
     format = "parquet",
     partitioning = "batch_number"
   )
-  
+
   rm(diag_table)
   rm(med_index_table)
   gc()
-  
+
   # DTE cohort data
   dte_cohort_data <- open_dataset("Parquet_batched/dte_cohort_data") %>%
     filter(batch_number == batch_num) %>%
@@ -379,44 +379,44 @@ for(batch_num in 1:n_patient_partitions){
     left_join(mdd_data,
               by = "PatientDurableKey") %>%
     filter(meets_diagnosis_eligibility_criteria)
-  
+
   for(i in 1:length(all_drugs)){
     this_drug <-  all_drugs[i]
-    
+
     var_name_index <- paste0(this_drug, "_Index")
     var_name_age_at_index_years <- paste0(this_drug, "_age_at_index_years")
     var_name_mdd_to_index_days <- paste0(this_drug, "_mdd_to_index_days")
-    
-    dte_cohort_data <- dte_cohort_data %>% 
+
+    dte_cohort_data <- dte_cohort_data %>%
       mutate(
         !!sym(var_name_mdd_to_index_days) := time_length(interval(MDD_Index, !!sym(var_name_index)), "days"),
         !!sym(var_name_age_at_index_years) := time_length(interval(BirthDate, !!sym(var_name_index)), "years")
       )
   }
-  
-  dte_cohort_data <- dte_cohort_data %>% 
-    dplyr::select(PatientDurableKey, 
-                  meets_diagnosis_eligibility_criteria, 
-                  MDD_Index, 
-                  BirthDate, 
+
+  dte_cohort_data <- dte_cohort_data %>%
+    dplyr::select(PatientDurableKey,
+                  meets_diagnosis_eligibility_criteria,
+                  MDD_Index,
+                  BirthDate,
                   sort(setdiff(names(.), c("PatientDurableKey", "meets_diagnosis_eligibility_criteria", "MDD_Index", "BirthDate")))
     ) %>%
     mutate(batch_number = batch_num)
-  
+
   if(nrow(dte_cohort_data) == 0){
     warning(str_glue("Table dte_cohort_data is empty for batch {batch_num}"))
   }
-  
+
   write_dataset(
     dte_cohort_data,
     path = "Parquet_batched_prepped/dte_cohort_data",
     format = "parquet",
     partitioning = "batch_number"
   )
-  
+
   rm(dte_cohort_data)
   gc()
-  
+
   # Nonswitch periods
   nonswitch_periods <- open_dataset("Parquet_batched/nonswitch_periods") %>%
     filter(batch_number == batch_num) %>%
@@ -431,65 +431,67 @@ for(batch_num in 1:n_patient_partitions){
       tfe_at_index_end = floor(time_length(interval(MDD_Index, at_12_months_before_end_date), "days")),
     ) %>%
     mutate(batch_number = batch_num)
-  
+
   if(nrow(nonswitch_periods) == 0){
     warning(str_glue("Table nonswitch_periods is empty for batch {batch_num}"))
   }
-  
+
   write_dataset(
     nonswitch_periods,
     path = "Parquet_batched_prepped/nonswitch_periods",
     format = "parquet",
     partitioning = "batch_number"
   )
-  
+
   rm(nonswitch_periods)
   rm(mdd_data)
   gc()
-  
+
   # Psych procedures table
   psych_proc <- open_dataset("Parquet_batched/psych_proc") %>%
     filter(batch_number == batch_num) %>%
     collect() %>%
-    left_join(cpt_acuity %>% 
-                dplyr::select(source_concept_code, level), 
+    left_join(cpt_acuity %>%
+                dplyr::select(source_concept_code, level),
               by = join_by("CPTCode" == "source_concept_code")) %>%
     mutate(batch_number = batch_num)
-  
+
   if(nrow(psych_proc) == 0){
     warning(str_glue("Table psych_proc is empty for batch {batch_num}"))
   }
-  
+
   write_dataset(
     psych_proc,
     path = "Parquet_batched_prepped/psych_proc",
     format = "parquet",
     partitioning = "batch_number"
   )
-  
+
   rm(psych_proc)
   gc()
-  
+
   # Encounters table
   encounter_table <- open_dataset("Parquet_batched/encounter_table") %>%
     filter(batch_number == batch_num) %>%
     collect() %>%
+    filter(!is.na(StartVisit)) %>%
     mutate(StartVisit = as.Date(StartVisit),
            EndVisit   = as.Date(EndVisit)) %>%
+    mutate(EndVisit   = coalesce(EndVisit, StartVisit)) %>%
     mutate(EndVisit = pmax(EndVisit, StartVisit)) %>% # End visit should not come before start visit.
-    mutate(batch_number = batch_num) 
-  
+    mutate(batch_number = batch_num)
+
   if(nrow(encounter_table) == 0){
     warning(str_glue("Table encounter_table is empty for batch {batch_num}"))
   }
-  
+
   write_dataset(
     encounter_table,
     path = "Parquet_batched_prepped/encounter_table",
     format = "parquet",
     partitioning = "batch_number"
   )
-  
+
   rm(encounter_table)
   gc()
   
@@ -501,6 +503,10 @@ for(batch_num in 1:n_patient_partitions){
     apply_recode(med_recode, "antidepressant") %>%
     left_join(atc_drugs, by = join_by("SimpleGenericName" == "Name")) %>%
     filter(substr(ATC_code, 1, 4) == "N06A") %>%
+    dplyr::select(-ExposureLabel) %>%
+    mutate(DaysSupply = Quantity/DailyDose) %>%
+    dplyr::select(-Quantity, -DailyDose) %>%
+    filter(!is.na(MedicationStartDate)) %>%
     mutate(batch_number = batch_num)
   
   if(nrow(med_table_ad) == 0){
@@ -525,6 +531,10 @@ for(batch_num in 1:n_patient_partitions){
     apply_recode(med_recode, "antipsychotics") %>%
     left_join(atc_drugs, by = join_by("SimpleGenericName" == "Name")) %>%
     filter(substr(ATC_code, 1, 5) %in% c("N05AE", "N05AH", "N05AL", "N05AN", "N05AX") & ATC_code != "N05AH02") %>%
+    dplyr::select(-ExposureLabel) %>%
+    mutate(DaysSupply = Quantity/DailyDose) %>%
+    dplyr::select(-Quantity, -DailyDose) %>%
+    filter(!is.na(MedicationStartDate)) %>%
     mutate(batch_number = batch_num)
   
   if(nrow(med_table_ap) == 0){
@@ -549,6 +559,10 @@ for(batch_num in 1:n_patient_partitions){
     apply_recode(med_recode, "hydrochlorothiazide") %>%
     left_join(atc_drugs, by = join_by("SimpleGenericName" == "Name")) %>%
     filter(ATC_code == "C03AA03") %>%
+    dplyr::select(-ExposureLabel) %>%
+    mutate(DaysSupply = Quantity/DailyDose) %>%
+    dplyr::select(-Quantity, -DailyDose) %>%
+    filter(!is.na(MedicationStartDate)) %>%
     mutate(batch_number = batch_num)
   
   if(nrow(med_table_hctz) == 0){
@@ -575,6 +589,9 @@ for(batch_num in 1:n_patient_partitions){
     left_join(treatments_subclass_map, by = c("SimpleGenericName" = "canonical_name")) %>%
     rename(PharmaceuticalSubclass = "subclass") %>%
     dplyr::select(-ExposureLabel) %>%
+    mutate(DaysSupply = Quantity/DailyDose) %>%
+    dplyr::select(-Quantity, -DailyDose) %>%
+    filter(!is.na(MedicationStartDate)) %>%
     mutate(batch_number = batch_num)
   
   if(nrow(med_table_treat) == 0){

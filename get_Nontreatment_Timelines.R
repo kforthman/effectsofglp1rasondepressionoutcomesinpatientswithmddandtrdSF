@@ -20,24 +20,20 @@
 #   result_file            - Filename for results file
 
 
-get_Nontreatment_Timelines <- function(dte_cohort_data_file,
-                                                    nonswitch_periods_file,
-                                                    target_drug = "Semaglutide",
-                                                    nontreatment_group = "Nontreatment",
-                                                    mdd_data_file,
-                                                    nontreat_data_filename,
-                                                    result_file) {
-  load(dte_cohort_data_file)
-  load(nonswitch_periods_file)
-  load(mdd_data_file)
-
+get_Nontreatment_Timelines <- function(dte_cohort_data,
+                                       nonswitch_periods,
+                                       target_drug = "Semaglutide",
+                                       nontreatment_group = "Nontreatment",
+                                       mdd_data,
+                                       tfe_dist) {
+  
   col_TimelineCriteria <- paste0(target_drug,        "_meets_timeline_criteria")
   col_mdd_to_index    <- paste0(target_drug,        "_mdd_to_index_days")
   col_Index           <- paste0(target_drug,        "_Index")
   col_vs_Nontreat     <- paste0(target_drug,        "_Population_for_", target_drug, "_vs_", nontreatment_group)
   col_Nontreat_vs     <- paste0(nontreatment_group, "_Population_for_", target_drug, "_vs_", nontreatment_group)
   col_age_at_index    <- paste0(target_drug,        "_age_at_index_years")
-
+  
   col_nt_Index          <- paste0(nontreatment_group, "_Index")
   col_nt_mdd_to_index   <- paste0(nontreatment_group, "_mdd_to_index_days")
   col_nt_meets_criteria <- paste0(nontreatment_group, "_meets_timeline_criteria")
@@ -47,13 +43,6 @@ get_Nontreatment_Timelines <- function(dte_cohort_data_file,
   
   target_data <- dte_cohort_data %>%
     filter(!!sym(col_TimelineCriteria) == 1)
-  
-  # ── Distribution of time from eligibility to index ───────────────────────
-  
-  tfe_dist <- target_data %>%
-    count(!!sym(col_mdd_to_index)) %>%
-    rename(tfe_at_index_days = !!sym(col_mdd_to_index)) %>%
-    mutate(freq = n / sum(n))
   
   # ── Nontreatment eligible population ─────────────────────────────────────
   
@@ -84,35 +73,35 @@ get_Nontreatment_Timelines <- function(dte_cohort_data_file,
   
   # ── Build distribution comparison for KS test ────────────────────────────
   
-  tfe_dist_wide <- tfe_dist %>% dplyr::select(-freq)
-  colnames(tfe_dist_wide)[colnames(tfe_dist_wide) == "n"] <- target_drug
-  
-  dist_comp <- tfe_dist_wide %>%
-    left_join(
-      nonswitch_selected %>%
-        count(emu_tfe_at_index_days) %>%
-        rename(Comparison       = n,
-               tfe_at_index_days = emu_tfe_at_index_days),
-      by = join_by(tfe_at_index_days == tfe_at_index_days)
-    ) %>%
-    pivot_longer(all_of(c(target_drug, "Comparison")),
-                 names_to  = "group",
-                 values_to = "n",
-                 values_drop_na = TRUE)
-  
-  s_samp_tfe <- dist_comp %>%
-    filter(group == target_drug) %>%
-    dplyr::select(-group) %>%
-    uncount(weights = n) %>%
-    pull(tfe_at_index_days)
-  
-  c_samp_tfe <- dist_comp %>%
-    filter(group == "Comparison") %>%
-    dplyr::select(-group) %>%
-    uncount(weights = n) %>%
-    pull(tfe_at_index_days)
-  
-  ks_tfe <- ks.test(s_samp_tfe, c_samp_tfe)
+  # tfe_dist_wide <- tfe_dist %>% dplyr::select(-freq)
+  # colnames(tfe_dist_wide)[colnames(tfe_dist_wide) == "n"] <- target_drug
+  # 
+  # dist_comp <- tfe_dist_wide %>%
+  #   left_join(
+  #     nonswitch_selected %>%
+  #       count(emu_tfe_at_index_days) %>%
+  #       rename(Comparison       = n,
+  #              tfe_at_index_days = emu_tfe_at_index_days),
+  #     by = join_by(tfe_at_index_days == tfe_at_index_days)
+  #   ) %>%
+  #   pivot_longer(all_of(c(target_drug, "Comparison")),
+  #                names_to  = "group",
+  #                values_to = "n",
+  #                values_drop_na = TRUE)
+  # 
+  # s_samp_tfe <- dist_comp %>%
+  #   filter(group == target_drug) %>%
+  #   dplyr::select(-group) %>%
+  #   uncount(weights = n) %>%
+  #   pull(tfe_at_index_days)
+  # 
+  # c_samp_tfe <- dist_comp %>%
+  #   filter(group == "Comparison") %>%
+  #   dplyr::select(-group) %>%
+  #   uncount(weights = n) %>%
+  #   pull(tfe_at_index_days)
+  # 
+  # ks_tfe <- ks.test(s_samp_tfe, c_samp_tfe)
   
   # ── Finalize: assign nontreatment index dates ─────────────────────────────
   
@@ -137,7 +126,7 @@ get_Nontreatment_Timelines <- function(dte_cohort_data_file,
   # ── Add nontreatment-only patients as new rows ───────────────────────────
   # Patients in the nontreatment arm who never had any treatment drug
   # treatment episode are not in dte_cohort_data and must be added explicitly.
-
+  
   nontreat_only <- nonswitch_selected2 %>%
     filter(!PatientDurableKey %in% dte_cohort_data$PatientDurableKey) %>%
     distinct(PatientDurableKey, .keep_all = TRUE) %>%
@@ -149,22 +138,22 @@ get_Nontreatment_Timelines <- function(dte_cohort_data_file,
       !!col_Nontreat_vs        := TRUE,
       !!col_nt_age_at_index    := time_length(interval(BirthDate, !!sym(col_nt_Index)), "years")
     )
-
+  
   dte_cohort_data2 <- bind_rows(dte_cohort_data2, nontreat_only)
-
+  
   na_logical_cols <- dte_cohort_data2 %>%
     dplyr::select(where(is.logical)) %>%
     dplyr::select(where(~ any(is.na(.)))) %>%
     names()
-
+  
   if (length(na_logical_cols) > 0) {
     message("The following logical columns contain NA for nontreatment-only rows and will be set to FALSE:\n  ",
             paste(na_logical_cols, collapse = "\n  "))
   }
-
+  
   dte_cohort_data2 <- dte_cohort_data2 %>%
     mutate(across(where(is.logical), ~ replace_na(., FALSE)))
-
+  
   # ── Diagnostic dataset for reporting ─────────────────────────────────────
   
   dte_cohort_data3 <- dte_cohort_data2 %>%
@@ -184,40 +173,37 @@ get_Nontreatment_Timelines <- function(dte_cohort_data_file,
   
   # ── KS tests for final diagnostic distributions ──────────────────────────
   
-  s_samp_age <- dte_cohort_data3 %>% filter(treatment_name == target_drug)     %>% pull(age_at_index_years)
-  c_samp_age <- dte_cohort_data3 %>% filter(treatment_name == nontreatment_group) %>% pull(age_at_index_years)
-  ks_age     <- ks.test(s_samp_age, c_samp_age)
-  
-  s_samp_tdi <- dte_cohort_data3 %>% filter(treatment_name == target_drug)     %>% pull(time_diag_to_index_days)
-  c_samp_tdi <- dte_cohort_data3 %>% filter(treatment_name == nontreatment_group) %>% pull(time_diag_to_index_days)
-  ks_tdi     <- ks.test(s_samp_tdi, c_samp_tdi)
-  
-  s_samp_yr  <- dte_cohort_data3 %>% filter(treatment_name == target_drug)     %>% pull(index_year)
-  c_samp_yr  <- dte_cohort_data3 %>% filter(treatment_name == nontreatment_group) %>% pull(index_year)
-  ks_year    <- ks.test(s_samp_yr, c_samp_yr)
+  # s_samp_age <- dte_cohort_data3 %>% filter(treatment_name == target_drug)     %>% pull(age_at_index_years)
+  # c_samp_age <- dte_cohort_data3 %>% filter(treatment_name == nontreatment_group) %>% pull(age_at_index_years)
+  # ks_age     <- ks.test(s_samp_age, c_samp_age)
+  # 
+  # s_samp_tdi <- dte_cohort_data3 %>% filter(treatment_name == target_drug)     %>% pull(time_diag_to_index_days)
+  # c_samp_tdi <- dte_cohort_data3 %>% filter(treatment_name == nontreatment_group) %>% pull(time_diag_to_index_days)
+  # ks_tdi     <- ks.test(s_samp_tdi, c_samp_tdi)
+  # 
+  # s_samp_yr  <- dte_cohort_data3 %>% filter(treatment_name == target_drug)     %>% pull(index_year)
+  # c_samp_yr  <- dte_cohort_data3 %>% filter(treatment_name == nontreatment_group) %>% pull(index_year)
+  # ks_year    <- ks.test(s_samp_yr, c_samp_yr)
   
   # ── Return diagnostic results for reporting ───────────────────────────────
   
-  nontreat_result <- list(
-    dte_cohort_data2   = dte_cohort_data2,
-    target_drug        = target_drug,
-    n_sema             = n_sema,
-    n_comp             = n_comp,
-    match_ratio        = match_ratio,
-    tfe_dist           = tfe_dist,
-    nonswitch_selected  = nonswitch_selected,
-    nonswitch_selected2 = nonswitch_selected2,
-    dist_comp          = dist_comp,
-    ks_tfe             = ks_tfe,
-    dte_cohort_data3   = dte_cohort_data3,
-    ks_age             = ks_age,
-    ks_tdi             = ks_tdi,
-    ks_year            = ks_year,
-    uniqueness_check   = length(unique(nonswitch_selected$PatientDurableKey)) == nrow(nonswitch_selected)
+  return(
+    list(
+      dte_cohort_data2   = dte_cohort_data2,
+      # target_drug        = target_drug,
+      # n_sema             = n_sema,
+      # n_comp             = n_comp,
+      # match_ratio        = match_ratio,
+      # tfe_dist           = tfe_dist,
+      # nonswitch_selected  = nonswitch_selected,
+      # nonswitch_selected2 = nonswitch_selected2,
+      # dist_comp          = dist_comp,
+      # ks_tfe             = ks_tfe,
+      dte_cohort_data3   = dte_cohort_data3#,
+      # ks_age             = ks_age,
+      # ks_tdi             = ks_tdi,
+      # ks_year            = ks_year,
+      # uniqueness_check   = length(unique(nonswitch_selected$PatientDurableKey)) == nrow(nonswitch_selected)
+    )
   )
-  
-  this.data <- nontreat_result$dte_cohort_data2
-  save(this.data, file = nontreat_data_filename)
-  
-  save(nontreat_result, file = result_file)
 }

@@ -32,10 +32,7 @@ r <- nb_result
 ## Sample Size
 
 ```{r sample-size}
-r$dataset %>%
-  count(treatment_name) %>%
-  rename(Group = treatment_name, N = n) %>%
-  mutate(N = comma(N)) %>%
+r$sample_size %>%
   knitr::kable()
 ```
 

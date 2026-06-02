@@ -4,32 +4,31 @@
 # time period.
 #
 # Arguments:
-#   matched_data_file — Path to PS_Matched_Dataset-{group}.rds. Must restore
+#   matched_data_file - Path to PS_Matched_Dataset-{group}.rds. Must restore
 #                       `matched.data` with columns PatientDurableKey,
 #                       treatment, treatment_name, {target_drug}_Index,
 #                       {comparator_group}_Index, and covariate columns.
-#   all_outcomes      — Long-format outcomes data frame (from main.R) with
+#   all_outcomes      - Long-format outcomes data frame (from main.R) with
 #                       columns: PatientDurableKey, study_cohort, period,
 #                       var_name, value.
-#   period_info       — Data frame with columns: period, period_name,
+#   period_info       - Data frame with columns: period, period_name,
 #                       bgn_win, end_win. Used to map period codes (e.g. "d")
 #                       to full period labels.
-#   comparator_group  — Comparator group name (e.g. "Insulins").
-#   target_drug       — Target drug name (e.g. "Semaglutide").
-#   period_name       — Period code matching period_info$period_name (e.g. "d").
-#   dep_var           — Outcome variable base name, without period suffix
+#   comparator_group  - Comparator group name (e.g. "Insulins").
+#   target_drug       - Target drug name (e.g. "Semaglutide").
+#   period_name       - Period code matching period_info$period_name (e.g. "d").
+#   dep_var           - Outcome variable base name, without period suffix
 #                       (e.g. "n_psych_days" or "n_med_changes").
-#   covariates        — Character vector of covariate column names
+#   covariates        - Character vector of covariate column names
 #                       (e.g. c("race.ethnicity_White", "sex_Male",
 #                               "age_at_index_years")).
-#   output_file       — Path to save the result .rds file.
+#   output_file       - Path to save the result .rds file.
 #
 # Returns (invisibly):
 #   Named list with model objects, analysis dataset, and metadata.
 #   Also saved to output_file as `nb_result`.
 
-analysis_Negative_Binomial_Regression <- function(matched_data_file,
-                                                   all_outcomes,
+analysis_Negative_Binomial_Regression <- function(analysis_data,
                                                    comparator_group,
                                                    target_drug,
                                                    period_name,
@@ -37,29 +36,12 @@ analysis_Negative_Binomial_Regression <- function(matched_data_file,
                                                    covariates,
                                                    output_file) {
 
-  load(matched_data_file)   # restores matched.data
-
   study_cohort_label <- paste0(target_drug, " vs ", comparator_group)
-
-  matched.data <- matched.data %>%
-    mutate(
-      index_date   = if_else(
-        treatment_name == target_drug,
-        !!sym(paste0(target_drug,       "_Index")),
-        !!sym(paste0(comparator_group,  "_Index"))
-      ),
-      study_cohort = study_cohort_label
-    )
-
-  # Pivot all_outcomes to wide for this comparator, appending period_name suffix
-  outcomes_wide <- all_outcomes %>%
-    filter(study_cohort == study_cohort_label) %>%
-    filter(period == period_name) %>%
-    dplyr::select(-period) %>%
-    pivot_wider(names_from = "var_name", values_from = "value")
-
-  analysis_data <- matched.data %>%
-    left_join(outcomes_wide, by = c("PatientDurableKey", "study_cohort"))
+  
+  sample_size <- analysis_data %>%
+    count(treatment_name) %>%
+    rename(Group = treatment_name, N = n) %>%
+    mutate(N = comma(N))
 
   # Build formula: {dep_var}_{period_name} ~ treatment + covariate1 + ...
   formula_obj <- as.formula(
@@ -73,7 +55,7 @@ analysis_Negative_Binomial_Regression <- function(matched_data_file,
   nb_result <- list(
     m_pois             = m_pois,
     m1                 = m1,
-    dataset            = analysis_data,
+    sample_size        = sample_size,
     dep_var            = dep_var,
     comparator_group   = comparator_group,
     target_drug        = target_drug,

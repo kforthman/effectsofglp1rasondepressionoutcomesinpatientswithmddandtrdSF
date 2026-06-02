@@ -4,6 +4,9 @@
 # But don't ignore directories (needed so we can unignore files inside them)
 !*/
 
+# Do ignore parquet directories
+Parquet*/
+
 # Track only R scripts
 !*.R
 

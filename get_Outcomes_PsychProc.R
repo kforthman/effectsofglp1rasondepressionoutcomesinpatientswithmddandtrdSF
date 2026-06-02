@@ -23,15 +23,21 @@ get_Outcomes_PsychProc <- function(psych_proc_file,
                                    period_info,
                                    target_drug,
                                    comparator_groups,
+                                   batch_num,
                                    output_file) {
   
-  load(psych_proc_file)
+  psych_proc <- open_dataset(psych_proc_file) %>%
+    filter(batch_number == batch_num) %>%
+    collect()
+  
 
   results <- vector("list", length(comparator_groups) * nrow(period_info))
   k <- 0L
 
   for (group in comparator_groups) {
-    load(matched_data_files[[group]])   # restores matched.data
+    matched.data <- open_dataset(matched_data_files[[group]]) %>%
+      filter(batch_number == batch_num) %>%
+      collect()
 
     matched.data <- matched.data %>%
       mutate(index_date = if_else(
@@ -123,6 +129,13 @@ get_Outcomes_PsychProc <- function(psych_proc_file,
   }
 
   outcomes <- bind_rows(results)
-  save(outcomes, file = output_file)
-  invisible(outcomes)
+  # invisible(outcomes)
+  
+  write_dataset(
+    outcomes %>%
+      mutate(batch_number = batch_num),
+    path = output_file,
+    format = "parquet",
+    partitioning = "batch_number"
+  )
 }

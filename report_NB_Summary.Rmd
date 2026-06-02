@@ -26,8 +26,8 @@ rows <- lapply(params$result_files, function(f) {
   rr_hi <- exp(coefs["treatment", "Estimate"] + 1.96 * coefs["treatment", "Std. Error"])
   pval  <- coefs["treatment", "Pr(>|z|)"]
 
-  n_target     <- sum(r$dataset$treatment == 1L)
-  n_comparator <- sum(r$dataset$treatment == 0L)
+  n_target     <- as.numeric(gsub(",", "", r$sample_size$N[r$sample_size$Group == r$target_drug]))
+  n_comparator <- as.numeric(gsub(",", "", r$sample_size$N[r$sample_size$Group == r$comparator_group]))
 
   data.frame(
     Target              = r$target_drug,
