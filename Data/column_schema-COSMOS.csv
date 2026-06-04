@@ -231,3 +231,7 @@ med_index_table,SGLT2i_Index,date,%Y-%m-%d
 med_index_table,Antidepressant_Index,date,%Y-%m-%d
 med_index_table,Antipsychotic_Index,date,%Y-%m-%d
 med_index_table,Hydrochlorothiazide_Index,date,%Y-%m-%d
+suicide_table,PatientDurableKey,integer,
+suicide_table,Diagnosis,character,
+suicide_table,ICD10Code,character,
+suicide_table,DiagnosisDate,date,%Y-%m-%d

@@ -89,6 +89,7 @@ check_schema_table(col_schema, "mdd_data",          config, conn = conProjects)
 check_schema_table(col_schema, "dte_cohort_data",   config, conn = conProjects)
 check_schema_table(col_schema, "nonswitch_periods", config, conn = conProjects)
 check_schema_table(col_schema, "psych_proc",        config, conn = conProjects)
+check_schema_table(col_schema, "suicide_table",   config, conn = conProjects)
 check_schema_table(col_schema, "encounter_table",   config, conn = conProjects)
 check_schema_table(col_schema, "med_table_ad",      config, conn = conProjects)
 check_schema_table(col_schema, "med_table_ap",      config, conn = conProjects)
@@ -493,6 +494,27 @@ for(batch_num in 1:n_patient_partitions){
   )
 
   rm(encounter_table)
+  gc()
+  
+  # Suicide table
+  suicide_table <- open_dataset("Parquet_batched/suicide_table") %>%
+    filter(batch_number == batch_num) %>%
+    collect() %>%
+    filter(!is.na(DiagnosisDate)) %>%
+    mutate(batch_number = batch_num)
+  
+  if(nrow(suicide_table) == 0){
+    warning(str_glue("Table suicide_table is empty for batch {batch_num}"))
+  }
+  
+  write_dataset(
+    suicide_table,
+    path = "Parquet_batched_prepped/suicide_table",
+    format = "parquet",
+    partitioning = "batch_number"
+  )
+  
+  rm(suicide_table)
   gc()
   
   # Antidepressants

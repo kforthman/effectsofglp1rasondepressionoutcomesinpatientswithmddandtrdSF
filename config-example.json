@@ -45,6 +45,7 @@
     "mdd_data":           "dbo.PatientListSample",
     "dte_cohort_data":    "dbo.TreatmentGroup",
     "nonswitch_periods":  "dbo.NontreatmentGroupSample",
+    "suicide_table":      "Z:/Project D91201F/PatientDiagnoses_Suicide.csv",
     "psych_proc":         "Z:/Project D91201F/PatientOutcomes.csv",
     "encounter_table":    "Z:/Project D91201F/PatientEncounters.csv",
     "column_schema":      "Data/column_schema-COSMOS.csv",
