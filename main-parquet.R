@@ -694,9 +694,6 @@ for (group in comparator_groups) {
       covariates        = analysis$covariates,
       output_file       = result_file
     )
-    
-    rm(analysis_data)
-    gc()
 
     nb_result_files <- c(nb_result_files, result_file)
 
@@ -705,6 +702,7 @@ for (group in comparator_groups) {
       output_file = paste0("Reports/report_NB-", target_drug, "Vs", group,
                            "-", analysis$dep_var, ".html"),
       params = list(
+        analysis_data    = analysis_data,
         result_file      = result_file,
         target_drug      = target_drug,
         comparator_group = group,
@@ -712,6 +710,9 @@ for (group in comparator_groups) {
       ),
       envir = new.env()
     )
+    
+    rm(analysis_data)
+    gc()
   }
 }
 
