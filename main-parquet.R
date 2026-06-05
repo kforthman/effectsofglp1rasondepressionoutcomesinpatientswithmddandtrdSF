@@ -485,24 +485,28 @@ visits_file      <- "Parquet_batched_prepped/encounter_table"
 med_changes_file <- "Parquet_batched_OutputData/antidepressant_antipsychotic_consecutive_period"
 hc_med_file      <- "Parquet_batched_OutputData/hydrochlorothiazide_consecutive_instance"
 psych_proc_file  <- "Parquet_batched_prepped/psych_proc"
+diagnosis_file   <- "Parquet_batched_prepped/suicide_table"
 
 outcomes_files <- list(
   psych   = paste0("Parquet_batched_OutputData/outcomes_psych-",         target_drug),
   visits  = paste0("Parquet_batched_OutputData/outcomes_visits-",        target_drug),
   med     = paste0("Parquet_batched_OutputData/outcomes_med_changes-",   target_drug),
-  hc_med  = paste0("Parquet_batched_OutputData/outcomes_hc_med_changes-",target_drug)
+  hc_med  = paste0("Parquet_batched_OutputData/outcomes_hc_med_changes-",target_drug),
+  diag    = paste0("Parquet_batched_OutputData/outcomes_diagnosis-",     target_drug)
 )
 
 source("get_Outcomes_PsychProc.R")
 source("get_Outcomes_Visits.R")
 source("get_Outcomes_MedChanges.R")
 source("get_Outcomes_HCMedChanges.R")
+source("get_Outcomes_Diagnosis.R")
 
 outcome_tasks <- list(
   list(fn = get_Outcomes_PsychProc,   src_file = psych_proc_file,   out_file = outcomes_files$psych),
   list(fn = get_Outcomes_Visits,      src_file = visits_file,       out_file = outcomes_files$visits),
   list(fn = get_Outcomes_MedChanges,  src_file = med_changes_file,  out_file = outcomes_files$med),
-  list(fn = get_Outcomes_HCMedChanges,src_file = hc_med_file,       out_file = outcomes_files$hc_med)
+  list(fn = get_Outcomes_HCMedChanges,src_file = hc_med_file,       out_file = outcomes_files$hc_med),
+  list(fn = get_Outcomes_Diagnosis   ,src_file = diagnosis_file,    out_file = outcomes_files$diag)
 )
 
 n_workers <- min(length(outcome_tasks), max(1L, detectCores(logical = TRUE) - 1L))
@@ -522,7 +526,8 @@ for(batch_num in 1:n_patient_partitions){
                   "get_Outcomes_PsychProc",
                   "get_Outcomes_Visits",
                   "get_Outcomes_MedChanges",
-                  "get_Outcomes_HCMedChanges"
+                  "get_Outcomes_HCMedChanges",
+                  "get_Outcomes_Diagnosis"
     )
   ) %dopar% {
     task$fn(task$src_file, matched_data_files, period_info,
@@ -557,18 +562,27 @@ for(batch_num in 1:n_patient_partitions){
     filter(batch_number == batch_num) %>%
     collect()
   
+  outcomes_diagnosis <- open_dataset(outcomes_files$diag) %>%
+    filter(batch_number == batch_num) %>%
+    collect()
+  
   all_outcomes_wide <- outcomes_psych %>%
     left_join(outcomes_visits,
               by = c("PatientDurableKey", "study_cohort", "period")) %>%
   left_join(outcomes_med_changes,
             by = c("PatientDurableKey", "study_cohort", "period")) %>%
     left_join(outcomes_hc_med_changes,
-              by = c("PatientDurableKey", "study_cohort", "period"))
+              by = c("PatientDurableKey", "study_cohort", "period")) %>%
+    left_join(outcomes_diagnosis,
+              by = c("PatientDurableKey", "study_cohort", "period")) %>%
+    left_join(period_info %>% dplyr::select(period, period_alias), by = "period") %>%
+    relocate(period_alias, .after = "study_cohort") %>%
+    dplyr::select(-period, -starts_with("batch_number"))
   
   all_outcomes <- all_outcomes_wide %>%
     pivot_longer(4:ncol(.), names_to = "var_name", values_to = "value") %>%
     mutate(
-      period       = factor(period,       levels = period_info$period),
+      period_alias = factor(period_alias, levels = period_info$period_alias),
       study_cohort = factor(study_cohort, levels = paste0(target_drug, " vs ", comparator_groups)),
       var_name     = factor(var_name)
     )
@@ -578,7 +592,7 @@ for(batch_num in 1:n_patient_partitions){
       mutate(batch_number = batch_num),
     path = paste0("Parquet_batched_OutputData/all_outcomes-", target_drug),
     format = "parquet",
-    partitioning = c("study_cohort", "var_name", "period", "batch_number")
+    partitioning = c("study_cohort", "var_name", "period_alias", "batch_number")
   )
   gc()
 }
@@ -603,12 +617,36 @@ matched_data_files <- setNames(
 
 nb_analyses <- list(
   list(dep_var    = "n_psych_days",
+       period     = "6to0m",
        covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")),
   list(dep_var    = "n_med_changes",
+       period     = "6to0m",
+       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")),
+  list(dep_var    = "n_Intentional_Self_Harm_diagnoses",
+       period     = "6to0m",
+       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")),
+  list(dep_var    = "n_Suicidal_Ideation_diagnoses",
+       period     = "6to0m",
+       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")),
+  list(dep_var    = "n_Suicide_Attempt_diagnoses",
+       period     = "6to0m",
+       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")),
+  list(dep_var    = "n_psych_days",
+       period     = "15dto12m",
+       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")),
+  list(dep_var    = "n_med_changes",
+       period     = "15dto12m",
+       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")),
+  list(dep_var    = "n_Intentional_Self_Harm_diagnoses",
+       period     = "15dto12m",
+       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")),
+  list(dep_var    = "n_Suicidal_Ideation_diagnoses",
+       period     = "15dto12m",
+       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")),
+  list(dep_var    = "n_Suicide_Attempt_diagnoses",
+       period     = "15dto12m",
        covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years"))
 )
-
-nb_period_name <- "15 days-12 months after index"
 
 nb_result_files <- character(0)
 
@@ -616,18 +654,20 @@ for (group in comparator_groups) {
   for (analysis in nb_analyses) {
     result_file <- paste0(
       "OutputData/nb_result-", target_drug, "Vs", group,
-      "-", analysis$dep_var, "-period", nb_period_name, ".rds"
+      "-", analysis$dep_var, "-period", analysis$period, ".rds"
     )
+    
+    period_name <- period_info$period[period_info$period_alias == analysis$period]
 
     message("Fitting NB model: ", target_drug, " vs ", group,
-            " | ", analysis$dep_var, " | period ", nb_period_name)
+            " | ", analysis$dep_var, " | period ", period_name)
     
     study_cohort_label <- paste0(target_drug, " vs ", group)
     
     ds_connect <- open_dataset(paste0("Parquet_batched_OutputData/all_outcomes-", target_drug))
     this_outcome <- ds_connect %>%
       filter(study_cohort == study_cohort_label,
-             period == nb_period_name,
+             period_alias == analysis$period,
              var_name == analysis$dep_var) %>%
       dplyr::select(c("PatientDurableKey", "var_name", "value")) %>% 
       collect() %>%
@@ -649,7 +689,7 @@ for (group in comparator_groups) {
       analysis_data     = analysis_data,
       comparator_group  = group,
       target_drug       = target_drug,
-      period_name       = nb_period_name,
+      period_name       = period_name,
       dep_var           = analysis$dep_var,
       covariates        = analysis$covariates,
       output_file       = result_file
