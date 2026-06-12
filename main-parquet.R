@@ -569,8 +569,8 @@ for(batch_num in 1:n_patient_partitions){
   all_outcomes_wide <- outcomes_psych %>%
     left_join(outcomes_visits,
               by = c("PatientDurableKey", "study_cohort", "period")) %>%
-  left_join(outcomes_med_changes,
-            by = c("PatientDurableKey", "study_cohort", "period")) %>%
+    left_join(outcomes_med_changes,
+              by = c("PatientDurableKey", "study_cohort", "period")) %>%
     left_join(outcomes_hc_med_changes,
               by = c("PatientDurableKey", "study_cohort", "period")) %>%
     left_join(outcomes_diagnosis,
@@ -615,50 +615,39 @@ matched_data_files <- setNames(
   comparator_groups
 )
 
-nb_analyses <- list(
-  list(dep_var    = "n_psych_days",
-       period     = "6to0m",
-       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")),
-  list(dep_var    = "n_med_changes",
-       period     = "6to0m",
-       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")),
-  list(dep_var    = "n_Intentional_Self_Harm_diagnoses",
-       period     = "6to0m",
-       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")),
-  list(dep_var    = "n_Suicidal_Ideation_diagnoses",
-       period     = "6to0m",
-       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")),
-  list(dep_var    = "n_Suicide_Attempt_diagnoses",
-       period     = "6to0m",
-       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")),
-  list(dep_var    = "n_psych_days",
-       period     = "15dto12m",
-       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")),
-  list(dep_var    = "n_med_changes",
-       period     = "15dto12m",
-       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")),
-  list(dep_var    = "n_Intentional_Self_Harm_diagnoses",
-       period     = "15dto12m",
-       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")),
-  list(dep_var    = "n_Suicidal_Ideation_diagnoses",
-       period     = "15dto12m",
-       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")),
-  list(dep_var    = "n_Suicide_Attempt_diagnoses",
-       period     = "15dto12m",
-       covariates = c("Race_Ethnicity_white", "Sex_male", "age_at_index_years"))
-)
+all_outcomes <- c("n_psych_days", "n_med_changes", "n_Intentional_Self_Harm_diagnoses",
+                  "n_Suicidal_Ideation_diagnoses", "n_Suicide_Attempt_diagnoses")
+
+covariates <- c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")
+
+nb_analyses <- list()
+i <- 1
+for(period in period_info$period_alias){
+  for(dep_var in all_outcomes){
+      nb_analyses[[i]] <- list(dep_var = dep_var,
+                               period = period,
+                               covariates = covariates
+                               )
+      i <- i+1
+  }
+}
 
 nb_result_files <- character(0)
 
 for (group in comparator_groups) {
   for (analysis in nb_analyses) {
+    
+    result_suffix <- paste0(target_drug, "Vs", group,
+                            "-", analysis$dep_var, 
+                            "-period", analysis$period)
+    
     result_file <- paste0(
-      "OutputData/nb_result-", target_drug, "Vs", group,
-      "-", analysis$dep_var, "-period", analysis$period, ".rds"
+      "OutputData/nb_result-", result_suffix, 
+      ".rds"
     )
     
     period_name <- period_info$period[period_info$period_alias == analysis$period]
-
+    
     message("Fitting NB model: ", target_drug, " vs ", group,
             " | ", analysis$dep_var, " | period ", period_name)
     
@@ -694,13 +683,12 @@ for (group in comparator_groups) {
       covariates        = analysis$covariates,
       output_file       = result_file
     )
-
+    
     nb_result_files <- c(nb_result_files, result_file)
-
+    
     render(
       input       = "report_Negative_Binomial_Regression.Rmd",
-      output_file = paste0("Reports/report_NB-", target_drug, "Vs", group,
-                           "-", analysis$dep_var, ".html"),
+      output_file = paste0("Reports/report_NB-", result_suffix, ".html"),
       params = list(
         analysis_data    = analysis_data,
         result_file      = result_file,
@@ -766,10 +754,10 @@ for (group in comparator_groups) {
       "OutputData/pwp_result-", target_drug, "Vs", group,
       "-", analysis$dep_var, "-period", pwp_period_name, ".rds"
     )
-
+    
     message("Fitting PWP model: ", target_drug, " vs ", group,
             " | ", analysis$dep_var, " | period ", pwp_period_name)
-
+    
     analysis_PWP_Gap_Time_Cox_Model(
       matched_data_file = matched_data_files[[group]],
       event_data_file   = analysis$event_data_file,
@@ -784,9 +772,9 @@ for (group in comparator_groups) {
       covariates        = analysis$covariates,
       output_file       = result_file
     )
-
+    
     pwp_result_files <- c(pwp_result_files, result_file)
-
+    
     render(
       input       = "report_PWP_Gap_Time_Cox_Model.Rmd",
       output_file = paste0("Reports/report_PWP-", target_drug, "Vs", group,

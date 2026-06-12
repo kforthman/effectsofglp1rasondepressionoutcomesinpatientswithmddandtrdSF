@@ -1,6 +1,16 @@
 period,period_alias,bgn_win,end_win
 "6-0 months before index","6to0m",-180,0
+"3-0 months before index","3to0m",-90,0
+"0 days-3 months after index","0dto3m",0,90
+"0 days-6 months after index","0dto6m",0,180
+"0 days-12 months after index","0dto12m",0,360
+"8 days-3 months after index","8dto3m",8,90
+"8 days-6 months after index","8dto6m",8,180
+"8 days-12 months after index","8dto12m",8,360
 "15 days-3 months after index","15dto3m",15,90
 "15 days-6 months after index","15dto6m",15,180
 "15 days-12 months after index","15dto12m",15,360
+"31 days-3 months after index","31dto3m",31,90
+"31 days-6 months after index","31dto6m",31,180
+"31 days-12 months after index","31dto12m",31,360
 "6-12 months after index","6to12m",180,360
