@@ -500,3 +500,71 @@ summarize_strata <- function(emm_contrast, mod_var, digits = 2) {
                 cs$ratio[j], cs$asymp.LCL[j], cs$asymp.UCL[j], cs$p.value[j]))
   }
 }
+
+stat_smd <- function(var, treat, data) {
+  z <- data[[treat]]
+  x <- data[[var]]
+  xT <- x[z == 1]
+  xC <- x[z == 0]
+  m0 <- mean(xC)
+  m1 <- mean(xT)
+  s_pooled <- sqrt((sd(xC)^2 + sd(xT)^2) / 2)
+  return((m1 - m0) / s_pooled)
+}
+
+stat_pval <- function(var, treat, data) {
+  z <- data[[treat]]
+  x <- data[[var]]
+  xT <- x[z == 1]
+  xC <- x[z == 0]
+  if (is.numeric(x)) {
+    test_obj <- try(t.test(xT, xC), silent = TRUE)
+    if (inherits(test_obj, "htest")) test_obj$p.value else NA_real_
+  } else {
+    tab     <- table(x, z)
+    chi_obj <- try(chisq.test(tab, correct = FALSE), silent = TRUE)
+    if (inherits(chi_obj, "htest") && all(chi_obj$expected >= 5)) {
+      chi_obj$p.value
+    } else {
+      fish_obj <- try(fisher.test(tab), silent = TRUE)
+      if (inherits(fish_obj, "htest")) fish_obj$p.value else NA_real_
+    }
+  }
+}
+
+std_diff <- function(var, treat, data) {
+  z <- data[[treat]]
+  x <- data[[var]]
+  xT <- x[z == 1]
+  xC <- x[z == 0]
+  if (is.numeric(x)) {
+    s_pooled <- sqrt((sd(xT, na.rm = TRUE)^2 + sd(xC, na.rm = TRUE)^2) / 2)
+    if (s_pooled == 0) return(NA_real_)
+    return((mean(xT, na.rm = TRUE) - mean(xC, na.rm = TRUE)) / s_pooled)
+  } else {
+    pT     <- mean(as.numeric(xT == levels(x)[2]), na.rm = TRUE)
+    pC     <- mean(as.numeric(xC == levels(x)[2]), na.rm = TRUE)
+    p_pool <- (pT * length(xT) + pC * length(xC)) / (length(xT) + length(xC))
+    denom  <- sqrt(p_pool * (1 - p_pool))
+    if (denom == 0) return(NA_real_)
+    return((pT - pC) / denom)
+  }
+}
+
+stat_ks <- function(var, treat, data) {
+  z <- data[[treat]]
+  x <- data[[var]]
+  xT <- x[z == 1]
+  xC <- x[z == 0]
+  if (is.numeric(x)) {
+    ks_obj <- try(suppressWarnings(ks.test(xT, xC)), silent = TRUE)
+  } else {
+    ks_obj <- try(suppressWarnings(ks.test(as.numeric(factor(xT)),
+                                           as.numeric(factor(xC)))), silent = TRUE)
+  }
+  if (inherits(ks_obj, "htest")) {
+    list(ks_stat = as.numeric(ks_obj$statistic), ks_pval = ks_obj$p.value)
+  } else {
+    list(ks_stat = NA_real_, ks_pval = NA_real_)
+  }
+}

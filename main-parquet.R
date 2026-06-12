@@ -23,6 +23,9 @@ library(lubridate)
 library(patchwork)
 library(arrow)
 library(dplyr)
+source("../CBPSlite.R")
+
+source("helper_functions.R")
 
 config <- fromJSON("config-FullSample.json")
 
@@ -699,6 +702,126 @@ for (group in comparator_groups) {
       ),
       envir = new.env()
     )
+    
+    rm(analysis_data)
+    gc()
+  }
+}
+
+render(
+  input       = "report_NB_Summary.Rmd",
+  output_file = paste0("Reports/report_NB_Summary-", target_drug, ".html"),
+  params = list(
+    result_files = nb_result_files,
+    target_drug  = target_drug
+  ),
+  envir = new.env()
+)
+gc()
+
+# -- Negative Binomial Regression analyses with CBPS -----------------------------------------
+
+source("analysis_Propensity_Scoring_Variable_Selection.R")
+
+matched_data_files <- setNames(
+  paste0("Parquet_batched_OutputData/Unmatched_Dataset_", comparator_groups),
+  comparator_groups
+)
+
+all_outcomes <- c("n_psych_days", "n_med_changes", "n_Intentional_Self_Harm_diagnoses",
+                  "n_Suicidal_Ideation_diagnoses", "n_Suicide_Attempt_diagnoses", 
+                  "n_External_Causes_of_Morbidity_diagnoses")
+
+nb_analyses <- list()
+i <- 1
+for(period in period_info$period_alias){
+  for(dep_var in all_outcomes){
+    nb_analyses[[i]] <- list(dep_var = dep_var,
+                             period = period
+    )
+    i <- i+1
+  }
+}
+
+nb_result_files <- character(0)
+
+for (group in comparator_groups) {
+  for (analysis in nb_analyses) {
+    
+    result_suffix <- paste0(target_drug, "Vs", group,
+                            "-", analysis$dep_var, 
+                            "-period", analysis$period)
+    
+    dataset_file <- paste0(
+      "OutputData/cbps_nb_dataset-", result_suffix, 
+      ".rds"
+    )
+    
+    vs_result_file <- paste0(
+      "OutputData/cbps_nb_vs_result-", result_suffix, 
+      ".rds"
+    )
+    
+    result_file <- paste0(
+      "OutputData/cbps_nb_result-", result_suffix, 
+      ".rds"
+    )
+    
+    period_name <- period_info$period[period_info$period_alias == analysis$period]
+    
+    message("Fitting NB model: ", target_drug, " vs ", group,
+            " | ", analysis$dep_var, " | period ", period_name)
+    
+    study_cohort_label <- paste0(target_drug, " vs ", group)
+    
+    ds_connect <- open_dataset(paste0("Parquet_batched_OutputData/all_outcomes-", target_drug))
+    this_outcome <- ds_connect %>%
+      filter(study_cohort == study_cohort_label,
+             period_alias == analysis$period,
+             var_name == analysis$dep_var) %>%
+      dplyr::select(c("PatientDurableKey", "var_name", "value")) %>% 
+      collect() %>%
+      pivot_wider(names_from = "var_name", values_from = "value")
+    
+    ds_connect <- open_dataset(matched_data_files[[group]])
+    matched_data <- ds_connect %>% 
+      dplyr::select(c("PatientDurableKey", "treatment", "treatment_name", ps_covariates$var)) %>% 
+      collect()
+    
+    analysis_data <- matched_data %>%
+      left_join(this_outcome, by = c("PatientDurableKey"))
+    
+    rm(this_outcome)
+    rm(matched_data)
+    gc()
+    
+    vs_res <- analysis_Propensity_Scoring_Variable_Selection(
+      comparator_group = group,
+      target_drug = target_drug,
+      cohort_table = analysis_data,
+      covariates_table = ps_covariates
+    )
+    
+    analysis_data <- analysis_data %>%
+      mutate(across(all_of(vs_res$logical_vars), ~ as.numeric(.)))
+    
+    write_dataset(
+      analysis_data,
+      path = dataset_file,
+      format = "parquet",
+      partitioning = "batch_number"
+    )
+    
+    matchingFormula <- as.formula(paste0("treatment ~ ",
+                                         paste(vs_res$matchingVars.final$var, collapse = " + ")))
+    
+    res <- bigcbps(matchingFormula,
+                   outcome = analysis$dep_var,
+                   data = dataset_file,
+                   family = "nb")
+    
+    save(vs_res, file = vs_result_file)
+    save(res, file = result_file)
     
     rm(analysis_data)
     gc()
