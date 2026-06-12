@@ -485,7 +485,7 @@ visits_file      <- "Parquet_batched_prepped/encounter_table"
 med_changes_file <- "Parquet_batched_OutputData/antidepressant_antipsychotic_consecutive_period"
 hc_med_file      <- "Parquet_batched_OutputData/hydrochlorothiazide_consecutive_instance"
 psych_proc_file  <- "Parquet_batched_prepped/psych_proc"
-diagnosis_file   <- "Parquet_batched_prepped/suicide_table"
+diagnosis_file   <- "Parquet_batched_prepped/diagnosis_events_table"
 
 outcomes_files <- list(
   psych   = paste0("Parquet_batched_OutputData/outcomes_psych-",         target_drug),
@@ -616,7 +616,8 @@ matched_data_files <- setNames(
 )
 
 all_outcomes <- c("n_psych_days", "n_med_changes", "n_Intentional_Self_Harm_diagnoses",
-                  "n_Suicidal_Ideation_diagnoses", "n_Suicide_Attempt_diagnoses")
+                  "n_Suicidal_Ideation_diagnoses", "n_Suicide_Attempt_diagnoses", 
+                  "n_External_Causes_of_Morbidity_diagnoses")
 
 covariates <- c("Race_Ethnicity_white", "Sex_male", "age_at_index_years")
 

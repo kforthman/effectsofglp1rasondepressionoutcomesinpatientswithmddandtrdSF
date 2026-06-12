@@ -235,3 +235,7 @@ suicide_table,PatientDurableKey,integer,
 suicide_table,Diagnosis,character,
 suicide_table,ICD10Code,character,
 suicide_table,DiagnosisDate,date,%Y-%m-%d
+externalmorbidity_table,PatientDurableKey,integer,
+externalmorbidity_table,Diagnosis,character,
+externalmorbidity_table,ICD10Code,character,
+externalmorbidity_table,DiagnosisDate,date,%Y-%m-%d

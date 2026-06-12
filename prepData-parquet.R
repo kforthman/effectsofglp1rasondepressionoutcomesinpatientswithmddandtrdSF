@@ -90,6 +90,7 @@ check_schema_table(col_schema, "dte_cohort_data",   config, conn = conProjects)
 check_schema_table(col_schema, "nonswitch_periods", config, conn = conProjects)
 check_schema_table(col_schema, "psych_proc",        config, conn = conProjects)
 check_schema_table(col_schema, "suicide_table",   config, conn = conProjects)
+check_schema_table(col_schema, "externalmorbidity_table",   config, conn = conProjects)
 check_schema_table(col_schema, "encounter_table",   config, conn = conProjects)
 check_schema_table(col_schema, "med_table_ad",      config, conn = conProjects)
 check_schema_table(col_schema, "med_table_ap",      config, conn = conProjects)
@@ -514,7 +515,41 @@ for(batch_num in 1:n_patient_partitions){
     partitioning = "batch_number"
   )
   
+  # External causes of morbidity table
+  externalmorbidity_table <- open_dataset("Parquet_batched/externalmorbidity_table") %>%
+    filter(batch_number == batch_num) %>%
+    collect() %>%
+    filter(!is.na(DiagnosisDate)) %>%
+    mutate(batch_number = batch_num)
+  
+  if(nrow(externalmorbidity_table) == 0){
+    warning(str_glue("Table externalmorbidity_table is empty for batch {batch_num}"))
+  }
+  
+  write_dataset(
+    externalmorbidity_table,
+    path = "Parquet_batched_prepped/externalmorbidity_table",
+    format = "parquet",
+    partitioning = "batch_number"
+  )
+  
+  # Combined diagnosis events table
+  
+  diagnosis_events_table <- rbind(suicide_table, 
+                                  externalmorbidity_table %>%
+                                    mutate(Diagnosis = "External_Causes_of_Morbidity")
+                                  )
+  
+  write_dataset(
+    diagnosis_events_table,
+    path = "Parquet_batched_prepped/diagnosis_events_table",
+    format = "parquet",
+    partitioning = "batch_number"
+  )
+  
+  rm(diagnosis_events_table)
   rm(suicide_table)
+  rm(externalmorbidity_table)
   gc()
   
   # Antidepressants
