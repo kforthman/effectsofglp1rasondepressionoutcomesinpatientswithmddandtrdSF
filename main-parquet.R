@@ -785,7 +785,7 @@ for (group in comparator_groups) {
     
     ds_connect <- open_dataset(matched_data_files[[group]])
     matched_data <- ds_connect %>% 
-      dplyr::select(c("PatientDurableKey", "treatment", "treatment_name", ps_covariates$var)) %>% 
+      dplyr::select(c("PatientDurableKey", "treatment", "treatment_name", ps_covariates$var, "batch_number")) %>% 
       collect()
     
     analysis_data <- matched_data %>%
