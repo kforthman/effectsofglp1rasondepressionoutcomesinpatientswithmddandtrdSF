@@ -226,6 +226,8 @@ tfe_dist <- open_dataset("Parquet_batched_prepped/dte_cohort_data") %>%
   rename(tfe_at_index_days = !!sym(col_mdd_to_index)) %>%
   mutate(freq = n / sum(n))
 
+save(tfe_dist, file = paste0("OutputData/", target_drug, "_tfe_dist.rds"))
+
 for(batch_num in 1:n_patient_partitions){
   
   message("Processing batch ", batch_num, "...")
@@ -269,20 +271,7 @@ for(batch_num in 1:n_patient_partitions){
   
 }
 
-# # -- Render nontreatment timelines report ------------------------------------------
-# 
-# render(
-#   input       = "report_Nontreatment_Timelines.Rmd",
-#   output_file = paste0("Reports/report_Nontreatment_Timelines-", target_drug, ".html"),
-#   params      = list(
-#     target_drug        = target_drug,
-#     nontreatment_group = nontreatment_group,
-#     result_file        = paste0("OutputData/nontreatment_timelines_result-", target_drug, ".rds")
-#   ),
-#   envir = new.env()
-# )
-# gc()
-# 
+
 # # -- Render treatment overlap report -------------------------------------------
 # 
 # render(
@@ -494,6 +483,52 @@ for(batch_num in 1:n_patient_partitions){
     )
   }
 }
+
+# # -- Render nontreatment timelines report ------------------------------------------
+
+source("get_Nontreatment_Summary.R")
+
+ds_connect <- open_dataset(paste0("Parquet_batched_OutputData/Unmatched_Dataset_", nontreatment_group))
+
+dte_cohort_wNontreat_data <- ds_connect %>%
+  collect()
+
+load(file = paste0("OutputData/", target_drug, "_tfe_dist.rds"))
+
+n_sema <- open_dataset("Parquet_batched_prepped/dte_cohort_data") %>%
+  filter(!!sym(paste0(target_drug, "_Use"))) %>%
+  summarise(count = n())  %>%
+  collect() %>%
+  pull(count)
+
+n_comp <- open_dataset("Parquet_batched_prepped/nonswitch_periods") %>%
+  distinct(PatientDurableKey) %>%
+  summarise(count = n())  %>%
+  collect() %>%
+  pull(count)
+
+nontreat_result <- get_Nontreatment_Summary(
+  n_sema                    = n_sema,
+  n_comp                    = n_comp,
+  dte_cohort_wNontreat_data = dte_cohort_wNontreat_data,
+  target_drug               = target_drug,
+  nontreatment_group        = nontreatment_group,
+  tfe_dist                  = tfe_dist)
+
+save(nontreat_result, file = paste0("OutputData/nontreatment_summary-", target_drug, ".rds"))
+
+render(
+  input       = "report_Nontreatment_Timelines.Rmd",
+  output_file = paste0("Reports/report_Nontreatment_Timelines-", target_drug, ".html"),
+  params      = list(
+    summary_data       = nontreat_result,
+    data               = dte_cohort_wNontreat_data
+  ),
+  envir = new.env()
+)
+rm(dte_cohort_wNontreat_data)
+gc()
+
 
 # -- Render eligibility criteria report -------------------------------------------
 

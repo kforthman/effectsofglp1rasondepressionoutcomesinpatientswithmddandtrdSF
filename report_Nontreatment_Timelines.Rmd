@@ -1,5 +1,5 @@
 ---
-title: "Antidiabetic Nontreatment Timelines: `r params$target_drug` vs. `r params$nontreatment_group`"
+title: "Antidiabetic Nontreatment Timelines: `r params$summary_data$target_drug` vs. `r params$summary_data$nontreatment_group`"
 date: "`r Sys.Date()`"
 output:
   html_document:
@@ -9,9 +9,8 @@ output:
     theme: flatly
     df_print: kable
 params:
-  target_drug:        "Semaglutide"
-  nontreatment_group: "Nontreatment"
-  result_file:        "Data/nontreatment_timelines_result-Semaglutide.rds"
+  summary_data:       NULL
+  data:               NULL
 ---
 
 ```{r setup, include=FALSE}
@@ -19,9 +18,6 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 
 library(tidyverse)
 library(scales)
-
-load(params$result_file)
-r <- nontreat_result
 ```
 
 # Eligible Population Summary
@@ -29,11 +25,11 @@ r <- nontreat_result
 ```{r population-summary}
 cat(sprintf(
     "There are %s individuals eligible for the %s population and %s in the %s population. Match ratio of %d to 1.",
-    comma(r$n_comp),
-    params$nontreatment_group,
-    comma(r$n_sema),
-    r$target_drug,
-    r$match_ratio
+    comma(params$summary_data$n_comp),
+    params$summary_data$nontreatment_group,
+    comma(params$summary_data$n_sema),
+    params$summary_data$target_drug,
+    params$summary_data$match_ratio
 ))
 ```
 
@@ -41,14 +37,14 @@ cat(sprintf(
 
 # Treatment Group: Time from Eligibility to Index
 
-Distribution of days from MDD diagnosis to index date in the **`r params$target_drug`** group.
+Distribution of days from MDD diagnosis to index date in the **`r params$summary_data$target_drug`** group.
 
 ```{r tfe-dist-plot, fig.width=12, fig.height=5}
-ggplot(r$tfe_dist, aes(x = tfe_at_index_days, y = n)) +
+ggplot(params$summary_data$tfe_dist, aes(x = tfe_at_index_days, y = n)) +
     geom_bar(stat = "identity", fill = "salmon") +
     theme_minimal(base_size = 14) +
     labs(
-        title = paste0(r$target_drug, ": Time from MDD Diagnosis to Index Date"),
+        title = paste0(params$summary_data$target_drug, ": Time from MDD Diagnosis to Index Date"),
         x     = "Days from MDD Diagnosis to Index",
         y     = "Count"
     )
@@ -59,7 +55,7 @@ ggplot(r$tfe_dist, aes(x = tfe_at_index_days, y = n)) +
 ## TFE Distribution: Treatment vs. Comparison
 
 ```{r tfe-comparison-plot, fig.width=12, fig.height=5}
-ggplot(r$dist_comp, aes(x = tfe_at_index_days, y = n, fill = group)) +
+ggplot(params$summary_data$dist_comp, aes(x = tfe_at_index_days, y = n, fill = group)) +
     geom_bar(stat = "identity") +
     scale_fill_viridis_d(option = "plasma", end = 0.7) +
     theme_minimal(base_size = 14) +
@@ -74,7 +70,7 @@ ggplot(r$dist_comp, aes(x = tfe_at_index_days, y = n, fill = group)) +
 ## KS Test: TFE Distribution
 
 ```{r ks-tfe}
-print(r$ks_tfe)
+print(params$summary_data$ks_tfe)
 ```
 
 ---
@@ -84,7 +80,7 @@ print(r$ks_tfe)
 ## Age at Index
 
 ```{r age-plot, fig.width=12, fig.height=5}
-ggplot(r$dte_cohort_data3, aes(x = age_at_index_years)) +
+ggplot(params$data, aes(x = age_at_index_years)) +
     geom_histogram(aes(y = after_stat(density),
                        color = treatment_name,
                        fill  = treatment_name),
@@ -106,13 +102,13 @@ ggplot(r$dte_cohort_data3, aes(x = age_at_index_years)) +
 **KS test — age at index:**
 
 ```{r ks-age}
-print(r$ks_age)
+print(params$summary_data$ks_age)
 ```
 
 ## Time from Diagnosis to Index
 
 ```{r tdi-plot, fig.width=12, fig.height=5}
-ggplot(r$dte_cohort_data3, aes(x = time_diag_to_index_days)) +
+ggplot(params$data, aes(x = mdd_to_index_days)) +
     geom_histogram(aes(y = after_stat(density),
                        color = treatment_name,
                        fill  = treatment_name),
@@ -134,13 +130,13 @@ ggplot(r$dte_cohort_data3, aes(x = time_diag_to_index_days)) +
 **KS test — time from diagnosis to index:**
 
 ```{r ks-tdi}
-print(r$ks_tdi)
+print(params$summary_data$ks_tdi)
 ```
 
 ## Index Year
 
 ```{r year-plot, fig.width=12, fig.height=5}
-ggplot(r$dte_cohort_data3, aes(x = index_year)) +
+ggplot(params$data, aes(x = index_year)) +
     geom_histogram(aes(y = after_stat(density),
                        color = treatment_name,
                        fill  = treatment_name),
@@ -162,7 +158,7 @@ ggplot(r$dte_cohort_data3, aes(x = index_year)) +
 **KS test — index year:**
 
 ```{r ks-year}
-print(r$ks_year)
+print(params$summary_data$ks_year)
 ```
 
 ---
@@ -170,9 +166,9 @@ print(r$ks_year)
 # Data Integrity Check
 
 ```{r uniqueness-check}
-if (r$uniqueness_check) {
-    cat(sprintf("PASS: Each patient appears in exactly one selected %s period row.\n", params$nontreatment_group))
+if (params$summary_data$uniqueness_check) {
+    print(paste0("PASS: Each patient appears in exactly one selected ", params$nontreatment_group," period row."))
 } else {
-    cat(sprintf("WARNING: Some patients appear in more than one selected %s period row.\n", params$nontreatment_group))
+    print(paste0("WARNING: Some patients appear in more than one selected ", params$nontreatment_group," period row."))
 }
 ```
