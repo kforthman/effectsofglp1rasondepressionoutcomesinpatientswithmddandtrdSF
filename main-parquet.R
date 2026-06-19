@@ -328,26 +328,6 @@ for(batch_num in 1:n_patient_partitions){
   gc()
 }
 
-# # -- Render eligibility criteria report -------------------------------------------
-# 
-# render(
-#   input       = "report_Eligibility_Criteria.Rmd",
-#   output_file = paste0("Reports/report_Eligibility_Criteria-", target_drug, ".html"),
-#   params      = list(
-#     eligibility_inclusion_diagnoses = eligibility_inclusion_diagnoses,
-#     all_drugs                       = all_drugs,
-#     comparator_groups               = comparator_groups,
-#     var_name_to_pretty              = var_name_to_pretty,
-#     comparator_drugs                = comparator_drugs,
-#     target_drug                     = target_drug,
-#     diagnosis_timeline_filename     = "OutputData/data_DTE_DiagnosisTimelineVars.rds",
-#     nontreat_data_filename          = "OutputData/dte_cohort_wNontreat_data.rds",
-#     nontreatment_group              = nontreatment_group
-#   ),
-#   envir = new.env()
-# )
-# gc()
-# 
 # # -- Render propensity covariates report ------------------------------------------
 # 
 # render(
@@ -447,10 +427,17 @@ for(batch_num in 1:n_patient_partitions){
     varname_target_index     <- paste0(target_drug, "_Index")
     varname_comparator_index <- paste0(this_comparator, "_Index")
     
+    this_ds <- open_dataset("Parquet_batched_OutputData/data_DTE_DiagnosisTimelineVars") %>%
+      filter(batch_number == batch_num)
+    
+    diag_data <- this_ds %>% collect() %>%
+      mutate(false_col = FALSE)
+    
     this_ds <- open_dataset("Parquet_batched_OutputData/dte_cohort_wNontreat_data") %>%
       filter(batch_number == batch_num) %>%
       filter(!!sym(target_pop_colname) |
                !!sym(comparator_pop_colname))
+    
     nontreat_data <-  this_ds %>% collect() %>%
       mutate(treatment = ifelse(!!sym(target_pop_colname) == TRUE, 1, 0)) %>%
       mutate(treatment_name = ifelse(!!sym(target_pop_colname) == TRUE, target_drug, this_comparator)) %>%
@@ -463,8 +450,40 @@ for(batch_num in 1:n_patient_partitions){
       mutate(index = as.Date(ifelse(treatment,
                                     !!sym(varname_target_index),
                                     !!sym(varname_comparator_index))),
-             index_year = year(index)) %>% 
-      as.data.frame()
+             index_year = year(index)) %>%
+      left_join(diag_data, by = "PatientDurableKey")
+    
+    for (this_diag in eligibility_inclusion_diagnoses) {
+      new_col    <- paste0(this_diag, "_Before_Drug_Index")
+      target_col <- paste0(this_diag, "_Before_", target_drug, "_Index")
+      other_col  <- paste0(this_diag, "_Before_", this_comparator, "_Index")
+      
+      nontreat_data <- nontreat_data %>%
+        mutate(!!new_col := ifelse(!!sym(target_pop_colname),
+                                   !!sym(target_col), !!sym(other_col)))
+    }
+    
+    for (this_demo_drug in all_drugs) {
+      if (this_demo_drug == target_drug) {
+        target_col <- paste0(target_drug, "_Use")
+      } else {
+        target_col <- paste0(this_demo_drug, "_Overlaps_", target_drug, "_Index")
+      }
+      
+      if (this_demo_drug == this_comparator) {
+        other_col  <- paste0(this_demo_drug, "_Use")
+      } else if(this_comparator == nontreatment_group){
+        other_col <- "false_col"
+      } else {
+        other_col  <- paste0(this_demo_drug, "_Overlaps_", this_comparator, "_Index")
+      } 
+      
+      new_col <- paste0(this_demo_drug, "_Overlaps_Drug_Index")
+      
+      nontreat_data <- nontreat_data %>%
+        mutate(!!new_col := ifelse(!!sym(target_pop_colname),
+                                   !!sym(target_col), !!sym(other_col)))
+    }
     
     write_dataset(
       nontreat_data[seq_len(nrow(nontreat_data)), ] %>% # I have no idea why it has to be subsetted like this.
@@ -476,6 +495,28 @@ for(batch_num in 1:n_patient_partitions){
   }
 }
 
+# -- Render eligibility criteria report -------------------------------------------
+
+for (group in comparator_groups) {
+  ds_connect_data <- open_dataset(paste0("Parquet_batched_OutputData/Unmatched_Dataset_", group))
+  
+  all.data <- ds_connect_data %>%
+    collect()
+  
+  render(
+    input       = "report_Eligibility_Criteria.Rmd",
+    output_file = paste0("Reports/report_Eligibility_Criteria-", target_drug, "vs", group, ".html"),
+    params      = list(
+      eligibility_inclusion_diagnoses = eligibility_inclusion_diagnoses,
+      comparator                      = group,
+      var_name_to_pretty              = var_name_to_pretty,
+      target_drug                     = target_drug,
+      all.data                         = all.data
+    ),
+    envir = new.env()
+  )
+  gc()
+}
 
 # -- Compute outcomes --------------------------------------------------------------
 
@@ -753,8 +794,7 @@ for (group in comparator_groups) {
                             "-period", analysis$period)
     
     dataset_file <- paste0(
-      "OutputData/cbps_nb_dataset-", result_suffix, 
-      ".rds"
+      "OutputData/cbps_nb_dataset-", result_suffix
     )
     
     vs_result_file <- paste0(
