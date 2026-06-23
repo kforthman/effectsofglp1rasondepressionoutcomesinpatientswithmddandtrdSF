@@ -842,6 +842,8 @@ for (group in comparator_groups) {
       ".rds"
     )
     
+    if(file.exists(result_file)){next}
+    
     period_name <- period_info$period[period_info$period_alias == analysis$period]
     
     message("Fitting NB model: ", target_drug, " vs ", group,
@@ -903,16 +905,16 @@ for (group in comparator_groups) {
   }
 }
 
-render(
-  input       = "report_NB_Summary.Rmd",
-  output_file = paste0("Reports/report_NB_Summary-", target_drug, ".html"),
-  params = list(
-    result_files = nb_result_files,
-    target_drug  = target_drug
-  ),
-  envir = new.env()
-)
-gc()
+# render(
+#   input       = "report_NB_Summary.Rmd",
+#   output_file = paste0("Reports/report_NB_Summary-", target_drug, ".html"),
+#   params = list(
+#     result_files = nb_result_files,
+#     target_drug  = target_drug
+#   ),
+#   envir = new.env()
+# )
+# gc()
 
 # -- PWP Gap Time Cox Model analyses -----------------------------------------------
 
