@@ -867,7 +867,8 @@ matched_data_files <- setNames(
   comparator_groups
 )
 
-all_outcomes <- c("n_psych_days", "n_med_changes", "n_Intentional_Self_Harm_diagnoses",
+all_outcomes <- c(#"n_psych_days", "n_med_changes", 
+                  "n_Intentional_Self_Harm_diagnoses",
                   "n_Suicidal_Ideation_diagnoses", "n_Suicide_Attempt_diagnoses", 
                   "n_External_Causes_of_Morbidity_diagnoses")
 
@@ -884,8 +885,14 @@ for(period in period_info$period_alias){
 
 nb_result_files <- character(0)
 
+total_models <- length(comparator_groups) * length(nb_analyses)
+i <- 0
+
 for (group in comparator_groups) {
   for (analysis in nb_analyses) {
+
+    i <- i + 1
+    percent_complete <- percent(i/total_models, accuracy = 0.01)
     
     result_suffix <- paste0(target_drug, "Vs", group,
                             "-", analysis$dep_var, 
@@ -965,6 +972,8 @@ for (group in comparator_groups) {
     
     rm(analysis_data)
     gc()
+    
+    message(i, " of ", total_models, " complete (", percent_complete, ")")
   }
 }
 
