@@ -468,9 +468,9 @@ for(batch_num in 1:n_patient_partitions){
         "[20,200]" = ">20 years")
       )) %>%
       mutate(index_year_group = cut(index_year,
-                                             breaks = c(0,2010,2015,2020,2025,3000),
-                                             include.lowest = T,
-                                             right = F)) %>%
+                                    breaks = c(0,2010,2015,2020,2025,3000),
+                                    include.lowest = T,
+                                    right = F)) %>%
       mutate(index_year_group = plyr::revalue(index_year_group, c(
         "[0,2010)"     = "Before 2010",
         "[2010,2015)"  = "2010-2015",
@@ -767,11 +767,11 @@ nb_analyses <- list()
 i <- 1
 for(period in period_info$period_alias){
   for(dep_var in all_outcomes){
-      nb_analyses[[i]] <- list(dep_var = dep_var,
-                               period = period,
-                               covariates = covariates
-                               )
-      i <- i+1
+    nb_analyses[[i]] <- list(dep_var = dep_var,
+                             period = period,
+                             covariates = covariates
+    )
+    i <- i+1
   }
 }
 
@@ -868,9 +868,9 @@ matched_data_files <- setNames(
 )
 
 all_outcomes <- c(#"n_psych_days", "n_med_changes", 
-                  "n_Intentional_Self_Harm_diagnoses",
-                  "n_Suicidal_Ideation_diagnoses", "n_Suicide_Attempt_diagnoses", 
-                  "n_External_Causes_of_Morbidity_diagnoses")
+  "n_Intentional_Self_Harm_diagnoses",
+  "n_Suicidal_Ideation_diagnoses", "n_Suicide_Attempt_diagnoses", 
+  "n_External_Causes_of_Morbidity_diagnoses")
 
 nb_analyses <- list()
 i <- 1
@@ -890,7 +890,7 @@ i <- 0
 
 for (group in comparator_groups) {
   for (analysis in nb_analyses) {
-
+    
     i <- i + 1
     percent_complete <- percent(i/total_models, accuracy = 0.01)
     
@@ -912,7 +912,11 @@ for (group in comparator_groups) {
       ".rds"
     )
     
-    if(file.exists(result_file)){next}
+    if(file.exists(result_file)){
+      message("Skipping ", i, ", already complete.");
+      message(i, " of ", total_models, " complete (", percent_complete, ")");
+      next
+    }
     
     period_name <- period_info$period[period_info$period_alias == analysis$period]
     
