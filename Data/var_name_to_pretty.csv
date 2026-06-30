@@ -1,14 +1,20 @@
-﻿var_name,pretty_name,pretty_var_category
+var_name,pretty_name,pretty_var_category
 DPP4i,DPP-4i,Antidiabetics
+GLP1RA,GLP1-RA (excluding Semaglutide),Antidiabetics
 Insulins,Insulins,Antidiabetics
 Metformin,Metformin,Antidiabetics
 Semaglutide,Semaglutide,Antidiabetics
 SGLT2i,SGLT-2i,Antidiabetics
 SU,SU,Antidiabetics
 TZD,TZD,Antidiabetics
-GLP1RA,GLP1-RA (excluding Semaglutide),Antidiabetics
+Bariatric_Surgery,Bariatric Surgery,Cardiometabolic Conditions
+Diseases_of_the_Arteries_Artrioles_and_Capillaries,"Diseases of the Arteries, Atrioles, and Capillaries",Cardiometabolic Conditions
+T2DM_with_Complications,Type 2 Diabetes with Complications,Cardiometabolic Conditions
 Race_Ethnicity_white,White,Demographics
 Sex_male,Male,Demographics
+age_group_at_index,Age Group (at index),Demographics
+Race_Ethnicity,Race/Ethnicity,Demographics
+Sex,Sex,Demographics
 A1C_over_8p5,A1C over 8.5,Diagnostic Eligibility Criteria
 Chronic_Kidney_Disease,Chronic Kidney Disease,Diagnostic Eligibility Criteria
 Gastroparesis,Gastroparesis,Diagnostic Eligibility Criteria
@@ -29,9 +35,7 @@ AvgYearlyPatientPsychVisits,Average Yearly Psychiatric Visits,Health System Util
 age_at_index_years,Age at Index,Index Variables
 index_year,Index Year,Index Variables
 mdd_to_index_days,MDD to Index (days),Index Variables
-Bariatric_Surgery,Bariatric Surgery,Cardiometabolic Conditions
-Diseases_of_the_Arteries_Artrioles_and_Capillaries,"Diseases of the Arteries, Atrioles, and Capillaries",Cardiometabolic Conditions
-T2DM_with_Complications,Type 2 Diabetes with Complications,Cardiometabolic Conditions
+Nontreatment,Nontreatment,Nontreatment Group
 ADHD,ADHD,Psychiatric Comorbidities
 Agoraphobia,Agoraphobia,Psychiatric Comorbidities
 Anxiety_Disorder_NOS,Anxiety Disorder NOS,Psychiatric Comorbidities
@@ -51,4 +55,6 @@ Opioid_Dependence,Opioid Dependence,Substance Abuse and Dependence
 Sedative_Abuse,Sedative Abuse,Substance Abuse and Dependence
 Sedative_Dependence,Sedative Dependence,Substance Abuse and Dependence
 Tobacco_Use_Disorder,Tobacco Use Disorder,Substance Abuse and Dependence
-Nontreatment,Nontreatment,Nontreatment Group
+age_group_at_index_years,Age at Index,Index Variables
+index_year_group,Index Year,Index Variables
+mdd_to_index_group,MDD to Index (days),Index Variables

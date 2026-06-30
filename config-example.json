@@ -31,6 +31,7 @@
   },
   "files": {
     "var_name_to_pretty": "Data/var_name_to_pretty.csv",
+    "comp_vars":          "Data/table1_covariates.csv",
     "ps_covariates":      "Data/ps_covariates.csv",
     "atc_drugs":          "Data/Drug_ATC_Categories.csv",
     "drug_class":         "Data/DrugClasses.csv",

@@ -40,6 +40,7 @@ comparator_groups <- c(nontreatment_group, comparator_drugs)
 all_groups        <- c(target_drug, comparator_groups)
 
 var_name_to_pretty <- read.csv(config$files$var_name_to_pretty)
+comp_vars          <- read.csv(config$files$comp_vars)$var_name
 ps_covariates      <- read.csv(config$files$ps_covariates)
 
 atc_drugs <- read_csv(config$files$atc_drugs, 
@@ -427,7 +428,7 @@ for(batch_num in 1:n_patient_partitions){
       filter(!!sym(target_pop_colname) |
                !!sym(comparator_pop_colname))
     
-    nontreat_data <-  this_ds %>% collect() %>%
+    unmatched_data <-  this_ds %>% collect() %>%
       mutate(treatment = ifelse(!!sym(target_pop_colname) == TRUE, 1, 0)) %>%
       mutate(treatment_name = ifelse(!!sym(target_pop_colname) == TRUE, target_drug, this_comparator)) %>%
       mutate(age_at_index_years = ifelse(treatment,
@@ -440,6 +441,44 @@ for(batch_num in 1:n_patient_partitions){
                                     !!sym(varname_target_index),
                                     !!sym(varname_comparator_index))),
              index_year = year(index)) %>%
+      mutate(age_group_at_index_years = cut(age_at_index_years,
+                                            breaks = c(0,18,25,45,65,85,150),
+                                            include.lowest = T,
+                                            right = F)) %>%
+      mutate(age_group_at_index_years = plyr::revalue(age_group_at_index_years, c(
+        "[0,18)"   = "Minor (<18)",
+        "[18,25)"  = "Young Adult (18-24)",
+        "[25,45)"  = "Adult (25-44)",
+        "[45,65)"  = "Older Adult (45-64)",
+        "[65,85)"  = "Senior (65-84)",
+        "[85,150]" = "Elder (85+)")
+      )) %>%
+      mutate(mdd_to_index_years = time_length(interval(MDD_Index, index), "years")) %>%
+      mutate(mdd_to_index_group = cut(mdd_to_index_years,
+                                      breaks = c(0,1,2,5,10,15,20,200),
+                                      include.lowest = T,
+                                      right = F)) %>%
+      mutate(mdd_to_index_group = plyr::revalue(mdd_to_index_group, c(
+        "[0,1)"    = "0-1 years",
+        "[1,2)"    = "1-2 years",
+        "[2,5)"    = "2-5 years",
+        "[5,10)"   = "5-10 years",
+        "[10,15)"  = "10-15 years",
+        "[15,20)"  = "15-20 years",
+        "[20,200]" = ">20 years")
+      )) %>%
+      mutate(index_year_group = cut(index_year,
+                                             breaks = c(0,2010,2015,2020,2025,3000),
+                                             include.lowest = T,
+                                             right = F)) %>%
+      mutate(index_year_group = plyr::revalue(index_year_group, c(
+        "[0,2010)"     = "Before 2010",
+        "[2010,2015)"  = "2010-2015",
+        "[2015,2020)"  = "2015-2020",
+        "[2020,2025)"  = "2020-2025",
+        "[2025,3000]"  = "2025 and beyond")
+      )) %>%
+      dplyr::select(-starts_with("batch_number.")) %>%
       left_join(diag_data, by = "PatientDurableKey")
     
     for (this_diag in eligibility_inclusion_diagnoses) {
@@ -447,7 +486,7 @@ for(batch_num in 1:n_patient_partitions){
       target_col <- paste0(this_diag, "_Before_", target_drug, "_Index")
       other_col  <- paste0(this_diag, "_Before_", this_comparator, "_Index")
       
-      nontreat_data <- nontreat_data %>%
+      unmatched_data <- unmatched_data %>%
         mutate(!!new_col := ifelse(!!sym(target_pop_colname),
                                    !!sym(target_col), !!sym(other_col)))
     }
@@ -469,13 +508,13 @@ for(batch_num in 1:n_patient_partitions){
       
       new_col <- paste0(this_demo_drug, "_Overlaps_Drug_Index")
       
-      nontreat_data <- nontreat_data %>%
+      unmatched_data <- unmatched_data %>%
         mutate(!!new_col := ifelse(!!sym(target_pop_colname),
                                    !!sym(target_col), !!sym(other_col)))
     }
     
     write_dataset(
-      nontreat_data[seq_len(nrow(nontreat_data)), ] %>% # I have no idea why it has to be subsetted like this.
+      unmatched_data[seq_len(nrow(unmatched_data)), ] %>% # I have no idea why it has to be subsetted like this.
         mutate(batch_number = batch_num),
       path = paste0("Parquet_batched_OutputData/Unmatched_Dataset_", this_comparator),
       format = "parquet",
@@ -552,6 +591,30 @@ for (group in comparator_groups) {
   )
   gc()
 }
+
+# -- Render table 1 report -------------------------------------------
+
+for (group in comparator_groups) {
+  ds_connect_data <- open_dataset(paste0("Parquet_batched_OutputData/Unmatched_Dataset_", group))
+  
+  all.data <- ds_connect_data %>%
+    collect()
+  
+  render(
+    input       = "report_Table_1.Rmd",
+    output_file = paste0("Reports/report_Table_1-", target_drug, "vs", group, ".html"),
+    params      = list(
+      comp_vars                       = comp_vars,
+      comparator                      = group,
+      var_name_to_pretty              = var_name_to_pretty,
+      target_drug                     = target_drug,
+      all.data                        = all.data
+    ),
+    envir = new.env()
+  )
+  gc()
+}
+
 
 # -- Compute outcomes --------------------------------------------------------------
 
