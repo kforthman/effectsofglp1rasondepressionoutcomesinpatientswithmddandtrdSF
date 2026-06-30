@@ -883,103 +883,130 @@ for(period in period_info$period_alias){
   }
 }
 
-nb_result_files <- character(0)
-
-total_models <- length(comparator_groups) * length(nb_analyses)
-i <- 0
-
+nb_tasks <- list()
+k <- 1
 for (group in comparator_groups) {
   for (analysis in nb_analyses) {
-    
-    i <- i + 1
-    percent_complete <- percent(i/total_models, accuracy = 0.01)
-    
-    result_suffix <- paste0(target_drug, "Vs", group,
-                            "-", analysis$dep_var, 
-                            "-period", analysis$period)
-    
-    dataset_file <- paste0(
-      "OutputData/cbps_nb_dataset-", result_suffix
-    )
-    
-    vs_result_file <- paste0(
-      "OutputData/cbps_nb_vs_result-", result_suffix, 
-      ".rds"
-    )
-    
-    result_file <- paste0(
-      "OutputData/cbps_nb_result-", result_suffix, 
-      ".rds"
-    )
-    
-    if(file.exists(result_file)){
-      message("Skipping ", i, ", already complete.");
-      message(i, " of ", total_models, " complete (", percent_complete, ")");
-      next
-    }
-    
-    period_name <- period_info$period[period_info$period_alias == analysis$period]
-    
-    message("Fitting NB model: ", target_drug, " vs ", group,
-            " | ", analysis$dep_var, " | period ", period_name)
-    
-    study_cohort_label <- paste0(target_drug, " vs ", group)
-    
-    ds_connect <- open_dataset(paste0("Parquet_batched_OutputData/all_outcomes-", target_drug))
-    this_outcome <- ds_connect %>%
-      filter(study_cohort == study_cohort_label,
-             period_alias == analysis$period,
-             var_name == analysis$dep_var) %>%
-      dplyr::select(c("PatientDurableKey", "var_name", "value")) %>% 
-      collect() %>%
-      pivot_wider(names_from = "var_name", values_from = "value")
-    
-    ds_connect <- open_dataset(matched_data_files[[group]])
-    matched_data <- ds_connect %>% 
-      dplyr::select(c("PatientDurableKey", "treatment", "treatment_name", ps_covariates$var, "batch_number")) %>% 
-      collect()
-    
-    analysis_data <- matched_data %>%
-      left_join(this_outcome, by = c("PatientDurableKey"))
-    
-    rm(this_outcome)
-    rm(matched_data)
-    gc()
-    
-    vs_res <- analysis_Propensity_Scoring_Variable_Selection(
-      comparator_group = group,
-      target_drug = target_drug,
-      cohort_table = analysis_data,
-      covariates_table = ps_covariates
-    )
-    
-    analysis_data <- analysis_data %>%
-      mutate(across(all_of(vs_res$logical_vars), ~ as.numeric(.)))
-    
-    write_dataset(
-      analysis_data,
-      path = dataset_file,
-      format = "parquet",
-      partitioning = "batch_number"
-    )
-    
-    matchingFormula <- as.formula(paste0("treatment ~ ",
-                                         paste(vs_res$matchingVars.final$var, collapse = " + ")))
-    
-    res <- bigcbps(matchingFormula,
-                   outcome = analysis$dep_var,
-                   data = dataset_file,
-                   family = "nb")
-    
-    save(vs_res, file = vs_result_file)
-    save(res, file = result_file)
-    
-    rm(analysis_data)
-    gc()
-    
-    message(i, " of ", total_models, " complete (", percent_complete, ")")
+    nb_tasks[[k]] <- list(group = group, analysis = analysis)
+    k <- k + 1
   }
 }
+
+total_models <- length(nb_tasks)
+n_workers    <- min(total_models, max(1L, detectCores(logical = TRUE) - 1L))
+
+cl <- makeCluster(n_workers)
+registerDoParallel(cl)
+
+clusterEvalQ(cl, {
+  source("../CBPSlite.R")
+  source("helper_functions.R")
+  source("analysis_Propensity_Scoring_Variable_Selection.R")
+  NULL
+})
+
+message("Running NB CBPS analyses in parallel (", n_workers, " workers, ",
+        total_models, " models)...")
+
+nb_result_files <- foreach(
+  task      = nb_tasks,
+  .combine  = c,
+  .packages = c("dplyr", "tidyr", "tibble", "arrow", "caret", "MASS"),
+  .export   = c("matched_data_files", "period_info", "target_drug",
+                "ps_covariates")
+) %dopar% {
+  
+  group    <- task$group
+  analysis <- task$analysis
+  
+  result_suffix <- paste0(target_drug, "Vs", group,
+                          "-", analysis$dep_var,
+                          "-period", analysis$period)
+  
+  dataset_file <- paste0(
+    "OutputData/cbps_nb_dataset-", result_suffix
+  )
+  
+  vs_result_file <- paste0(
+    "OutputData/cbps_nb_vs_result-", result_suffix,
+    ".rds"
+  )
+  
+  result_file <- paste0(
+    "OutputData/cbps_nb_result-", result_suffix,
+    ".rds"
+  )
+  
+  if(file.exists(result_file)){
+    message("Skipping (already complete): ", result_suffix)
+    return(result_file)
+  }
+  
+  period_name <- period_info$period[period_info$period_alias == analysis$period]
+  
+  message("Fitting NB model: ", target_drug, " vs ", group,
+          " | ", analysis$dep_var, " | period ", period_name)
+  
+  study_cohort_label <- paste0(target_drug, " vs ", group)
+  
+  ds_connect <- open_dataset(paste0("Parquet_batched_OutputData/all_outcomes-", target_drug))
+  this_outcome <- ds_connect %>%
+    filter(study_cohort == study_cohort_label,
+           period_alias == analysis$period,
+           var_name == analysis$dep_var) %>%
+    dplyr::select(c("PatientDurableKey", "var_name", "value")) %>%
+    collect() %>%
+    pivot_wider(names_from = "var_name", values_from = "value")
+  
+  ds_connect <- open_dataset(matched_data_files[[group]])
+  matched_data <- ds_connect %>%
+    dplyr::select(c("PatientDurableKey", "treatment", "treatment_name", ps_covariates$var, "batch_number")) %>%
+    collect()
+  
+  analysis_data <- matched_data %>%
+    left_join(this_outcome, by = c("PatientDurableKey"))
+  
+  rm(this_outcome)
+  rm(matched_data)
+  gc()
+  
+  vs_res <- analysis_Propensity_Scoring_Variable_Selection(
+    comparator_group = group,
+    target_drug = target_drug,
+    cohort_table = analysis_data,
+    covariates_table = ps_covariates
+  )
+  
+  analysis_data <- analysis_data %>%
+    mutate(across(all_of(vs_res$logical_vars), ~ as.numeric(.)))
+  
+  write_dataset(
+    analysis_data,
+    path = dataset_file,
+    format = "parquet",
+    partitioning = "batch_number"
+  )
+  
+  matchingFormula <- as.formula(paste0("treatment ~ ",
+                                       paste(vs_res$matchingVars.final$var, collapse = " + ")))
+  
+  res <- bigcbps(matchingFormula,
+                 outcome = analysis$dep_var,
+                 data = dataset_file,
+                 family = "nb")
+  
+  save(vs_res, file = vs_result_file)
+  save(res, file = result_file)
+  
+  rm(analysis_data)
+  gc()
+  
+  result_file
+}
+
+stopCluster(cl)
+message("All NB CBPS analyses complete.")
+gc()
 
 # render(
 #   input       = "report_NB_Summary.Rmd",
