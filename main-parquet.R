@@ -441,6 +441,7 @@ for(batch_num in 1:n_patient_partitions){
                                     !!sym(varname_target_index),
                                     !!sym(varname_comparator_index))),
              index_year = year(index)) %>%
+      filter(!is.na(index)) %>%
       mutate(age_group_at_index_years = cut(age_at_index_years,
                                             breaks = c(0,18,25,45,65,85,150),
                                             include.lowest = T,
@@ -867,7 +868,7 @@ matched_data_files <- setNames(
   comparator_groups
 )
 
-all_outcomes <- c(#"n_psych_days", "n_med_changes", 
+all_outcomes <- c("n_psych_days", "n_med_changes", 
   "n_Intentional_Self_Harm_diagnoses",
   "n_Suicidal_Ideation_diagnoses", "n_Suicide_Attempt_diagnoses", 
   "n_External_Causes_of_Morbidity_diagnoses")
@@ -893,9 +894,9 @@ for (group in comparator_groups) {
 }
 
 total_models <- length(nb_tasks)
-n_workers    <- min(total_models, max(1L, detectCores(logical = TRUE) - 1L))
+n_workers    <- 4
 
-cl <- makeCluster(n_workers)
+cl <- makeCluster(n_workers, outfile = "OutputData/nb_workers.log")
 registerDoParallel(cl)
 
 clusterEvalQ(cl, {
@@ -913,7 +914,8 @@ nb_result_files <- foreach(
   .combine  = c,
   .packages = c("dplyr", "tidyr", "tibble", "arrow", "caret", "MASS"),
   .export   = c("matched_data_files", "period_info", "target_drug",
-                "ps_covariates")
+                "ps_covariates"),
+  .errorhandling = "pass"
 ) %dopar% {
   
   group    <- task$group
