@@ -1015,7 +1015,8 @@ render(
   output_file = paste0("Reports/report_CBPS_NB_Summary-", target_drug, ".html"),
   params = list(
     result_files = nb_result_files,
-    target_drug  = target_drug
+    target_drug  = target_drug,
+    csv_path     = "OutputData/NB_summary_table.csv"
   ),
   envir = new.env()
 )

@@ -8,6 +8,7 @@ output:
 params:
   result_files: !r character(0)
   target_drug:  "Semaglutide"
+  csv_path:     "NB_summary_table.csv"
 ---
 
 ```{r setup, include=FALSE}
@@ -114,6 +115,22 @@ if (have_results) {
 }
 ```
 
+```{r export-csv}
+# Export the unformatted table (raw numerics, not the display-rounded/kable
+# version) so downstream consumers get full precision.
+csv_written <- FALSE
+if (have_results) {
+  csv_written <- tryCatch({
+    utils::write.csv(summary_tab, file = params$csv_path, row.names = FALSE)
+    TRUE
+  }, error = function(e) {
+    warning("Failed to write CSV to '", params$csv_path, "': ",
+            conditionMessage(e), call. = FALSE)
+    FALSE
+  })
+}
+```
+
 ```{r render-table}
 if (!have_results) {
   knitr::asis_output("_No result files provided (`params$result_files` is empty)._")
@@ -176,5 +193,11 @@ kbl %>%
     general_title = "",
     escape        = FALSE
   )
+}
+```
+
+```{r export-note, results='asis'}
+if (csv_written) {
+  cat(sprintf("\n_Table exported to `%s`._\n", params$csv_path))
 }
 ```
