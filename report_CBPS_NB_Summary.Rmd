@@ -1,0 +1,180 @@
+---
+title: "Negative Binomial Regression — Summary: `r params$target_drug`"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: false
+    theme: flatly
+params:
+  result_files: !r character(0)
+  target_drug:  "Semaglutide"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+library(dplyr)
+library(scales)
+library(knitr)
+library(kableExtra)
+# Optional project helpers (e.g. custom comma()/sig_code() wrappers). Safe to
+# skip if not present -- fallbacks are defined below.
+if (file.exists("helper_functions.R")) source("helper_functions.R")
+
+`%||%` <- function(a, b) if (is.null(a) || length(a) == 0 || (length(a) == 1 && is.na(a))) b else a
+if (!exists("sig_code")) {
+  sig_code <- function(p) {
+    ifelse(is.na(p), "", ifelse(p < 0.001, "***",
+           ifelse(p < 0.01,  "**",
+           ifelse(p < 0.05,  "*",
+           ifelse(p < 0.1,   ".", "")))))
+  }
+}
+```
+
+```{r build-table}
+have_results <- length(params$result_files) > 0
+
+# Each element of params$result_files is a path to an .rds file holding a
+# `bigcbps_result` object produced by bigcbps(..., family = "nb"). The
+# object carries the *marginal ATE* (rate difference, g-computation --
+# the primary estimand) alongside the *conditional* log-rate-ratio from
+# the weighted NB GLM (secondary; NOT the ATE). See ?bigcbps and
+# CBPS_IPW_DEV_PLAN.md for the distinction.
+rows <- lapply(params$result_files, function(f) {
+  load(f)
+
+  if (!inherits(res, "bigcbps_result")) {
+    stop("File does not contain a bigcbps_result object: ", f, call. = FALSE)
+  }
+  fam <- res$spec$family %||% NA_character_
+  if (!identical(fam, "nb")) {
+    warning("Result file family is '", fam, "', not 'nb': ", f, call. = FALSE)
+  }
+
+  # --- Primary estimand: marginal ATE (rate difference), g-computation ---
+  tau    <- res$marginal$tau    %||% NA_real_
+  tau_lo <- res$marginal$ci[1]  %||% NA_real_
+  tau_hi <- res$marginal$ci[2]  %||% NA_real_
+
+  # --- Secondary: conditional log-rate-ratio -> Rate Ratio (absent for AIPW) ---
+  cond <- res$conditional
+  has_cond <- !is.null(cond) && !is.null(cond$coef) && length(cond$coef) > 0
+  if (has_cond) {
+    rr    <- exp(cond$coef)
+    rr_lo <- exp(cond$ci[1])
+    rr_hi <- exp(cond$ci[2])
+    pval  <- if (isTRUE(cond$se > 0)) 2 * stats::pnorm(-abs(cond$coef / cond$se)) else NA_real_
+  } else {
+    rr <- rr_lo <- rr_hi <- pval <- NA_real_
+  }
+
+  # --- Validity gates: flag anything that failed and wasn't deliberately overridden ---
+  gr        <- res$gate_results %||% list()
+  failed    <- Filter(function(g) !isTRUE(g$passed) && !isTRUE(g$overridden), gr)
+  gate_flag <- if (length(failed) == 0) "OK" else paste(names(failed), collapse = ", ")
+
+  # --- Comparison label / metadata: pulled from spec if the caller passed
+  #     custom fields through bigcbps(..., target_drug = ..., ...); falls
+  #     back to the file name when absent. ---
+  label <- res$spec$target_drug %||% tools::file_path_sans_ext(basename(f))
+  comparator <- res$spec$comparator_group %||% NA_character_
+  dep_var    <- res$spec$dep_var          %||% NA_character_
+  period     <- res$spec$period_name      %||% NA_character_
+  covs       <- paste(res$covariate_names %||% character(0), collapse = ", ")
+
+  data.frame(
+    Comparison         = label,
+    Comparator         = comparator,
+    Estimator          = toupper(res$spec$estimator %||% NA_character_),
+    N                  = res$n_obs %||% NA_integer_,
+    ESS_Pct            = 100 * (res$ess %||% NA_real_),
+    Dependent_Variable = dep_var,
+    Period             = period,
+    Covariates         = covs,
+    Marginal_ATE       = tau,
+    Marginal_CI        = if (all(is.finite(c(tau_lo, tau_hi))))
+                           paste0("(", round(tau_lo, 3), ", ", round(tau_hi, 3), ")") else NA_character_,
+    Rate_Ratio         = rr,
+    RR_CI              = if (all(is.finite(c(rr_lo, rr_hi))))
+                           paste0("(", round(rr_lo, 3), ", ", round(rr_hi, 3), ")") else NA_character_,
+    P_Value            = pval,
+    Gates              = gate_flag,
+    stringsAsFactors   = FALSE
+  )
+})
+
+summary_tab <- if (have_results) do.call(rbind, rows) else NULL
+
+if (have_results) {
+  # Drop identifying columns that are entirely unpopulated (no caller supplied
+  # that metadata via bigcbps(...)), so the table doesn't show blank columns.
+  optional_cols <- c("Comparator", "Dependent_Variable", "Period")
+  drop_cols <- optional_cols[sapply(optional_cols, function(cn) all(is.na(summary_tab[[cn]])))]
+  summary_tab <- summary_tab[, setdiff(names(summary_tab), drop_cols), drop = FALSE]
+}
+```
+
+```{r render-table}
+if (!have_results) {
+  knitr::asis_output("_No result files provided (`params$result_files` is empty)._")
+} else {
+disp <- summary_tab %>%
+  mutate(
+    N            = comma(N),
+    ESS_Pct      = paste0(round(ESS_Pct, 1), "%"),
+    Marginal_ATE = round(Marginal_ATE, 3),
+    Rate_Ratio   = ifelse(is.na(Rate_Ratio), "—", round(Rate_Ratio, 3)),
+    RR_CI        = ifelse(is.na(RR_CI), "—", RR_CI),
+    Sig          = sig_code(P_Value),
+    P_Value      = ifelse(is.na(P_Value), "—",
+                    ifelse(P_Value < 0.001, "<0.001", round(P_Value, 3)))
+  )
+
+rename_map <- c(
+  Comparison         = "Comparison",
+  Comparator         = "Comparator",
+  Estimator          = "Estimator",
+  N                  = "N",
+  ESS_Pct            = "ESS (post-trim)",
+  Dependent_Variable = "Dependent Variable",
+  Period             = "Period",
+  Covariates         = "Covariates",
+  Marginal_ATE       = "Marginal ATE (rate diff.)",
+  Marginal_CI        = "95% CI (ATE)",
+  Rate_Ratio         = "Rate Ratio (conditional)",
+  RR_CI              = "95% CI (RR)",
+  P_Value            = "P-Value",
+  Sig                = " ",
+  Gates              = "Validity Gates"
+)
+names(disp) <- unname(rename_map[names(disp)])
+
+align_vec <- ifelse(sapply(disp, is.numeric), "r", "l")
+
+kbl <- disp %>%
+  knitr::kable(align = align_vec, row.names = FALSE) %>%
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"),
+                            full_width = TRUE, font_size = 14)
+
+gate_col <- which(names(disp) == "Validity Gates")
+if (length(gate_col) == 1) {
+  kbl <- kbl %>%
+    kableExtra::column_spec(
+      gate_col,
+      color = ifelse(disp[["Validity Gates"]] == "OK", "black", "#b30000"),
+      bold  = disp[["Validity Gates"]] != "OK"
+    )
+}
+
+kbl %>%
+  kableExtra::footnote(
+    general = c(
+      "Primary estimand is the marginal ATE (rate difference, g-computation); the Rate Ratio is the secondary conditional log-rate-ratio from the weighted NB GLM and is NOT the ATE.",
+      "Signif. codes (conditional coefficient): 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1",
+      "Validity Gates: 'OK' = all gates passed; otherwise lists the failed gate name(s) (see CBPS_IPW_DEV_PLAN.md validity-gate table)."
+    ),
+    general_title = "",
+    escape        = FALSE
+  )
+}
+```

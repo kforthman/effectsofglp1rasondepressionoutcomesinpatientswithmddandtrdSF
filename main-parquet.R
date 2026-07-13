@@ -1010,6 +1010,17 @@ stopCluster(cl)
 message("All NB CBPS analyses complete.")
 gc()
 
+render(
+  input       = "report_CBPS_NB_Summary.Rmd",
+  output_file = paste0("Reports/report_CBPS_NB_Summary-", target_drug, ".html"),
+  params = list(
+    result_files = nb_result_files,
+    target_drug  = target_drug
+  ),
+  envir = new.env()
+)
+gc()
+
 # render(
 #   input       = "report_NB_Summary.Rmd",
 #   output_file = paste0("Reports/report_NB_Summary-", target_drug, ".html"),
