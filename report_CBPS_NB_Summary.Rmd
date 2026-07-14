@@ -13,6 +13,7 @@ params:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+options(scipen = 999)  # never render numerics in scientific notation
 library(dplyr)
 library(scales)
 library(knitr)
@@ -117,11 +118,19 @@ if (have_results) {
 
 ```{r export-csv}
 # Export the unformatted table (raw numerics, not the display-rounded/kable
-# version) so downstream consumers get full precision.
+# version) so downstream consumers get full precision. Numeric columns are
+# explicitly rendered in fixed (non-scientific) notation -- relying on
+# options(scipen=...) alone isn't guaranteed to survive every downstream
+# reader of the CSV, so we force it at write time too.
 csv_written <- FALSE
 if (have_results) {
+  csv_tab <- summary_tab
+  num_cols <- names(csv_tab)[sapply(csv_tab, is.numeric)]
+  for (cn in num_cols) {
+    csv_tab[[cn]] <- format(csv_tab[[cn]], scientific = FALSE, trim = TRUE)
+  }
   csv_written <- tryCatch({
-    utils::write.csv(summary_tab, file = params$csv_path, row.names = FALSE)
+    utils::write.csv(csv_tab, file = params$csv_path, row.names = FALSE)
     TRUE
   }, error = function(e) {
     warning("Failed to write CSV to '", params$csv_path, "': ",
