@@ -597,8 +597,11 @@ for (group in comparator_groups) {
 
 for (group in comparator_groups) {
   ds_connect_data <- open_dataset(paste0("Parquet_batched_OutputData/Unmatched_Dataset_", group))
+  ds_connect_addl_demo <- open_dataset("Parquet_batched/table1_add_demo")
   
   all.data <- ds_connect_data %>%
+    left_join(ds_connect_addl_demo, by = "PatientDurableKey") %>%
+    dplyr::select(-starts_with("batch_number")) %>%
     collect()
   
   render(

@@ -58,3 +58,11 @@ Tobacco_Use_Disorder,Tobacco Use Disorder,Substance Abuse and Dependence
 age_group_at_index_years,Age at Index,Index Variables
 index_year_group,Index Year,Index Variables
 mdd_to_index_group,MDD to Index (days),Index Variables
+MaritalStatus,Marital Status,Demographics
+GenderIdentity,Gender Identity,Demographics
+StateOrProvince,State or Province,Demographics
+SviHouseholdCompositionPctlRankingByZip2018_X,Household Characteristics,Social Vulnerability
+SviHousingTypeTransportationPctlRankingByZip2018_X,Housing Type and Transportation,Social Vulnerability
+SviMinorityStatusLanguagePctlRankingByZip2018_X,Racial and Ethnic Minority Status,Social Vulnerability
+SviOverallPctlRankingByZip2018_X,Overall Vulnerability,Social Vulnerability
+SviSocioeconomicPctlRankingByZip2018_X,Socioeconomic Status,Social Vulnerability
