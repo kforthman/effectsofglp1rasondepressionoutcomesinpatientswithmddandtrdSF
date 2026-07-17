@@ -1121,3 +1121,172 @@ render(
   envir = new.env()
 )
 gc()
+
+# -- Cox Regression analyses with CBPS -----------------------------------------
+
+source("analysis_Propensity_Scoring_Variable_Selection.R")
+
+matched_data_files <- setNames(
+  paste0("Parquet_batched_OutputData/Unmatched_Dataset_", comparator_groups),
+  comparator_groups
+)
+
+all_outcomes <- c("time_to_first_Intentional_Self_Harm_diagnosis",
+                  "time_to_first_Suicidal_Ideation_diagnosis",
+                  "time_to_first_Suicide_Attempt_diagnosis",
+                  "time_to_first_External_Causes_of_Morbidity_diagnosis"
+                  )
+
+cox_analyses <- list()
+i <- 1
+for(period in period_info$period_alias){
+  for(dep_var in all_outcomes){
+    cox_analyses[[i]] <- list(dep_var = dep_var,
+                             period = period
+    )
+    i <- i+1
+  }
+}
+
+cox_tasks <- list()
+k <- 1
+for (group in comparator_groups) {
+  for (analysis in cox_analyses) {
+    cox_tasks[[k]] <- list(group = group, analysis = analysis)
+    k <- k + 1
+  }
+}
+
+total_models <- length(cox_tasks)
+n_workers    <- 2
+
+cl <- makeCluster(n_workers, outfile = "OutputData/cox_workers.log")
+registerDoParallel(cl)
+
+clusterEvalQ(cl, {
+  source("../CBPSlite.R")
+  source("helper_functions.R")
+  source("analysis_Propensity_Scoring_Variable_Selection.R")
+  NULL
+})
+
+message("Running Cox CBPS analyses in parallel (", n_workers, " workers, ",
+        total_models, " models)...")
+
+cox_result_files <- foreach(
+  task      = cox_tasks,
+  .combine  = c,
+  .packages = c("dplyr", "tidyr", "tibble", "arrow", "caret", "MASS"),
+  .export   = c("matched_data_files", "period_info", "target_drug",
+                "ps_covariates"),
+  .errorhandling = "pass"
+) %dopar% {
+  
+  group    <- task$group
+  analysis <- task$analysis
+  
+  result_suffix <- paste0(target_drug, "Vs", group,
+                          "-", analysis$dep_var,
+                          "-period", analysis$period)
+  
+  dataset_file <- paste0(
+    "OutputData/cbps_cox_dataset-", result_suffix
+  )
+  
+  vs_result_file <- paste0(
+    "OutputData/cbps_cox_vs_result-", result_suffix,
+    ".rds"
+  )
+  
+  result_file <- paste0(
+    "OutputData/cbps_cox_result-", result_suffix,
+    ".rds"
+  )
+  
+  if(file.exists(result_file)){
+    message("Skipping (already complete): ", result_suffix)
+    return(result_file)
+  }
+  
+  period_name <-  period_info$period[period_info$period_alias == analysis$period]
+  horizon     <- period_info$end_win[period_info$period_alias == analysis$period]
+  
+  message("Fitting Cox model: ", target_drug, " vs ", group,
+          " | ", analysis$dep_var, " | period ", period_name)
+  
+  study_cohort_label <- paste0(target_drug, " vs ", group)
+  
+  ds_connect <- open_dataset(paste0("Parquet_batched_OutputData/all_outcomes-", target_drug))
+  this_outcome <- ds_connect %>%
+    filter(study_cohort == study_cohort_label,
+           period_alias == analysis$period,
+           var_name == analysis$dep_var) %>%
+    dplyr::select(c("PatientDurableKey", "var_name", "value")) %>%
+    collect() %>%
+    pivot_wider(names_from = "var_name", values_from = "value") %>%
+    mutate(event = ifelse(is.na(!!sym(analysis$dep_var)), 0, 1),
+           !!sym(analysis$dep_var) := ifelse(is.na(!!sym(analysis$dep_var)), horizon, !!sym(analysis$dep_var))
+           )
+  
+  ds_connect <- open_dataset(matched_data_files[[group]])
+  matched_data <- ds_connect %>%
+    dplyr::select(c("PatientDurableKey", "treatment", "treatment_name", ps_covariates$var, "batch_number")) %>%
+    collect()
+  
+  analysis_data <- matched_data %>%
+    left_join(this_outcome, by = c("PatientDurableKey"))
+  
+  rm(this_outcome)
+  rm(matched_data)
+  gc()
+  
+  vs_res <- analysis_Propensity_Scoring_Variable_Selection(
+    comparator_group = group,
+    target_drug = target_drug,
+    cohort_table = analysis_data,
+    covariates_table = ps_covariates
+  )
+  
+  analysis_data <- analysis_data %>%
+    mutate(across(all_of(vs_res$logical_vars), ~ as.numeric(.)))
+  
+  write_dataset(
+    analysis_data,
+    path = dataset_file,
+    format = "parquet",
+    partitioning = "batch_number"
+  )
+  
+  matchingFormula <- as.formula(paste0("treatment ~ ",
+                                       paste(vs_res$matchingVars.final$var, collapse = " + ")))
+  
+  res <- bigcbps(matchingFormula,
+                 outcome = list(time = analysis$dep_var, event = "event"),
+                 data = dataset_file,
+                 family = "cox",
+                 horizon = horizon)
+  
+  save(vs_res, file = vs_result_file)
+  save(res, file = result_file)
+  
+  rm(analysis_data)
+  gc()
+  
+  result_file
+}
+
+stopCluster(cl)
+message("All Cox CBPS analyses complete.")
+gc()
+
+render(
+  input       = "report_CBPS_Cox_Summary.Rmd",
+  output_file = paste0("Reports/report_CBPS_Cox_Summary-", target_drug, ".html"),
+  params = list(
+    result_files = cox_result_files,
+    target_drug  = target_drug,
+    csv_path     = "OutputData/Cox_summary_table.csv"
+  ),
+  envir = new.env()
+)
+gc()
