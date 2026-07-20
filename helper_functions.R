@@ -351,6 +351,54 @@ my_cut <- function(my_value, range, my_min = 1) {
 
 # -- Table formatting helpers --------------------------------------------------
 
+# Decide how the two strata counts in a Table 1 row should be displayed so
+# that no patient count under `threshold` is ever shown exactly, and the
+# complementary (unmasked) group count can't be used with the (unmasked)
+# row total to back-calculate the masked one. `minus_N`/`plus_N` are the
+# strata's overall sample sizes, used only to decide whether showing a
+# rounded percent would narrow the count beyond what the count display
+# itself already discloses.
+#
+# Returns list(minus = list(count, pct), plus = list(count, pct)); `count`
+# is NA when the value needs no masking (caller should show the real
+# count), otherwise a ready-to-display string ("<= 10" or "~<rounded>").
+# `pct` is NA when the percent should be suppressed.
+mask_table1_group_counts <- function(minus_n, plus_n, minus_pct, plus_pct,
+                                     minus_N, plus_N, threshold = 11) {
+  
+  # Would showing the rounded percent (at `digits` decimal places) let a
+  # reader distinguish the low and high ends of the range already implied
+  # by the masked/rounded count display? If lo and hi round to the same
+  # displayed percent, showing it reveals nothing beyond that range.
+  pct_is_ambiguous <- function(lo, hi, denom, digits = 1) {
+    if (is.na(denom) || denom <= 0) return(FALSE)
+    round(lo / denom * 100, digits) == round(hi / denom * 100, digits)
+  }
+  
+  mask_one <- function(n, pct, denom) {
+    list(count = "<= 10",
+         pct   = if (pct_is_ambiguous(0, threshold - 1, denom)) pct else NA)
+  }
+  round_one <- function(n, pct, denom) {
+    rounded <- round(n / 10) * 10
+    list(count = paste0("~", scales::comma(rounded)),
+         pct   = if (pct_is_ambiguous(rounded - 5, rounded + 5, denom)) pct else NA)
+  }
+  
+  minus_small <- minus_n < threshold
+  plus_small  <- plus_n  < threshold
+  
+  if (!minus_small && !plus_small) {
+    return(list(minus = list(count = NA, pct = minus_pct),
+                plus  = list(count = NA, pct = plus_pct)))
+  }
+  
+  list(
+    minus = if (minus_small) mask_one(minus_n, minus_pct, minus_N) else round_one(minus_n, minus_pct, minus_N),
+    plus  = if (plus_small)  mask_one(plus_n,  plus_pct,  plus_N)  else round_one(plus_n,  plus_pct,  plus_N)
+  )
+}
+
 number_to_viridis <- function(x) {
   x <- as.numeric(x)
   # Ensure input is numeric
@@ -404,6 +452,66 @@ my_table1 <- function(this.data, my_strata, filename, varsToFactor, new_names = 
   frmt_dataset <- tab3Mat
   # Format table for readability
   
+  # -- Mask small patient counts (<11) --------------------------------------
+  # Decide, per row, whether the TOTAL/minus/plus counts need masking, using
+  # the still-pristine "n (%)" text tableone produced. Continuous (mean (SD))
+  # rows are left alone. mask_decisions[[i]] is NULL when row i needs no
+  # masking at all.
+  mask_threshold <- 11
+  is_continuous  <- grepl("mean\\ \\(SD", tab3Mat$n2)
+  extract_count  <- function(x) suppressWarnings(as.numeric(gsub("^$|^(\\d+).*|.*", "\\1", x)))
+  extract_pct    <- function(x) suppressWarnings(as.numeric(gsub("^$|.*\\(([0-9.]+)\\).*|.*", "\\1", x)))
+  
+  n_row <- which(tab3Mat$n2 == "n")
+  arm_N <- c(minus = NA_real_, plus = NA_real_)
+  if (length(n_row) == 1) {
+    arm_N["minus"] <- extract_count(tab3Mat$minus[n_row])
+    arm_N["plus"]  <- extract_count(tab3Mat$plus[n_row])
+  }
+  
+  total_n   <- extract_count(tab3Mat$TOTAL)
+  minus_n   <- extract_count(tab3Mat$minus)
+  plus_n    <- extract_count(tab3Mat$plus)
+  minus_pct <- extract_pct(tab3Mat$minus)
+  plus_pct  <- extract_pct(tab3Mat$plus)
+  
+  mask_decisions <- vector("list", nrow(tab3Mat))
+  for (i in seq_len(nrow(tab3Mat))) {
+    if (is_continuous[i] || is.na(total_n[i]) || is.na(minus_n[i]) || is.na(plus_n[i])) next
+    
+    if (total_n[i] < mask_threshold) {
+      # Total itself is a small count: mask it along with both groups so no
+      # exact small count is shown anywhere for this row.
+      mask_decisions[[i]] <- list(
+        TOTAL = list(count = "<= 10", pct = NA),
+        minus = list(count = "<= 10", pct = NA),
+        plus  = list(count = "<= 10", pct = NA)
+      )
+      next
+    }
+    
+    grp <- mask_table1_group_counts(minus_n[i], plus_n[i], minus_pct[i], plus_pct[i],
+                                    arm_N["minus"], arm_N["plus"], mask_threshold)
+    if (is.na(grp$minus$count) && is.na(grp$plus$count)) next # neither group is small
+    
+    mask_decisions[[i]] <- list(TOTAL = list(count = NA, pct = NA), minus = grp$minus, plus = grp$plus)
+  }
+  
+  # Plain-text render for the CSV export: substitute masked/rounded values
+  # into the still-untouched tab3Mat, leaving unmasked cells exactly as
+  # tableone printed them.
+  apply_mask_plain <- function(orig, decision) {
+    if (is.na(decision$count)) return(orig)
+    if (is.na(decision$pct)) decision$count else paste0(decision$count, " (", decision$pct, ")")
+  }
+  for (i in seq_len(nrow(tab3Mat))) {
+    d <- mask_decisions[[i]]
+    if (is.null(d)) next
+    tab3Mat$TOTAL[i] <- apply_mask_plain(tab3Mat$TOTAL[i], d$TOTAL)
+    tab3Mat$minus[i] <- apply_mask_plain(tab3Mat$minus[i], d$minus)
+    tab3Mat$plus[i]  <- apply_mask_plain(tab3Mat$plus[i],  d$plus)
+  }
+  
   if(!is.null(new_names)){tab3Mat$nn <- new_names}
   if(!is.null(new_titles)){tab3Mat$title <- new_titles}
   if(!is.null(new_colnames)){colnames(tab3Mat) <- new_colnames}
@@ -448,7 +556,33 @@ my_table1 <- function(this.data, my_strata, filename, varsToFactor, new_names = 
                           )
                   ),
                   .names = "{.col}")) %>%
-    ungroup() %>%
+    ungroup()
+  
+  # Overwrite masked/rounded cells decided above with their styled display
+  # text (plain "<= 10" / "~<rounded>", with a colored percent when showing
+  # one doesn't narrow the count beyond what's already masked).
+  for (i in seq_len(nrow(frmt_dataset))) {
+    d <- mask_decisions[[i]]
+    if (is.null(d)) next
+    
+    if (!is.na(d$TOTAL$count)) {
+      frmt_dataset$TOTAL.freq[i] <- d$TOTAL$count
+      frmt_dataset$TOTAL.rate[i] <- if (is.na(d$TOTAL$pct)) "" else
+        cell_spec(paste0(d$TOTAL$pct, "%"), color = "white", background = number_to_viridis(d$TOTAL$pct))
+    }
+    if (!is.na(d$minus$count)) {
+      frmt_dataset$minus.freq[i] <- d$minus$count
+      frmt_dataset$minus.rate[i] <- if (is.na(d$minus$pct)) "" else
+        cell_spec(paste0(d$minus$pct, "%"), color = "white", background = number_to_viridis(d$minus$pct))
+    }
+    if (!is.na(d$plus$count)) {
+      frmt_dataset$plus.freq[i] <- d$plus$count
+      frmt_dataset$plus.rate[i] <- if (is.na(d$plus$pct)) "" else
+        cell_spec(paste0(d$plus$pct, "%"), color = "white", background = number_to_viridis(d$plus$pct))
+    }
+  }
+  
+  frmt_dataset <- frmt_dataset %>%
     dplyr::select(n1,n2,TOTAL.freq, TOTAL.rate,minus.freq,minus.rate, plus.freq, plus.rate, p) %>%
     replace(is.na(.), "")
   
