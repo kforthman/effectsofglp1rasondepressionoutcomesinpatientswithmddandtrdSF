@@ -6,6 +6,7 @@
 
 # Do ignore parquet directories
 Parquet*/
+OutputData/
 OutputData/cbps_nb_dataset*/
 
 # Track only R scripts
