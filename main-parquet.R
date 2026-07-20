@@ -1208,75 +1208,95 @@ cox_result_files <- foreach(
     return(result_file)
   }
   
-  period_name <-  period_info$period[period_info$period_alias == analysis$period]
-  horizon     <- period_info$end_win[period_info$period_alias == analysis$period]
-  
-  message("Fitting Cox model: ", target_drug, " vs ", group,
-          " | ", analysis$dep_var, " | period ", period_name)
-  
-  study_cohort_label <- paste0(target_drug, " vs ", group)
-  
-  ds_connect <- open_dataset(paste0("Parquet_batched_OutputData/all_outcomes-", target_drug))
-  this_outcome <- ds_connect %>%
-    filter(study_cohort == study_cohort_label,
-           period_alias == analysis$period,
-           var_name == analysis$dep_var) %>%
-    dplyr::select(c("PatientDurableKey", "var_name", "value")) %>%
-    collect() %>%
-    pivot_wider(names_from = "var_name", values_from = "value") %>%
-    mutate(event = ifelse(is.na(!!sym(analysis$dep_var)), 0, 1),
-           !!sym(analysis$dep_var) := ifelse(is.na(!!sym(analysis$dep_var)), horizon, !!sym(analysis$dep_var))
-           )
-  
-  ds_connect <- open_dataset(matched_data_files[[group]])
-  matched_data <- ds_connect %>%
-    dplyr::select(c("PatientDurableKey", "treatment", "treatment_name", ps_covariates$var, "batch_number")) %>%
-    collect()
-  
-  analysis_data <- matched_data %>%
-    left_join(this_outcome, by = c("PatientDurableKey"))
-  
-  rm(this_outcome)
-  rm(matched_data)
-  gc()
-  
-  vs_res <- analysis_Propensity_Scoring_Variable_Selection(
-    comparator_group = group,
-    target_drug = target_drug,
-    cohort_table = analysis_data,
-    covariates_table = ps_covariates
-  )
-  
-  analysis_data <- analysis_data %>%
-    mutate(across(all_of(vs_res$logical_vars), ~ as.numeric(.)))
-  
-  write_dataset(
-    analysis_data,
-    path = dataset_file,
-    format = "parquet",
-    partitioning = "batch_number"
-  )
-  
-  matchingFormula <- as.formula(paste0("treatment ~ ",
-                                       paste(vs_res$matchingVars.final$var, collapse = " + ")))
-  
-  res <- bigcbps(matchingFormula,
-                 outcome = list(time = analysis$dep_var, event = "event"),
-                 data = dataset_file,
-                 family = "cox",
-                 horizon = horizon)
-  
-  save(vs_res, file = vs_result_file)
-  save(res, file = result_file)
-  
-  rm(analysis_data)
-  gc()
-  
-  result_file
+  tryCatch({
+    period_name <-  period_info$period[period_info$period_alias == analysis$period]
+    horizon     <- period_info$end_win[period_info$period_alias == analysis$period]
+    
+    message("Fitting Cox model: ", target_drug, " vs ", group,
+            " | ", analysis$dep_var, " | period ", period_name)
+    
+    study_cohort_label <- paste0(target_drug, " vs ", group)
+    
+    ds_connect <- open_dataset(paste0("Parquet_batched_OutputData/all_outcomes-", target_drug))
+    this_outcome <- ds_connect %>%
+      filter(study_cohort == study_cohort_label,
+             period_alias == analysis$period,
+             var_name == analysis$dep_var) %>%
+      dplyr::select(c("PatientDurableKey", "var_name", "value")) %>%
+      collect() %>%
+      pivot_wider(names_from = "var_name", values_from = "value") %>%
+      mutate(event = ifelse(is.na(!!sym(analysis$dep_var)), 0, 1),
+             !!sym(analysis$dep_var) := ifelse(is.na(!!sym(analysis$dep_var)), horizon, !!sym(analysis$dep_var))
+      )
+    
+    ds_connect <- open_dataset(matched_data_files[[group]])
+    matched_data <- ds_connect %>%
+      dplyr::select(c("PatientDurableKey", "treatment", "treatment_name", ps_covariates$var, "batch_number")) %>%
+      collect()
+    
+    analysis_data <- matched_data %>%
+      left_join(this_outcome, by = c("PatientDurableKey"))
+    
+    rm(this_outcome)
+    rm(matched_data)
+    gc()
+    
+    vs_res <- analysis_Propensity_Scoring_Variable_Selection(
+      comparator_group = group,
+      target_drug = target_drug,
+      cohort_table = analysis_data,
+      covariates_table = ps_covariates
+    )
+    
+    analysis_data <- analysis_data %>%
+      mutate(across(all_of(vs_res$logical_vars), ~ as.numeric(.)))
+    
+    write_dataset(
+      analysis_data,
+      path = dataset_file,
+      format = "parquet",
+      partitioning = "batch_number"
+    )
+    
+    matchingFormula <- as.formula(paste0("treatment ~ ",
+                                         paste(vs_res$matchingVars.final$var, collapse = " + ")))
+    
+    res <- bigcbps(matchingFormula,
+                   outcome = list(time = analysis$dep_var, event = "event"),
+                   data = dataset_file,
+                   family = "cox",
+                   horizon = horizon)
+    
+    save(vs_res, file = vs_result_file)
+    save(res, file = result_file)
+    
+    rm(analysis_data)
+    gc()
+    
+    result_file
+  }, error = function(e) {
+    cat(
+      sprintf(
+        "[%s] pid %d | %s\n  message: %s\n  call: %s\n\n",
+        format(Sys.time()), Sys.getpid(), result_suffix,
+        conditionMessage(e),
+        paste(deparse(conditionCall(e)), collapse = " ")
+      ),
+      file = "OutputData/cox_errors.log", append = TRUE
+    )
+    NA_character_
+  })
 }
 
 stopCluster(cl)
 message("All Cox CBPS analyses complete.")
+
+n_failed <- sum(is.na(cox_result_files))
+if (n_failed > 0) {
+  message(n_failed, " Cox CBPS model(s) failed - see OutputData/cox_errors.log for details.")
+}
+cox_result_files <- cox_result_files[!is.na(cox_result_files)]
+
 gc()
 
 render(
