@@ -1139,7 +1139,10 @@ all_outcomes <- c("time_to_first_Intentional_Self_Harm_diagnosis",
 
 cox_analyses <- list()
 i <- 1
-for(period in period_info$period_alias){
+
+period_info_cox <- period_info %>% filter(end_win > 0)
+
+for(period in period_info_cox$period_alias){
   for(dep_var in all_outcomes){
     cox_analyses[[i]] <- list(dep_var = dep_var,
                              period = period
@@ -1177,7 +1180,7 @@ cox_result_files <- foreach(
   task      = cox_tasks,
   .combine  = c,
   .packages = c("dplyr", "tidyr", "tibble", "arrow", "caret", "MASS"),
-  .export   = c("matched_data_files", "period_info", "target_drug",
+  .export   = c("matched_data_files", "period_info_cox", "target_drug",
                 "ps_covariates"),
   .errorhandling = "pass"
 ) %dopar% {
@@ -1209,8 +1212,8 @@ cox_result_files <- foreach(
   }
   
   tryCatch({
-    period_name <-  period_info$period[period_info$period_alias == analysis$period]
-    horizon     <- period_info$end_win[period_info$period_alias == analysis$period]
+    period_name <-  period_info_cox$period[period_info_cox$period_alias == analysis$period]
+    horizon     <- period_info_cox$end_win[period_info_cox$period_alias == analysis$period]
     
     message("Fitting Cox model: ", target_drug, " vs ", group,
             " | ", analysis$dep_var, " | period ", period_name)
