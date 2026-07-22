@@ -469,13 +469,11 @@ for(batch_num in 1:n_patient_partitions){
         "[20,200]" = ">20 years")
       )) %>%
       mutate(index_year_group = cut(index_year,
-                                    breaks = c(0,2010,2015,2020,2025,3000),
+                                    breaks = c(0,2020,2025,3000),
                                     include.lowest = T,
                                     right = F)) %>%
       mutate(index_year_group = plyr::revalue(index_year_group, c(
-        "[0,2010)"     = "Before 2010",
-        "[2010,2015)"  = "2010-2015",
-        "[2015,2020)"  = "2015-2020",
+        "[0,2020)"     = "Before 2020",
         "[2020,2025)"  = "2020-2025",
         "[2025,3000]"  = "2025 and beyond")
       )) %>%
